@@ -1,0 +1,105 @@
+# Build, test and lint of wbft-inspector, the checks against the pinned
+# wbft-spec revision (spec.lock), and the end-to-end run against the wbft
+# simulator (pinned in test/e2e/go.mod).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  GOTOOLCHAIN: local
+
+jobs:
+  test:
+    name: build and test (go ${{ matrix.go }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.24.x", "1.25.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          # The inspector module has no dependencies, so no go.sum to key a cache.
+          cache: false
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          cache-dependency-path: "**/go.sum"
+      - name: golangci-lint (inspector module)
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.13.2
+      - name: golangci-lint (end-to-end module)
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.13.2
+          working-directory: test/e2e
+      - name: dependencies (standard library only)
+        run: scripts/check-deps.sh
+
+  spec:
+    # The embedded requirement list must match the pinned specification,
+    # every Observable requirement of A-05 and A-06 must have a catalog row,
+    # every vector file must parse in the YAML subset, and the inspector's
+    # own model must pass the vectors of the handlers it implements.
+    name: specification and vectors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          cache: false
+      - id: lock
+        run: |
+          echo "repository=$(sed -n 's/^repository=//p' spec.lock)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(sed -n 's/^commit=//p' spec.lock)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.lock.outputs.repository }}
+          ref: ${{ steps.lock.outputs.commit }}
+          path: wbft-spec
+      - run: make catalog-check vectors WBFT_SPEC_DIR="$PWD/wbft-spec"
+
+  e2e:
+    # The wbft simulator writes the event streams of every scenario of its
+    # bundle (three seeds each) and the inspector must decide them without a
+    # failure; every public vector runs against the wbft adapter.
+    name: end to end
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "1"
+      WBFT_E2E_SEEDS: "3"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          cache-dependency-path: test/e2e/go.sum
+      - id: lock
+        run: |
+          echo "repository=$(sed -n 's/^repository=//p' spec.lock)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(sed -n 's/^commit=//p' spec.lock)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.lock.outputs.repository }}
+          ref: ${{ steps.lock.outputs.commit }}
+          path: wbft-spec
+      - run: make e2e WBFT_SPEC_DIR="$PWD/wbft-spec"
