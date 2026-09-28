@@ -1,0 +1,13 @@
+{
+  "config": {
+    "chainId": 1,
+    "anzeon": {
+      "wbft": {
+        "requestTimeoutSeconds": 2,
+        "blockPeriodSeconds": 1,
+        "epochLength": 1099511627776,
+        "proposerPolicy": 0
+      }
+    }
+  }
+}
