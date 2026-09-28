@@ -169,10 +169,8 @@
               "type": "string"
             },
             "build": {
-              "enum": [
-                "public",
-                "private"
-              ],
+              "type": "string",
+              "minLength": 1,
               "description": "public for the build of this repository; another build names itself"
             },
             "catalog_sha256": {
