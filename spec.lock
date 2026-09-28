@@ -1,0 +1,6 @@
+# The wbft-spec revision this build is generated from and tested against:
+# internal/catalog/data/requirements.json is extracted from it, and CI runs
+# its vectors. Change it only together with a regenerated requirement list
+# (wbft-inspector catalog extract).
+repository=0xmhha/wbft-spec
+commit=1c91f5025bdec752344a6757e8c9e9436def69df
