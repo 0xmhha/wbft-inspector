@@ -1,0 +1,17 @@
+# golangci-lint v2 configuration of the end-to-end test module. This module
+# may import the implementation under test (wbft) and test libraries; the
+# inspector module may not.
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - misspell
+
+  exclusions:
+    presets:
+      - std-error-handling
+
+formatters:
+  enable:
+    - gofmt

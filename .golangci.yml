@@ -1,0 +1,59 @@
+# golangci-lint v2 configuration of the wbft-inspector module.
+#
+# Besides the standard linters it enforces two rules:
+#
+#   1. Independence (depguard): the inspector decides from what an
+#      implementation writes (event streams, vector results), never from its
+#      code. The module depends on the Go standard library only.
+#   2. Determinism (forbidigo): checkers and the specification model do not
+#      read clocks or randomness; the same inputs give the same report.
+version: "2"
+
+run:
+  tests: true
+
+linters:
+  default: standard
+  enable:
+    - depguard
+    - forbidigo
+    - misspell
+    - unconvert
+
+  settings:
+    depguard:
+      rules:
+        standard-library-only:
+          list-mode: strict
+          files:
+            - $all
+          allow:
+            - $gostd
+            - github.com/0xmhha/wbft-inspector/
+
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: ^time\.(Now|Since|Until|After|AfterFunc|Tick|NewTimer|NewTicker|Sleep)$
+          msg: "checkers and the specification model take time from their inputs"
+        - pattern: ^math/rand
+          msg: "checkers and the specification model are deterministic"
+
+  exclusions:
+    presets:
+      - std-error-handling
+    rules:
+      # The determinism rule applies to the non-test files of the checkers,
+      # the event model, the verdicts and the specification model.
+      - linters: [forbidigo]
+        path-except: '^internal/(check|events|verdict|spec)/'
+      - linters: [forbidigo]
+        path: '_test\.go$'
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt

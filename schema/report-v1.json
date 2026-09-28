@@ -1,0 +1,1030 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/0xmhha/wbft-inspector/schema/report-v1.json",
+  "title": "wbft-inspector report",
+  "type": "object",
+  "required": [
+    "schema",
+    "run",
+    "summary",
+    "results",
+    "observations",
+    "errors"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "wbft-inspector-report/1"
+    },
+    "run": {
+      "$ref": "#/$defs/run"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/result"
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "vectors": {
+      "$ref": "#/$defs/vectors"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/error"
+      }
+    }
+  },
+  "$defs": {
+    "hex": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]*$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$"
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{40}$"
+    },
+    "uint": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "decimal, arbitrary size"
+    },
+    "reqId": {
+      "type": "string",
+      "pattern": "^(WBFT|SNET)-[A-Z]+-[0-9]{3}$"
+    },
+    "impId": {
+      "type": "string",
+      "description": "identifier of an optional behaviour as a node or an adapter reports it; the report does not describe it"
+    },
+    "verdict": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "CANNOT_DECIDE",
+        "NOT_RUN"
+      ]
+    },
+    "reasonCode": {
+      "enum": [
+        "MISSING_DATA",
+        "MISSING_ANCESTOR",
+        "ARCHIVE_REQUIRED",
+        "NOT_EXERCISED",
+        "CLOCK_UNCERTAINTY",
+        "OBSERVER_SCOPE",
+        "LOG_LEVEL",
+        "IMPL_PROFILE",
+        "RPC_UNAVAILABLE",
+        "NEEDS_NODE_FEATURE",
+        "VECTOR_ONLY",
+        "INCONSISTENT_INPUT",
+        "NOT_IN_BUILD"
+      ]
+    },
+    "severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "advisory"
+      ]
+    },
+    "priority": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "V"
+      ]
+    },
+    "tag": {
+      "enum": [
+        "header",
+        "state",
+        "network",
+        "log",
+        "rpc"
+      ]
+    },
+    "run": {
+      "type": "object",
+      "required": [
+        "id",
+        "started_at",
+        "finished_at",
+        "inspector",
+        "spec",
+        "command",
+        "inputs",
+        "nodes",
+        "clock",
+        "options"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "inspector": {
+          "type": "object",
+          "required": [
+            "version",
+            "commit",
+            "go",
+            "build",
+            "catalog_sha256"
+          ],
+          "properties": {
+            "version": {
+              "type": "string"
+            },
+            "commit": {
+              "type": "string"
+            },
+            "go": {
+              "type": "string"
+            },
+            "build": {
+              "type": "string",
+              "minLength": 1,
+              "description": "public for the build of this repository; another build names itself"
+            },
+            "catalog_sha256": {
+              "type": "string"
+            },
+            "profiles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "spec": {
+          "type": "object",
+          "required": [
+            "repo",
+            "commit",
+            "reference_commit",
+            "requirement_count"
+          ],
+          "properties": {
+            "repo": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "commit": {
+              "type": "string"
+            },
+            "reference_commit": {
+              "type": "string",
+              "description": "go-stablenet commit the spec is written against, e.g. 740526d03"
+            },
+            "requirement_count": {
+              "type": "integer"
+            },
+            "observable_count": {
+              "type": "integer"
+            }
+          }
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "network": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "chain_id": {
+              "$ref": "#/$defs/uint"
+            },
+            "genesis_hash": {
+              "$ref": "#/$defs/hash"
+            },
+            "preset": {
+              "type": "string"
+            }
+          }
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/uint"
+            },
+            "to": {
+              "$ref": "#/$defs/uint"
+            }
+          }
+        },
+        "trust_anchor": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "genesis",
+                "epoch"
+              ]
+            },
+            "number": {
+              "$ref": "#/$defs/uint"
+            },
+            "hash": {
+              "$ref": "#/$defs/hash"
+            }
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/input"
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "clock": {
+          "type": "object",
+          "required": [
+            "model"
+          ],
+          "properties": {
+            "model": {
+              "enum": [
+                "shared-host",
+                "ntp",
+                "unknown"
+              ]
+            },
+            "skew_ms": {
+              "type": "number"
+            },
+            "sched_ms": {
+              "type": "number"
+            },
+            "margin_ms": {
+              "type": "number"
+            }
+          }
+        },
+        "options": {
+          "type": "object",
+          "description": "effective CLI options, secrets removed"
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "e.g. in-3"
+        },
+        "kind": {
+          "enum": [
+            "rpc",
+            "log",
+            "frames",
+            "events",
+            "genesis",
+            "vectors",
+            "impl",
+            "cache"
+          ]
+        },
+        "node": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "scheme://host[:port] only; path, query and credentials removed"
+        },
+        "endpoint_sha256": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "debug_getRawHeader": {
+              "type": "boolean"
+            },
+            "istanbul": {
+              "type": "boolean"
+            },
+            "archive": {
+              "type": "boolean"
+            },
+            "state_window": {
+              "type": "integer",
+              "description": "blocks behind head for which state was available"
+            }
+          }
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "records": {
+          "type": "integer"
+        },
+        "time_range": {
+          "type": "object",
+          "properties": {
+            "first": {
+              "type": "string"
+            },
+            "last": {
+              "type": "string"
+            }
+          }
+        },
+        "profile": {
+          "type": "string",
+          "description": "log/event profile id"
+        },
+        "impl": {
+          "type": "object",
+          "properties": {
+            "cmd": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "commit": {
+              "type": "string"
+            },
+            "lang": {
+              "type": "string"
+            },
+            "handlers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "build": {
+              "type": "string",
+              "description": "e.g. cgo, nocgo; reported only (WBFT-VEC-022)"
+            },
+            "improvements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/impId"
+              }
+            }
+          }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/$defs/address"
+        },
+        "impl": {
+          "type": "string",
+          "description": "e.g. gstable@740526d03, wbft-stablenet@<commit>"
+        },
+        "role": {
+          "enum": [
+            "validator",
+            "full",
+            "observer",
+            "unknown"
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "requirements",
+        "by_priority",
+        "by_tag",
+        "exit_code"
+      ],
+      "properties": {
+        "requirements": {
+          "$ref": "#/$defs/counts"
+        },
+        "by_priority": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/counts"
+          }
+        },
+        "by_tag": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/counts"
+          }
+        },
+        "by_node": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/counts"
+          }
+        },
+        "fail_by_severity": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "observations": {
+          "type": "integer"
+        },
+        "exit_code": {
+          "type": "integer"
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer"
+        },
+        "pass": {
+          "type": "integer"
+        },
+        "fail": {
+          "type": "integer"
+        },
+        "cannot_decide": {
+          "type": "integer"
+        },
+        "not_run": {
+          "type": "integer"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": [
+        "requirement",
+        "tags",
+        "level",
+        "priority",
+        "checker",
+        "verdict",
+        "coverage"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "requirement": {
+          "$ref": "#/$defs/reqId"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tag"
+          }
+        },
+        "level": {
+          "enum": [
+            "MUST",
+            "MUST NOT",
+            "SHOULD",
+            "SHOULD NOT",
+            "MAY",
+            null
+          ],
+          "description": "null for a requirement ID this build does not know"
+        },
+        "priority": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/priority"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null when the requirement has no catalog row"
+        },
+        "checker": {
+          "type": "string"
+        },
+        "checker_version": {
+          "type": "integer"
+        },
+        "node": {
+          "type": "string",
+          "description": "present when the verdict is per node (mixed networks)"
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "reason": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "code": {
+              "$ref": "#/$defs/reasonCode"
+            },
+            "detail": {
+              "type": "string"
+            },
+            "unlock": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "node features that would decide the requirement"
+            }
+          },
+          "description": "code is present for CANNOT_DECIDE; a NOT_RUN result may carry only a detail"
+        },
+        "severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "coverage": {
+          "type": "object",
+          "required": [
+            "instances",
+            "pass",
+            "fail",
+            "cannot_decide"
+          ],
+          "properties": {
+            "instances": {
+              "type": "integer"
+            },
+            "pass": {
+              "type": "integer"
+            },
+            "fail": {
+              "type": "integer"
+            },
+            "cannot_decide": {
+              "type": "integer"
+            },
+            "reasons": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "input ids used"
+            }
+          }
+        },
+        "violations": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "violations_truncated": {
+          "type": "integer"
+        },
+        "undecided_samples": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "quirks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reqId"
+          },
+          "description": "reference-behaviour requirements this checker deliberately honours"
+        },
+        "vector_cases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "trust_anchor_dependent": {
+          "type": "boolean"
+        },
+        "duration_ms": {
+          "type": "integer"
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "instance",
+        "message",
+        "evidence"
+      ],
+      "properties": {
+        "instance": {
+          "type": "string",
+          "description": "stable instance key, e.g. block:1234, msg:node2:0xabc…, event:node1:L5821"
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "reason": {
+          "$ref": "#/$defs/reasonCode"
+        },
+        "message": {
+          "type": "string"
+        },
+        "expected": {},
+        "actual": {},
+        "step": {
+          "type": "string",
+          "description": "spec step, e.g. H17, P3, NET-043.7"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "node": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "block",
+            "header_bytes",
+            "tx",
+            "receipt_log",
+            "state",
+            "rpc",
+            "log",
+            "event",
+            "frame",
+            "vector",
+            "computed",
+            "config"
+          ]
+        },
+        "input": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string"
+        },
+        "number": {
+          "$ref": "#/$defs/uint"
+        },
+        "hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "field": {
+          "type": "string",
+          "description": "e.g. extra.prev_committed_seal.sealers"
+        },
+        "tx_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "tx_index": {
+          "type": "integer"
+        },
+        "log_index": {
+          "type": "integer"
+        },
+        "address": {
+          "$ref": "#/$defs/address"
+        },
+        "slot": {
+          "$ref": "#/$defs/hash"
+        },
+        "value": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "params_sha256": {
+          "type": "string"
+        },
+        "response_sha256": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "t": {
+          "type": "string",
+          "description": "timestamp as found in the source"
+        },
+        "msg": {
+          "type": "string",
+          "description": "log message text"
+        },
+        "frame_id": {
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "in",
+            "out"
+          ]
+        },
+        "peer": {
+          "$ref": "#/$defs/address"
+        },
+        "code": {
+          "type": "string"
+        },
+        "payload_sha256": {
+          "type": "string"
+        },
+        "vector_path": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "description": "for computed evidence, e.g. expected_proposer"
+        },
+        "excerpt": {
+          "type": "string",
+          "description": "only with --embed-evidence"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "imp",
+        "checker",
+        "count",
+        "evidence"
+      ],
+      "description": "imp may be empty",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "e.g. OBS-0007"
+        },
+        "kind": {
+          "type": "string",
+          "description": "e.g. late_timeout_catch_up_rc"
+        },
+        "imp": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/impId"
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reqId"
+          }
+        },
+        "checker": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "first": {
+          "type": "string"
+        },
+        "last": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 20
+        }
+      }
+    },
+    "vectors": {
+      "type": "object",
+      "required": [
+        "dir",
+        "impls",
+        "totals",
+        "cases",
+        "unaccessed_files"
+      ],
+      "properties": {
+        "dir": {
+          "type": "string"
+        },
+        "spec_commit": {
+          "type": "string"
+        },
+        "impls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "input ids of the impl adapters (one per --impl)"
+        },
+        "diagnostic": {
+          "type": "boolean",
+          "description": "true when an adapter reported enabled improvement items"
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "cases": {
+              "type": "integer"
+            },
+            "pass": {
+              "type": "integer"
+            },
+            "fail": {
+              "type": "integer"
+            },
+            "unsupported": {
+              "type": "integer"
+            },
+            "error": {
+              "type": "integer"
+            },
+            "timeout": {
+              "type": "integer"
+            },
+            "timeout_passed": {
+              "type": "integer",
+              "description": "cases without expected.yaml that passed by exceeding the time limit (WBFT-VEC-049)"
+            }
+          }
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "result",
+              "passed"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "<runner>/<handler>/<case>"
+              },
+              "kind": {
+                "enum": [
+                  "pure",
+                  "chain",
+                  "steps"
+                ]
+              },
+              "impl": {
+                "type": "string",
+                "description": "input id of the adapter that ran the case"
+              },
+              "first_divergent_step": {
+                "type": "integer",
+                "description": "steps cases: index of the first record that differs; -1 for start"
+              },
+              "requirements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/reqId"
+                }
+              },
+              "expect_fail": {
+                "type": "boolean"
+              },
+              "result": {
+                "enum": [
+                  "PASS",
+                  "FAIL",
+                  "UNSUPPORTED",
+                  "ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              "detail": {
+                "type": "string"
+              },
+              "diff": {
+                "type": "string"
+              },
+              "duration_ms": {
+                "type": "integer"
+              },
+              "passed": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "unaccessed_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "input": {
+          "type": "string"
+        },
+        "checker": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

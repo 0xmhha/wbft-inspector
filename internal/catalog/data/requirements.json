@@ -1,0 +1,5530 @@
+{
+  "spec": {
+    "repo": "github.com/0xmhha/wbft-spec",
+    "commit": "1c91f5025bdec752344a6757e8c9e9436def69df",
+    "reference_commit": "740526d0375a8aca817b580e7a4bfc4c1028ae29"
+  },
+  "requirements": [
+    {
+      "id": "SNET-BHDR-001",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-002",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-003",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-004",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-005",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-006",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-007",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-008",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-009",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-010",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-012",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BHDR-013",
+      "chapter": "B-03",
+      "level": "SHOULD",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BODY-001",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BODY-002",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BODY-003",
+      "chapter": "B-03",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BODY-004",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BODY-005",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-BODY-006",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-BODY-007",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-BODY-008",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BODY-009",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-BODY-010",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-BODY-011",
+      "chapter": "B-03",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-001",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-002",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-003",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-004",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-005",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-006",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-007",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-008",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-009",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-010",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-011",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-012",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-013",
+      "chapter": "B-01",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-014",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-015",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-CFG-016",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-CFG-018",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-019",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-020",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-021",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-022",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-023",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-024",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-025",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-026",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-027",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-028",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-CFG-029",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-CFG-030",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-CFG-031",
+      "chapter": "B-01",
+      "level": "MUST NOT",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-CFG-032",
+      "chapter": "B-01",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-FIN-001",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-002",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-003",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-004",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-005",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-FIN-006",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-007",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-008",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-009",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-010",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-012",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-013",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-014",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-FIN-015",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-FIN-016",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-FIN-017",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-018",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-FIN-019",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-FIN-020",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-FIN-021",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-022",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-FIN-023",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-FIN-024",
+      "chapter": "B-06",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-GEN-001",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-002",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-GEN-003",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-GEN-004",
+      "chapter": "B-02",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "SNET-GEN-005",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-GEN-006",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-GEN-007",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-GEN-008",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-GEN-009",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-010",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-011",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-012",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-013",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-014",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-015",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-016",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GEN-017",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-GEN-018",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-GEN-019",
+      "chapter": "B-02",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "SNET-GEN-020",
+      "chapter": "B-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-001",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-002",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-003",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-004",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-005",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-010",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-011",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-012",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-013",
+      "chapter": "B-05",
+      "level": "MUST NOT",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-020",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-022",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-023",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-030",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-031",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-032",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-040",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-041",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-042",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-043",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-044",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-045",
+      "chapter": "B-05",
+      "level": "MUST NOT",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-050",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-051",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-052",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-053",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-054",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-055",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-058",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-061",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-062",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-070",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-071",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-072",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-073",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-074",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-075",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-076",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-077",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-078",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-080",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-090",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-100",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-101",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-102",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-103",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-104",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-107",
+      "chapter": "B-05",
+      "level": "",
+      "tags": [],
+      "withdrawn": true
+    },
+    {
+      "id": "SNET-GOV-109",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-110",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-112",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-113",
+      "chapter": "B-05",
+      "level": "",
+      "tags": [],
+      "withdrawn": true
+    },
+    {
+      "id": "SNET-GOV-114",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-115",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-120",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-121",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-123",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-124",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-130",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-131",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-GOV-133",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-134",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-136",
+      "chapter": "B-05",
+      "level": "",
+      "tags": [],
+      "withdrawn": true
+    },
+    {
+      "id": "SNET-GOV-137",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-138",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-150",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-160",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-161",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-162",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-GOV-176",
+      "chapter": "B-05",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-RPC-001",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-010",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-011",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-012",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-013",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-014",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-015",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-016",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-017",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-018",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-019",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-030",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-031",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-032",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-040",
+      "chapter": "B-09",
+      "level": "MUST NOT",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-041",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-042",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-043",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-044",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-045",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-046",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-047",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-048",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-049",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-RPC-050",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SRC-001",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-002",
+      "chapter": "B-08",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-004",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SRC-006",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-007",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-008",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-009",
+      "chapter": "B-08",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-020",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SRC-022",
+      "chapter": "B-08",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-030",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SRC-031",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SRC-032",
+      "chapter": "B-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-001",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-002",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-003",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-010",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-020",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-021",
+      "chapter": "B-09",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-030",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-031",
+      "chapter": "B-09",
+      "level": "MUST NOT",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-040",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-041",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-050",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-051",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-052",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-060",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-061",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-062",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-063",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-064",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-065",
+      "chapter": "B-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-066",
+      "chapter": "B-09",
+      "level": "SHOULD",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYNC-067",
+      "chapter": "B-09",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "SNET-SYS-001",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-002",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-003",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-004",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-005",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-010",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-011",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-012",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-013",
+      "chapter": "B-04",
+      "level": "MUST NOT",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-020",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-021",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-022",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-024",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-025",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-030",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-031",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "SNET-SYS-032",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-033",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-040",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-041",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-050",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-060",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-061",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-062",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-064",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-070",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-071",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-072",
+      "chapter": "B-04",
+      "level": "MUST NOT",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-080",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-090",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-091",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-092",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-093",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-096",
+      "chapter": "B-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-SYS-097",
+      "chapter": "B-04",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "SNET-TX-001",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-002",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-TX-003",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-004",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-005",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-010",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-011",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-012",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-TX-013",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-015",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-020",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-TX-021",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-030",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-031",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-032",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-034",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-040",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-041",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-043",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-044",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-050",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-051",
+      "chapter": "B-07",
+      "level": "MUST NOT",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-060",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-TX-070",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "SNET-TX-071",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-TX-073",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "rpc"
+      ]
+    },
+    {
+      "id": "SNET-TX-080",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-081",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-082",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-084",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-085",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-086",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-088",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-089",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-091",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-092",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-093",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-094",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "SNET-TX-095",
+      "chapter": "B-07",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-APP-001",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-003",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-004",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-010",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "state",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-APP-011",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-APP-012",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-APP-021",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-030",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-APP-031",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-APP-032",
+      "chapter": "A-09",
+      "level": "MAY",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-033",
+      "chapter": "A-09",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-034",
+      "chapter": "A-09",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-040",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-050",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-051",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-APP-060",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-070",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-071",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-080",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-081",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-082",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-090",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "rpc"
+      ]
+    },
+    {
+      "id": "WBFT-APP-100",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-APP-110",
+      "chapter": "A-09",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-APP-111",
+      "chapter": "A-09",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-CRYPTO-001",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-010",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-011",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-013",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-014",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-015",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-016",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-017",
+      "chapter": "A-02",
+      "level": "SHOULD",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-020",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-021",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-022",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-023",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-024",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-025",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-026",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-027",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-028",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-030",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-031",
+      "chapter": "A-02",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-040",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-041",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-042",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-043",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-044",
+      "chapter": "A-02",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-050",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-053",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-055",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-CRYPTO-056",
+      "chapter": "A-02",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-001",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-002",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-003",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-004",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-005",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-006",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-007",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-008",
+      "chapter": "A-03",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-010",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-011",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-020",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-021",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-022",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-030",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-031",
+      "chapter": "A-03",
+      "level": "SHOULD",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-032",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-033",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-040",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-041",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-043",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-050",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-051",
+      "chapter": "A-03",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-060",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-070",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-071",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-080",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-081",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-082",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "rpc"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-084",
+      "chapter": "A-03",
+      "level": "SHOULD",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-ENC-090",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-001",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-002",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-EPOCH-003",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-EPOCH-006",
+      "chapter": "A-04",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-007",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-008",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-009",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-EPOCH-010",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-EPOCH-011",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-EPOCH-013",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-016",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-EPOCH-018",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-019",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-020",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-021",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-023",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-EPOCH-024",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-010",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-011",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-012",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-013",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-014",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-016",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-017",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-018",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-020",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-021",
+      "chapter": "A-08",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-030",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-031",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-032",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-033",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-034",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-035",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-036",
+      "chapter": "A-08",
+      "level": "MAY",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-040",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-041",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-042",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-050",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-051",
+      "chapter": "A-08",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-052",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-053",
+      "chapter": "A-08",
+      "level": "MUST NOT",
+      "tags": [
+        "header",
+        "rpc"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-060",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-061",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-063",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-070",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-071",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-080",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-081",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-082",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-083",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-084",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-085",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-086",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-088",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-089",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-090",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-091",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-100",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-101",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-102",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-103",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-111",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-120",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-121",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-130",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-131",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-HDR-132",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-140",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-141",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-142",
+      "chapter": "A-08",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-HDR-150",
+      "chapter": "A-08",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-MSG-001",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-002",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-003",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-004",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-010",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-011",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-020",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-030",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-031",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-032",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-033",
+      "chapter": "A-03",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-034",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-040",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-041",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-050",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-051",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-MSG-060",
+      "chapter": "A-03",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-001",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-002",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-003",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-004",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-005",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-006",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-007",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-010",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-011",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-012",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-013",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-020",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-021",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-022",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-023",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-024",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-025",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-026",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-027",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-028",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-030",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-NET-031",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-032",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-033",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-040",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-041",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-042",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-043",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-044",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-050",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-051",
+      "chapter": "A-07",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-NET-052",
+      "chapter": "A-07",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-001",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-002",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-010",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-011",
+      "chapter": "A-01",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-012",
+      "chapter": "A-01",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-020",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-030",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-031",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-PARAM-032",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-PARAM-033",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-034",
+      "chapter": "A-01",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-PARAM-050",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-051",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-052",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-PARAM-053",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-054",
+      "chapter": "A-01",
+      "level": "MUST NOT",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PARAM-060",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-PROP-001",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PROP-002",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-PROP-003",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PROP-004",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PROP-005",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-PROP-006",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-PROP-007",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PROTO-001",
+      "chapter": "A-14",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-PROTO-002",
+      "chapter": "A-14",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-001",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SEC-002",
+      "chapter": "A-10",
+      "level": "SHOULD",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SEC-010",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-021",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-030",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-031",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SEC-032",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SEC-040",
+      "chapter": "A-10",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-041",
+      "chapter": "A-10",
+      "level": "SHOULD",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-050",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-080",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": [
+        "state"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-081",
+      "chapter": "A-10",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SEC-090",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SEC-120",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SEC-130",
+      "chapter": "A-10",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "rpc"
+      ]
+    },
+    {
+      "id": "WBFT-SM-001",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-002",
+      "chapter": "A-05",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-003",
+      "chapter": "A-05",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-004",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-005",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-006",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-007",
+      "chapter": "A-05",
+      "level": "",
+      "tags": [],
+      "withdrawn": true
+    },
+    {
+      "id": "WBFT-SM-008",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-009",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-010",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-011",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-012",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-013",
+      "chapter": "A-05",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-014",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-015",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-016",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-017",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-018",
+      "chapter": "A-05",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-019",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-020",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-022",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-023",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-024",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-025",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-026",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-027",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-028",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-029",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-030",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-031",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-032",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-033",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-034",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-035",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-036",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-037",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-038",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-039",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-040",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-041",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-042",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-043",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-044",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-045",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-046",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-047",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-SM-048",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-SM-049",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-050",
+      "chapter": "A-05",
+      "level": "MUST NOT",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-051",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-052",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-053",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-054",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-055",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-056",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-057",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-058",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-059",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-060",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-061",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-062",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-063",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-064",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-065",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-066",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-067",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-SM-068",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-069",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-070",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-071",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-072",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-073",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-074",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-075",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-077",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-078",
+      "chapter": "A-05",
+      "level": "MAY",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-079",
+      "chapter": "A-05",
+      "level": "MAY",
+      "tags": []
+    },
+    {
+      "id": "WBFT-SM-080",
+      "chapter": "A-05",
+      "level": "MAY",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-081",
+      "chapter": "A-05",
+      "level": "MAY",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-082",
+      "chapter": "A-05",
+      "level": "MAY",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-083",
+      "chapter": "A-05",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-084",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-085",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-086",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-087",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-088",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-089",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-SM-090",
+      "chapter": "A-05",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-SM-091",
+      "chapter": "A-05",
+      "level": "MUST NOT",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-001",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-002",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-003",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-004",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-005",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-006",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-007",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-008",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-010",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-011",
+      "chapter": "A-06",
+      "level": "MUST NOT",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-012",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-013",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-014",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-015",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-016",
+      "chapter": "A-06",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-017",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-018",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-020",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-021",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-022",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-023",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-024",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-030",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "log"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-031",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-032",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-033",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-040",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-041",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-042",
+      "chapter": "A-06",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-TIMER-043",
+      "chapter": "A-06",
+      "level": "MUST NOT",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-001",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-002",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-003",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "network",
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-004",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-005",
+      "chapter": "A-01",
+      "level": "MUST NOT",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-010",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-011",
+      "chapter": "A-01",
+      "level": "",
+      "tags": [],
+      "withdrawn": true
+    },
+    {
+      "id": "WBFT-TYPE-012",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-020",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-021",
+      "chapter": "A-01",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-TYPE-022",
+      "chapter": "A-01",
+      "level": "",
+      "tags": [],
+      "withdrawn": true
+    },
+    {
+      "id": "WBFT-VAL-001",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VAL-002",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "network"
+      ]
+    },
+    {
+      "id": "WBFT-VAL-003",
+      "chapter": "A-04",
+      "level": "MAY",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VAL-004",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VAL-006",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header",
+        "rpc"
+      ]
+    },
+    {
+      "id": "WBFT-VAL-007",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VAL-009",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-VAL-010",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": [
+        "header"
+      ]
+    },
+    {
+      "id": "WBFT-VAL-011",
+      "chapter": "A-04",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-001",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": [],
+      "withdrawn": true
+    },
+    {
+      "id": "WBFT-VEC-003",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-010",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-011",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-012",
+      "chapter": "A-11",
+      "level": "SHOULD",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-013",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-014",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-015",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-016",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-020",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-021",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-022",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-030",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-031",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-032",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-033",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-034",
+      "chapter": "A-11",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-035",
+      "chapter": "A-11",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-036",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-037",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-038",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-039",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-040",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-041",
+      "chapter": "A-11",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-042",
+      "chapter": "A-11",
+      "level": "MUST NOT",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-043",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-044",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-045",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-046",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-047",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-048",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-049",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-050",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-051",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-052",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-053",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-054",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-058",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-059",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-060",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-061",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    },
+    {
+      "id": "WBFT-VEC-062",
+      "chapter": "A-11",
+      "level": "MUST",
+      "tags": []
+    }
+  ]
+}
