@@ -21,7 +21,7 @@ This is the first public version. The checkers cover part of chapters A-05
 
 ## Build
 
-Go 1.24 or later. The inspector module depends on the Go standard library
+Go 1.26.8 or later. The inspector module depends on the Go standard library
 only.
 
 ```sh

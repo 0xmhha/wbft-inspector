@@ -1,6 +1,6 @@
 module github.com/0xmhha/wbft-inspector/test/e2e
 
-go 1.24.0
+go 1.26.8
 
 require (
 	github.com/0xmhha/wbft v0.0.0-20260928195704-9215f9980335
