@@ -1,5 +1,5 @@
-github.com/0xmhha/wbft v0.0.0-20260928162422-b13a15365ba3 h1:53vMJtNecCu/sAqycmUA+x4xIqKM5YkOWPBMJf4DN0w=
-github.com/0xmhha/wbft v0.0.0-20260928162422-b13a15365ba3/go.mod h1:B6XQm+35IIXm2Ef4+g29PcVQm0MgRd93/AwIok4YNAs=
+github.com/0xmhha/wbft v0.0.0-20260928195704-9215f9980335 h1:Wmj10nbYD+//kT3qVRSGncgBcOUt3UGPN/prS2Fap+Y=
+github.com/0xmhha/wbft v0.0.0-20260928195704-9215f9980335/go.mod h1:B6XQm+35IIXm2Ef4+g29PcVQm0MgRd93/AwIok4YNAs=
 github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 h1:1zYrtlhrZ6/b6SAjLSfKzWtdgqK0U+HtH/VcBWh1BaU=
 github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6/go.mod h1:ioLG6R+5bUSO1oeGSDxOV3FADARuMoytZCSX6MEMQkI=
 github.com/decred/dcrd/crypto/blake256 v1.0.0 h1:/8DMNYp9SGi5f0w7uCm6d6M4OU2rGFK09Y2A4Xv7EE0=
