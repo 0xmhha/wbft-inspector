@@ -101,6 +101,24 @@ wbft-spec commit in `spec.lock`, extracted with `catalog extract`.
 `internal/catalog/data/checkers.yaml` assigns a checker and a priority to
 requirements; it is written in the same YAML subset as the vectors.
 
+## frames: frame dumps
+
+```sh
+wbft-inspector frames verify --frames dump/ [--frames dump2/]
+```
+
+A frame dump is the R-01 record of the istanbul frames a node sent and
+received: `frames-<run>.jsonl` (records `frame`, `outcome`,
+`send_suppressed`, `conn`, `dropped`) and the payloads under
+`payloads/<ab>/<sha256>`. The wbft node writes it with
+`wbft-journal export --format r01`. `frames verify` checks the format: the
+common fields, the value sets, one node and run per file, unique `seq` per
+run, `of` and `relay_of` naming a received frame, and for every frame its
+payload file, sha256, size and `dedup_key` (Keccak-256 of the payload as an
+RLP string, wbft-spec A-03). It prints one JSON object per dump and exits
+with 1 when a dump has a problem. No checker decides requirements from frame
+dumps yet.
+
 ## Report
 
 The report follows [`schema/report-v1.json`](schema/report-v1.json)

@@ -7,6 +7,7 @@
 //	wbft-inspector check   --events PATH [--events PATH ...] [--chain-config FILE] [flags]
 //	wbft-inspector vectors --impl "CMD ARGS" [--impl ...] --vectors DIR [flags]
 //	wbft-inspector catalog [list|coverage|extract] [flags]
+//	wbft-inspector frames verify --frames DIR [--frames DIR ...]
 //	wbft-inspector version
 //
 // Exit codes: 0 no failure, 1 failures (of the --fail-on severities, or a
@@ -32,6 +33,7 @@ Commands:
   check     decide requirements from consensus event streams (JSON Lines)
   vectors   run conformance vectors against implementation adapters (wbft-vector/1)
   catalog   list the checker catalog, check it against a specification, or extract requirements
+  frames    validate frame dumps in the R-01 format
   version   print the version and build
 
 Run "wbft-inspector <command> -h" for the flags of a command.
@@ -53,6 +55,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runVectors(args[1:], stdout, stderr)
 	case "catalog":
 		return runCatalog(args[1:], stdout, stderr)
+	case "frames":
+		return runFrames(args[1:], stdout, stderr)
 	case "version":
 		fmt.Fprintf(stdout, "wbft-inspector %s (commit %s, %s, build %s)\n", buildinfo.Version, buildinfo.Commit(), buildinfo.Go(), buildinfo.Build())
 		return report.ExitOK
