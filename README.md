@@ -166,9 +166,11 @@ are in the catalog with the checker planned for them and are reported
 
 From frame dumps (`check --frames`), chapter A-07: WBFT-NET-011 (only codes
 0x12..0x15 are sent), -013 (an oversized frame disconnects), -020 (codes
-0x00..0x10 other than 0x07 are discarded; the rows that depend on the engine
-state are not decided, since the dump has no engine state), -021 (an empty
-consensus payload disconnects) and -028 (0x07 does not disconnect). The size
+0x00..0x10 other than 0x07 are discarded; codes 0x11..0x15 received with the
+engine stopped are discarded while the node synchronises and disconnect the
+peer otherwise, decided from the frame's `engine` and its recorded outcome),
+-021 (an empty consensus payload disconnects), -027 (the same stopped-engine
+rows) and -028 (0x07 does not disconnect). The size
 is known from frames whose payload the dump holds and from frames recorded
 without their payload that carry their size. Chapter A-06: WBFT-TIMER-024
 (a retransmitted ROUND-CHANGE goes on the wire only to peers whose recent

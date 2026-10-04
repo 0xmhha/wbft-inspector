@@ -67,3 +67,50 @@ func TestFrameCodes(t *testing.T) {
 		t.Fatalf("instances\n%s\nwant\n%s", strings.Join(lines, "\n"), strings.Join(want, "\n"))
 	}
 }
+
+// TestStoppedEngineRows decides the stopped-engine rows of WBFT-NET-020 and
+// WBFT-NET-027 from the frame's engine state and its outcome, the frame's
+// own or the one the core recorded for it later.
+func TestStoppedEngineRows(t *testing.T) {
+	const some = "aa00000000000000000000000000000000000000000000000000000000000000"
+	in := func(seq uint64, code, engine, outcome string) *frames.Record {
+		r := frame(seq, "in", code, some, 4, outcome)
+		r.File, r.Engine = "f", engine
+		return r
+	}
+	outcomeOf := func(seq, of uint64, outcome string) *frames.Record {
+		return &frames.Record{Input: "in-1", File: "f", Type: "outcome", Node: "0x01", Run: "r", Seq: seq, Of: &of, Outcome: outcome}
+	}
+	recs := []*frames.Record{
+		in(1, "0x13", "syncing", "PENDING"), outcomeOf(2, 1, "DROP_SILENT"), // pass
+		in(3, "0x14", "stopped", "PENDING"), outcomeOf(4, 3, "DISCONNECT"), // pass
+		in(5, "0x14", "stopped", "PENDING"), outcomeOf(6, 5, "DROP_SILENT"), // fail: must disconnect
+		in(7, "0x11", "syncing", "PENDING"),      // no outcome: undecided
+		in(8, "0x12", "running", "PENDING"),      // running: not these rows
+		in(9, "0x12", "", "PENDING"),             // no engine state
+		in(10, "0x07", "syncing", "DROP_SILENT"), // 0x07: WBFT-NET-028 only
+	}
+	var got sink
+	c := frameCodes{check.Base{ID: "net.frame_codes"}}
+	if err := c.Run(context.Background(), &check.Inputs{Frames: []*frames.Dump{{Input: "in-1", Records: recs}}}, &got); err != nil {
+		t.Fatal(err)
+	}
+	var lines []string
+	for _, i := range got {
+		s := i.Key + " " + i.Requirement + " " + string(i.Verdict)
+		if i.Reason != "" {
+			s += " " + string(i.Reason)
+		}
+		lines = append(lines, s)
+	}
+	want := []string{
+		"frame:r:1 WBFT-NET-020 PASS", "frame:r:1 WBFT-NET-027 PASS",
+		"frame:r:3 WBFT-NET-020 PASS", "frame:r:3 WBFT-NET-027 PASS",
+		"frame:r:5 WBFT-NET-020 FAIL", "frame:r:5 WBFT-NET-027 FAIL",
+		"frame:r:7 WBFT-NET-020 CANNOT_DECIDE MISSING_DATA", "frame:r:7 WBFT-NET-027 CANNOT_DECIDE MISSING_DATA",
+		"frame:r:10 WBFT-NET-028 PASS",
+	}
+	if strings.Join(lines, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("instances\n%s\nwant\n%s", strings.Join(lines, "\n"), strings.Join(want, "\n"))
+	}
+}

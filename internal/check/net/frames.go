@@ -16,7 +16,7 @@ import (
 
 func init() {
 	check.Register(frameCodes{check.Base{ID: "net.frame_codes",
-		Reqs:  []string{"WBFT-NET-011", "WBFT-NET-013", "WBFT-NET-020", "WBFT-NET-021", "WBFT-NET-028"},
+		Reqs:  []string{"WBFT-NET-011", "WBFT-NET-013", "WBFT-NET-020", "WBFT-NET-021", "WBFT-NET-027", "WBFT-NET-028"},
 		Kinds: []check.Kind{check.Frames}}})
 }
 
@@ -39,9 +39,13 @@ var emptySHA256 = func() string { s := sha256.Sum256(nil); return hex.EncodeToSt
 //   - WBFT-NET-013: a received frame longer than MAX_ISTANBUL_MSG_SIZE
 //     disconnects the peer.
 //   - WBFT-NET-020: received codes 0x00..0x10 other than 0x07 are
-//     discarded (DROP_SILENT) whatever the engine state; the rows of codes
-//     0x11..0x15 depend on the engine state, which the dump does not carry,
-//     so they are not decided here.
+//     discarded (DROP_SILENT) whatever the engine state. For codes
+//     0x11..0x15 the row follows the frame's engine state: discarded while
+//     the node synchronises (syncing), the peer disconnected when the engine
+//     is stopped otherwise. With the engine running the message goes to the
+//     duplicate check (A-07 §5.3), decided elsewhere. A frame without an
+//     engine state has no instance.
+//   - WBFT-NET-027: the same two stopped-engine rows.
 //   - WBFT-NET-021: an empty payload under 0x12..0x15 disconnects the peer.
 //   - WBFT-NET-028: a received 0x07 does not disconnect the peer unless it
 //     is too large.
@@ -54,6 +58,16 @@ type frameCodes struct{ check.Base }
 
 func (c frameCodes) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
 	for _, d := range in.Frames {
+		// The outcomes the core recorded later for a received frame.
+		later := map[[3]string]string{}
+		for _, r := range d.Records {
+			if r.Type == "outcome" && r.Of != nil {
+				k := [3]string{r.File, r.Run, strconv.FormatUint(*r.Of, 10)}
+				if _, ok := later[k]; !ok {
+					later[k] = r.Outcome
+				}
+			}
+		}
 		for _, r := range d.Records {
 			if r.Type != "frame" {
 				continue
@@ -67,6 +81,7 @@ func (c frameCodes) Run(_ context.Context, in *check.Inputs, out check.Emitter) 
 				sendCode(r, code, out)
 			case "in":
 				receive(r, code, out)
+				stoppedEngine(r, code, later[[3]string{r.File, r.Run, strconv.FormatUint(r.Seq, 10)}], out)
 			}
 		}
 	}
@@ -102,5 +117,36 @@ func receive(r *frames.Record, code uint64, out check.Emitter) {
 		emit(out, "WBFT-NET-020", r, r.Outcome == "DROP_SILENT", fmt.Sprintf("received %#x, outcome %s (want DROP_SILENT)", code, r.Outcome))
 	case code >= codeFirst && code <= codeLast && r.Payload == emptySHA256:
 		emit(out, "WBFT-NET-021", r, disconnect, fmt.Sprintf("received %#x with an empty payload, outcome %s", code, r.Outcome))
+	}
+}
+
+// stoppedEngine decides the rows of WBFT-NET-020 and WBFT-NET-027 for a
+// consensus code received while the engine was not running. The outcome is
+// the frame's, or, when the frame waited for the core (PENDING), the first
+// outcome recorded for it.
+func stoppedEngine(r *frames.Record, code uint64, later string, out check.Emitter) {
+	if code < codeLegacy || code > codeLast {
+		return
+	}
+	var want string
+	switch r.Engine {
+	case "syncing":
+		want = "DROP_SILENT"
+	case "stopped":
+		want = "DISCONNECT"
+	default:
+		return
+	}
+	got := r.Outcome
+	if got == "PENDING" {
+		got = later
+	}
+	for _, req := range []string{"WBFT-NET-020", "WBFT-NET-027"} {
+		if got == "" {
+			out.Emit(check.FrameInstance(req, r, verdict.CannotDecide, verdict.MissingData,
+				fmt.Sprintf("received %#x with the engine %s; no outcome was recorded for it", code, r.Engine)))
+			continue
+		}
+		emit(out, req, r, got == want, fmt.Sprintf("received %#x with the engine %s, outcome %s (want %s)", code, r.Engine, got, want))
 	}
 }
