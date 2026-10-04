@@ -147,3 +147,25 @@ func TestCatalogList(t *testing.T) {
 		t.Fatalf("output: %s", o.String())
 	}
 }
+
+// TestFramesVerify validates the wbft frame dump fixture, and refuses a
+// directory without frame files and a missing --frames.
+func TestFramesVerify(t *testing.T) {
+	var o, e bytes.Buffer
+	if code := run([]string{"frames", "verify", "--frames", testdata("frames/wbft-kvstore")}, &o, &e); code != report.ExitOK {
+		t.Fatalf("exit %d: %s %s", code, o.String(), e.String())
+	}
+	var out struct {
+		Problems []string       `json:"problems"`
+		Records  map[string]int `json:"records"`
+	}
+	if err := json.Unmarshal(o.Bytes(), &out); err != nil || len(out.Problems) != 0 || out.Records["frame"] == 0 {
+		t.Fatalf("output %s: %v", o.String(), err)
+	}
+	if code := run([]string{"frames", "verify", "--frames", t.TempDir()}, &o, &e); code != report.ExitNoInput {
+		t.Fatalf("empty directory: exit %d", code)
+	}
+	if code := run([]string{"frames", "verify"}, &o, &e); code != report.ExitUsage {
+		t.Fatalf("no --frames: exit %d", code)
+	}
+}
