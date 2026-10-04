@@ -199,3 +199,15 @@ func TestCheckFrames(t *testing.T) {
 		t.Errorf("without frames: %+v", x)
 	}
 }
+
+// TestCheckRetryWire decides WBFT-TIMER-024 from the dump of a stalled
+// wbft network: every retransmission was left off the wire.
+func TestCheckRetryWire(t *testing.T) {
+	code, r, stderr := runCLI(t, "check", "--frames", testdata("frames/wbft-kvstore-stalled"), "--checks", "WBFT-TIMER-024")
+	if code != report.ExitOK {
+		t.Fatalf("exit %d: %s", code, stderr)
+	}
+	if len(r.Results) != 1 || r.Results[0].Verdict != "PASS" || r.Results[0].Coverage.Instances == 0 || len(r.Errors) != 0 {
+		t.Fatalf("results %+v errors %+v", r.Results, r.Errors)
+	}
+}
