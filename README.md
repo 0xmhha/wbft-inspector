@@ -169,7 +169,8 @@ From frame dumps (`check --frames`), chapter A-07: WBFT-NET-011 (only codes
 0x00..0x10 other than 0x07 are discarded; the rows that depend on the engine
 state are not decided, since the dump has no engine state), -021 (an empty
 consensus payload disconnects) and -028 (0x07 does not disconnect). The size
-is known only from frames whose payload the dump holds.
+is known from frames whose payload the dump holds and from frames recorded
+without their payload that carry their size.
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,
