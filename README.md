@@ -155,7 +155,7 @@ this repository; `run.inspector.catalog_sha256` then differs as well.
 ## Coverage
 
 Chapters A-05 and A-06 have 70 requirements tagged `Observable:` in the
-pinned specification. 32 of them have a checker in this version; the other 38
+pinned specification. 33 of them have a checker in this version; the other 37
 are in the catalog with the checker planned for them and are reported
 `NOT_RUN`.
 
@@ -170,11 +170,15 @@ From frame dumps (`check --frames`), chapter A-07: WBFT-NET-011 (only codes
 state are not decided, since the dump has no engine state), -021 (an empty
 consensus payload disconnects) and -028 (0x07 does not disconnect). The size
 is known from frames whose payload the dump holds and from frames recorded
-without their payload that carry their size.
+without their payload that carry their size. Chapter A-06: WBFT-TIMER-024
+(a retransmitted ROUND-CHANGE goes on the wire only to peers whose recent
+cache does not hold it), from the `cause` and `send_suppressed` records;
+a retransmission on the wire with no earlier copy for that peer in the
+dump, or after enough other keys or peers to evict it, is undecided.
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,
--083 .. -088, -090; WBFT-TIMER-024, -030, -031), headers or node RPC
+-083 .. -088, -090; WBFT-TIMER-030, -031), headers or node RPC
 (WBFT-SM-026, -047, -048, -067, -086; WBFT-TIMER-040, -042, -043), the `MAY`
 rules that give observations rather than verdicts (WBFT-SM-078, -080, -081,
 -082, -091), and WBFT-SM-049, WBFT-TIMER-001, -004, -008, -011, -032.
