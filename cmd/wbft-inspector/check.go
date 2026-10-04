@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"time"
 
@@ -13,16 +16,18 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/catalog"
 	"github.com/0xmhha/wbft-inspector/internal/check"
 	"github.com/0xmhha/wbft-inspector/internal/events"
+	"github.com/0xmhha/wbft-inspector/internal/frames"
 	"github.com/0xmhha/wbft-inspector/internal/report"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
 
-const checkUsage = `Usage: wbft-inspector check --events PATH [--events PATH ...] [flags]
+const checkUsage = `Usage: wbft-inspector check --events PATH [--events PATH ...] [--frames DIR ...] [flags]
 
 Decides the requirements of the checker catalog from consensus event
 streams (JSON Lines, one event per line; a directory stands for its *.jsonl
-files) and writes the report. Requirements whose checker needs an input that
+files) and frame dumps in the R-01 format (frames-<run>.jsonl and payloads/)
+and writes the report. Requirements whose checker needs an input that
 was not given are CANNOT_DECIDE (MISSING_DATA); requirements without a
 checker in this build are NOT_RUN; requirement IDs this build does not know
 are CANNOT_DECIDE (NOT_IN_BUILD).
@@ -34,6 +39,8 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	fs := newFlags("check", stderr)
 	var evPaths multi
 	fs.Var(&evPaths, "events", "event stream file or directory (repeatable)")
+	var framePaths multi
+	fs.Var(&framePaths, "frames", "frame dump directory in the R-01 format (repeatable); format problems are reported as errors")
 	chainCfg := fs.String("chain-config", "", "genesis file or chain configuration (anzeon.wbft, transitions) for timer durations")
 	checks := fs.String("checks", "", "comma-separated selection: requirement IDs, priorities (P0, P1, P2, V) or checker-name globs (e.g. timer.*); default: the whole catalog")
 	requireDecided := fs.String("require-decided", "", "file of requirement IDs that must be decided (PASS or FAIL); otherwise exit 2")
@@ -102,6 +109,35 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 				rep.Errors = append(rep.Errors, report.Error{Message: fmt.Sprintf("event kind %s (%d records) is not known to this build; its records were not interpreted", k, set.UnknownKinds[k])})
 			}
 			rep.Run.Nodes = nodesOf(set)
+		}
+	}
+	for _, dir := range framePaths {
+		d, err := frames.Load(dir)
+		if err != nil {
+			rep.Errors = append(rep.Errors, report.Error{Message: "frames: " + err.Error()})
+			exit = report.ExitNoInput
+			continue
+		}
+		id := fmt.Sprintf("in-%d", len(rep.Run.Inputs)+1)
+		d.SetInput(id)
+		in.Frames = append(in.Frames, d)
+		in.Given[check.Frames] = true
+		h := sha256.New()
+		for _, name := range d.Files {
+			b, err := os.ReadFile(filepath.Join(dir, name))
+			if err == nil {
+				h.Write(b)
+			}
+		}
+		sum := hex.EncodeToString(h.Sum(nil))
+		ri := report.Input{ID: id, Kind: "frames", Path: dir, SHA256: sum, Records: len(d.Records)}
+		if nodes := frameNodes(d); len(nodes) == 1 {
+			ri.Node = nodes[0]
+		}
+		rep.Run.Inputs = append(rep.Run.Inputs, ri)
+		idParts = append(idParts, sum)
+		for _, p := range frames.Validate(d).Problems {
+			rep.Errors = append(rep.Errors, report.Error{Message: "frames " + dir + ": " + p})
 		}
 	}
 	if *chainCfg != "" {
@@ -338,6 +374,20 @@ func sortedKeysOf[V any](m map[string]V) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {
 		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// frameNodes lists the nodes of a frame dump.
+func frameNodes(d *frames.Dump) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, r := range d.Records {
+		if !seen[r.Node] {
+			seen[r.Node] = true
+			out = append(out, r.Node)
+		}
 	}
 	sort.Strings(out)
 	return out

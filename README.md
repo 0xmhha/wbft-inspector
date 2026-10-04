@@ -116,8 +116,9 @@ common fields, the value sets, one node and run per file, unique `seq` per
 run, `of` and `relay_of` naming a received frame, and for every frame its
 payload file, sha256, size and `dedup_key` (Keccak-256 of the payload as an
 RLP string, wbft-spec A-03). It prints one JSON object per dump and exits
-with 1 when a dump has a problem. No checker decides requirements from frame
-dumps yet.
+with 1 when a dump has a problem. `check --frames DIR` decides the frame
+checkers (see [Coverage](#coverage)) and reports the format problems of the
+dump as errors.
 
 ## Report
 
@@ -162,6 +163,13 @@ are in the catalog with the checker planned for them and are reported
 |---|---|
 | A-05 | WBFT-SM-011, -012, -013 (relay after OK, no relay after ERR), -014 (self-delivery), -020 (disposition after `check_message`), -030 (round timer on entering a view), -039 (PRE-PREPARE acceptance order), -043 (Prepared on PREPARE quorum), -046 (decide on COMMIT quorum), -050 (timer not stopped after the decision), -057 (F+1 rule), -077 (retry timeout), -089 (cause of an own ROUND-CHANGE) |
 | A-06 | WBFT-TIMER-002, -005, -006, -007 (round timeout per `config_at`), -003, -020 (retry timer `RT(h)`), -010, -012 (arming on view entry and acceptance), -013, -033 (cancellation on arming), -014 (stale expiry), -015, -017 (expiry actions), -016 (not cancelled on COMMIT quorum), -018 (engine stop), -021, -022 (retry expiry), -023 (retry not cancelled on quorum), -041 (no build wait for round >= 1) |
+
+From frame dumps (`check --frames`), chapter A-07: WBFT-NET-011 (only codes
+0x12..0x15 are sent), -013 (an oversized frame disconnects), -020 (codes
+0x00..0x10 other than 0x07 are discarded; the rows that depend on the engine
+state are not decided, since the dump has no engine state), -021 (an empty
+consensus payload disconnects) and -028 (0x07 does not disconnect). The size
+is known only from frames whose payload the dump holds.
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,

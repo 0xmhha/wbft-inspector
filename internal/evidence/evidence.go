@@ -19,11 +19,19 @@ type Pointer struct {
 	VectorPath string `json:"vector_path,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Value      string `json:"value,omitempty"`
+	// Frame evidence: the record ("<run>:<seq>"), direction, peer, code
+	// and payload hash of a frame dump record.
+	FrameID       string `json:"frame_id,omitempty"`
+	Direction     string `json:"direction,omitempty"`
+	Peer          string `json:"peer,omitempty"`
+	Code          string `json:"code,omitempty"`
+	PayloadSHA256 string `json:"payload_sha256,omitempty"`
 }
 
 // Kinds of evidence used by this build.
 const (
 	KindEvent    = "event"
+	KindFrame    = "frame"
 	KindVector   = "vector"
 	KindComputed = "computed"
 	KindConfig   = "config"

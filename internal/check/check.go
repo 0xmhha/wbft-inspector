@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/0xmhha/wbft-inspector/internal/events"
+	"github.com/0xmhha/wbft-inspector/internal/frames"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
@@ -24,6 +25,7 @@ type Kind string
 // Input kinds.
 const (
 	Events      Kind = "events"       // consensus event streams
+	Frames      Kind = "frames"       // frame dumps (R-01)
 	ChainConfig Kind = "chain_config" // genesis chain configuration
 )
 
@@ -40,6 +42,7 @@ type Clock struct {
 // wall clock, no randomness and no network; everything comes from Inputs.
 type Inputs struct {
 	Events *events.Set    // nil when no event stream was given
+	Frames []*frames.Dump // frame dumps, in the order given
 	Config *params.Config // nil when no chain configuration was given
 	Clock  Clock
 	Given  map[Kind]bool
