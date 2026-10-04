@@ -38,8 +38,9 @@ const FormatVersion = 1
 
 // Record is one line of a dump. Optional fields are pointers or empty.
 type Record struct {
-	File string `json:"-"` // file name in the dump directory
-	Line int    `json:"-"` // 1-based line
+	Input string `json:"-"` // input id of the dump in a report
+	File  string `json:"-"` // file name in the dump directory
+	Line  int    `json:"-"` // 1-based line
 
 	V     int    `json:"v"`
 	Type  string `json:"type"`
@@ -89,11 +90,20 @@ func (r *Record) Where() string { return fmt.Sprintf("%s:%d", r.File, r.Line) }
 
 // Dump is the content of one dump directory.
 type Dump struct {
+	Input   string // input id in a report (SetInput)
 	Dir     string
 	Files   []string
 	Records []*Record
 	// Malformed lists the lines that are not a JSON object.
 	Malformed []string
+}
+
+// SetInput sets the input id of the dump and its records.
+func (d *Dump) SetInput(id string) {
+	d.Input = id
+	for _, r := range d.Records {
+		r.Input = id
+	}
 }
 
 // Load reads the frames-*.jsonl files of dir in name order.

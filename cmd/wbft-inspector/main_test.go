@@ -169,3 +169,33 @@ func TestFramesVerify(t *testing.T) {
 		t.Fatalf("no --frames: exit %d", code)
 	}
 }
+
+// TestCheckFrames decides the frame checkers from the wbft frame dump: the
+// node sent only consensus codes, and the dump has no frame of the other
+// decided rows.
+func TestCheckFrames(t *testing.T) {
+	code, r, stderr := runCLI(t, "check", "--frames", testdata("frames/wbft-kvstore"), "--checks", "net.*")
+	if code != report.ExitOK {
+		t.Fatalf("exit %d: %s", code, stderr)
+	}
+	if len(r.Run.Inputs) != 1 || r.Run.Inputs[0].Kind != "frames" || r.Run.Inputs[0].Records == 0 || len(r.Errors) != 0 {
+		t.Fatalf("inputs %+v errors %+v", r.Run.Inputs, r.Errors)
+	}
+	byID := map[string]report.Result{}
+	for _, x := range r.Results {
+		byID[x.Requirement] = x
+	}
+	if x := byID["WBFT-NET-011"]; x.Verdict != "PASS" || x.Coverage.Instances == 0 {
+		t.Errorf("WBFT-NET-011: %+v", x)
+	}
+	for _, id := range []string{"WBFT-NET-013", "WBFT-NET-020", "WBFT-NET-021", "WBFT-NET-028"} {
+		if x := byID[id]; x.Verdict != "CANNOT_DECIDE" || x.Reason == nil || x.Reason.Code != "NOT_EXERCISED" {
+			t.Errorf("%s: %+v", id, x)
+		}
+	}
+	// Without --frames the checker lacks its input.
+	_, r, _ = runCLI(t, "check", "--events", testdata("events"), "--checks", "WBFT-NET-011")
+	if x := r.Results[0]; x.Verdict != "CANNOT_DECIDE" || x.Reason == nil || x.Reason.Code != "MISSING_DATA" {
+		t.Errorf("without frames: %+v", x)
+	}
+}

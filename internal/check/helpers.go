@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xmhha/wbft-inspector/internal/events"
 	"github.com/0xmhha/wbft-inspector/internal/evidence"
+	"github.com/0xmhha/wbft-inspector/internal/frames"
 	"github.com/0xmhha/wbft-inspector/internal/spec/timers"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
@@ -298,4 +299,23 @@ func MissingSend(req string, e *events.Event, s Step, m Member, seq, what string
 		return Undecided(req, e, verdict.ObserverScope, "no "+what+" send recorded and the node sent no own message in sequence "+seq+" (it may not be a validator)", more...)
 	}
 	return Fail(req, e, "no "+what+" sent", more...)
+}
+
+// FramePointer returns the evidence pointer of a frame dump record.
+func FramePointer(r *frames.Record) evidence.Pointer {
+	p := evidence.Pointer{Kind: evidence.KindFrame, Input: r.Input, Node: r.Node, Line: r.Line, T: r.TWall,
+		FrameID: fmt.Sprintf("%s:%d", r.Run, r.Seq), Direction: r.Dir, Code: r.Code, PayloadSHA256: r.Payload}
+	if r.Peer != nil {
+		p.Peer = *r.Peer
+	}
+	return p
+}
+
+// FrameInstance returns an instance anchored at a frame dump record.
+func FrameInstance(req string, r *frames.Record, v verdict.Verdict, reason verdict.Reason, msg string) verdict.Instance {
+	if v != verdict.CannotDecide {
+		reason = ""
+	}
+	return verdict.Instance{Requirement: req, Node: r.Node, Key: fmt.Sprintf("frame:%s:%d", r.Run, r.Seq), Verdict: v, Reason: reason,
+		Message: msg, Source: r.Input, Evidence: []evidence.Pointer{FramePointer(r)}}
 }
