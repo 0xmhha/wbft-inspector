@@ -46,9 +46,10 @@ var emptySHA256 = func() string { s := sha256.Sum256(nil); return hex.EncodeToSt
 //   - WBFT-NET-028: a received 0x07 does not disconnect the peer unless it
 //     is too large.
 //
-// The size is known only from a frame whose payload the dump holds; a frame
-// recorded without its payload (too large to keep) has no instance of
-// WBFT-NET-013 or WBFT-NET-021.
+// The size is known from a frame whose payload the dump holds, and from a
+// frame recorded without its payload (too large to keep) that carries a
+// non-zero size. A dump that wrote such a frame with size 0 (earlier wbft
+// exports) leaves it without an instance of WBFT-NET-013.
 type frameCodes struct{ check.Base }
 
 func (c frameCodes) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
@@ -86,7 +87,7 @@ func sendCode(r *frames.Record, code uint64, out check.Emitter) {
 }
 
 func receive(r *frames.Record, code uint64, out check.Emitter) {
-	known := r.Payload != "" && r.Size != nil
+	known := r.Size != nil && (r.Payload != "" || *r.Size > 0)
 	large := known && *r.Size > maxIstanbulMsgLen
 	disconnect := r.Outcome == "DISCONNECT"
 	if large {
