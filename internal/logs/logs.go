@@ -72,11 +72,12 @@ func LoadProfile(path string) (*Profile, error) {
 	return &p, nil
 }
 
-// levels are the level spellings of slog JSON lines and geth's, by the
-// profile's level names.
+// levels are the level spellings of JSON lines by the profile's level
+// names: slog's (key "level") and go-stablenet's log.JSONHandler (key
+// "lvl", log.LevelString).
 var levels = map[string]string{
 	"DEBUG-4": "trace", "DEBUG": "debug", "INFO": "info", "WARN": "warn", "ERROR": "error",
-	"trce": "trace", "dbug": "debug", "info": "info", "warn": "warn", "eror": "error",
+	"trace": "trace", "debug": "debug", "info": "info", "warn": "warn", "error": "error",
 }
 
 // lineKeys are the keys of a log line that are not the record's fields.
@@ -175,6 +176,14 @@ func read(p *Profile, s *events.Set, r io.Reader, id, path, node string) (events
 	return in, run, nil
 }
 
+// levelName is the profile's name of a level spelling, or "unknown".
+func levelName(lv string) string {
+	if n, ok := levels[lv]; ok {
+		return n
+	}
+	return "unknown"
+}
+
 func parse(p *Profile, s *events.Set, line []byte, id string, no int) *events.Event {
 	var m map[string]json.RawMessage
 	d := json.NewDecoder(bytes.NewReader(line))
@@ -205,7 +214,7 @@ func parse(p *Profile, s *events.Set, line []byte, id string, no int) *events.Ev
 		lv = str("lvl")
 	}
 	if levels[lv] != ent.Level {
-		s.Errors = append(s.Errors, fmt.Sprintf("%s:%d: %s line at level %q, the profile has %s", id, no, ent.Kind, lv, ent.Level))
+		s.Errors = append(s.Errors, fmt.Sprintf("%s:%d: %s line at level %q (%s), the profile has %s", id, no, ent.Kind, lv, levelName(lv), ent.Level))
 		return nil
 	}
 	e := &events.Event{Input: id, Line: no, Kind: ent.Kind, Src: "log", FromLog: true, F: map[string]json.RawMessage{}}

@@ -63,6 +63,7 @@ not json
 {"time":"2026-01-01T00:00:00Z","level":"INFO","msg":"peer connected","module":"geth.p2p"}
 {"time":"2026-01-01T00:00:00Z","level":"WARN","msg":"event write failed","module":"node"}
 {"t":"2026-01-01T00:00:01Z","lvl":"info","msg":"block finalized","module":"consensus.round","number":"1"}
+{"t":"2026-01-01T00:00:02Z","lvl":"dbug","msg":"round entered","module":"consensus.round","h":"2","r":"0"}
 `
 	f := filepath.Join(t.TempDir(), "x.log")
 	if err := os.WriteFile(f, []byte(lines), 0o600); err != nil {
@@ -72,7 +73,8 @@ not json
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Errors) != 3 || !strings.Contains(s.Errors[0], "not in profile") || !strings.Contains(s.Errors[1], "level") {
+	if len(s.Errors) != 4 || !strings.Contains(s.Errors[0], "not in profile") || !strings.Contains(s.Errors[1], "level") ||
+		!strings.Contains(s.Errors[3], `level "dbug" (unknown)`) {
 		t.Fatalf("errors %v", s.Errors)
 	}
 	if len(s.Runs) != 1 || len(s.Runs[0].Events) != 1 || s.Runs[0].Events[0].Kind != "COMMIT_RESULT" ||
@@ -134,5 +136,33 @@ func TestComplete(t *testing.T) {
 		if got := s.Runs[0].Complete; got != c.want {
 			t.Errorf("%s: complete %v, want %v", name, got, c.want)
 		}
+	}
+}
+
+// TestLoadStablenetLog reads the JSON log of a wbft-stablenet validator run
+// with --log.format json --verbosity 5 (testdata/stablenet-node.log; the
+// data directory replaced by /data): go-stablenet's keys t and lvl, its
+// level names (trace, debug, ...) and lines of go-stablenet modules
+// between. The node runs wbft 0c3634a, whose profile is
+// testdata/wbft-profile.json.
+func TestLoadStablenetLog(t *testing.T) {
+	p, err := LoadProfile(filepath.Join("testdata", "wbft-profile.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := Load(p, []File{{Node: "0xca3cabbf85027687cc0f6515f0f2886f3a84d67a", Path: filepath.Join("testdata", "stablenet-node.log")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(s.Errors) != 0 || len(s.Runs) != 1 {
+		t.Fatalf("errors %v", s.Errors)
+	}
+	r := s.Runs[0]
+	kinds := map[string]int{}
+	for _, e := range r.Events {
+		kinds[e.Kind]++
+	}
+	if !r.Complete || kinds["LOG_CONFIG"] != 1 || kinds["TIMER_ARM"] == 0 || kinds["COMMIT_RESULT"] == 0 || len(r.Events) < 100 {
+		t.Fatalf("complete %v, %d events: %v", r.Complete, len(r.Events), kinds)
 	}
 }
