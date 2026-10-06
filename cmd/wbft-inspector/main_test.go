@@ -211,3 +211,74 @@ func TestCheckRetryWire(t *testing.T) {
 		t.Fatalf("results %+v errors %+v", r.Results, r.Errors)
 	}
 }
+
+// TestCheckLogs checks a node through its log instead of its event stream:
+// both files come from one run of a wbft node with every module at trace
+// (internal/logs/testdata). A checker that judges log runs reaches the same
+// verdict and instance count from either; a checker that measures
+// monotonic time cannot decide the log run (NEEDS_NODE_FEATURE).
+func TestCheckLogs(t *testing.T) {
+	const node = "0xa79140f1543ba4be52a0bb330e8088c67a89e655"
+	logsDir := filepath.Join("..", "..", "internal", "logs", "testdata")
+	sel := "sm.*,timer.*"
+	code, fromEvents, stderr := runCLI(t, "check", "--events", filepath.Join(logsDir, "node.events.jsonl"), "--checks", sel)
+	if code != report.ExitOK {
+		t.Fatalf("events: exit %d: %s", code, stderr)
+	}
+	code, fromLogs, stderr := runCLI(t, "check", "--logs", strings.ToUpper(node[:4])+node[4:]+"="+filepath.Join(logsDir, "node.log"),
+		"--log-profile", filepath.Join(logsDir, "wbft-profile.json"), "--checks", sel)
+	if code != report.ExitOK {
+		t.Fatalf("logs: exit %d: %s", code, stderr)
+	}
+	if in := fromLogs.Run.Inputs; len(in) != 1 || in[0].Kind != "log" || in[0].Node != node || len(fromLogs.Errors) != 0 {
+		t.Fatalf("log input %+v, errors %v", in, fromLogs.Errors)
+	}
+	evBy := map[string]report.Result{}
+	for _, x := range fromEvents.Results {
+		evBy[x.Requirement] = x
+	}
+	mono := map[string]bool{"sm.round_timer_on_entry": true, "sm.accept_preprepare_order": true, "sm.first_rc_cause": true,
+		"timer.round_timeout": true, "timer.cancel_on_arm": true}
+	passes := 0
+	for _, x := range fromLogs.Results {
+		e := evBy[x.Requirement]
+		switch {
+		case x.Verdict == "NOT_RUN":
+		case mono[x.Checker]:
+			if x.Verdict != "CANNOT_DECIDE" || x.Reason == nil || x.Reason.Code != "NEEDS_NODE_FEATURE" {
+				t.Errorf("%s (%s) from logs: %+v", x.Requirement, x.Checker, x)
+			}
+		default:
+			if x.Verdict != e.Verdict || x.Coverage.Instances != e.Coverage.Instances {
+				t.Errorf("%s (%s): %s with %d instances from logs, %s with %d from events", x.Requirement, x.Checker,
+					x.Verdict, x.Coverage.Instances, e.Verdict, e.Coverage.Instances)
+			}
+			if x.Verdict == "PASS" {
+				passes++
+			}
+		}
+	}
+	if passes == 0 {
+		t.Fatal("no requirement passed from logs")
+	}
+	// Both together: the inputs and the instances add up.
+	code, both, stderr := runCLI(t, "check", "--events", filepath.Join(logsDir, "node.events.jsonl"),
+		"--logs", node+"="+filepath.Join(logsDir, "node.log"), "--log-profile", filepath.Join(logsDir, "wbft-profile.json"), "--checks", sel)
+	if code != report.ExitOK || len(both.Run.Inputs) != 2 {
+		t.Fatalf("both: exit %d, inputs %+v: %s", code, both.Run.Inputs, stderr)
+	}
+	logBy := map[string]report.Result{}
+	for _, x := range fromLogs.Results {
+		logBy[x.Requirement] = x
+	}
+	for _, x := range both.Results {
+		if x.Verdict == "PASS" && x.Coverage.Instances != evBy[x.Requirement].Coverage.Instances+logBy[x.Requirement].Coverage.Instances {
+			t.Errorf("%s: %d instances from both, %d + %d apart", x.Requirement, x.Coverage.Instances,
+				evBy[x.Requirement].Coverage.Instances, logBy[x.Requirement].Coverage.Instances)
+		}
+	}
+	// Without the profile, --logs is a usage error.
+	if code, _, _ := runCLI(t, "check", "--logs", node+"="+filepath.Join(logsDir, "node.log")); code != report.ExitUsage {
+		t.Fatalf("--logs without --log-profile: exit %d", code)
+	}
+}

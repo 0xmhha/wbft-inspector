@@ -13,10 +13,10 @@ func init() {
 	ev := []check.Kind{check.Events}
 	check.Register(roundTimerOnEntry{check.Base{ID: "sm.round_timer_on_entry", Reqs: []string{"WBFT-SM-030", "WBFT-TIMER-010"}, Kinds: ev}})
 	check.Register(acceptOrder{check.Base{ID: "sm.accept_preprepare_order", Reqs: []string{"WBFT-SM-039", "WBFT-TIMER-012"}, Kinds: ev}})
-	check.Register(preparedTransition{check.Base{ID: "sm.prepared_transition", Reqs: []string{"WBFT-SM-043"}, Kinds: ev}})
-	check.Register(decideOnCommitQuorum{check.Base{ID: "sm.decide_on_commit_quorum", Reqs: []string{"WBFT-SM-046"}, Kinds: ev}})
-	check.Register(timerNotStoppedOnDecide{check.Base{ID: "sm.timer_not_stopped_on_decide", Reqs: []string{"WBFT-SM-050", "WBFT-TIMER-016"}, Kinds: ev}})
-	check.Register(fPlusOne{check.Base{ID: "sm.f_plus_one", Reqs: []string{"WBFT-SM-057"}, Kinds: ev}})
+	check.Register(preparedTransition{check.Base{ID: "sm.prepared_transition", Reqs: []string{"WBFT-SM-043"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(decideOnCommitQuorum{check.Base{ID: "sm.decide_on_commit_quorum", Reqs: []string{"WBFT-SM-046"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(timerNotStoppedOnDecide{check.Base{ID: "sm.timer_not_stopped_on_decide", Reqs: []string{"WBFT-SM-050", "WBFT-TIMER-016"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(fPlusOne{check.Base{ID: "sm.f_plus_one", Reqs: []string{"WBFT-SM-057"}, Kinds: ev, ReadsLogs: true}})
 }
 
 func roundArm(v *events.View) func(*events.Event) bool {

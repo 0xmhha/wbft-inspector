@@ -16,7 +16,13 @@ type Base struct {
 	ID    string
 	Reqs  []string
 	Kinds []Kind
+	// ReadsLogs marks a checker that uses no monotonic time, so that it may
+	// judge a complete run read from logs (see LogReader).
+	ReadsLogs bool
 }
+
+// JudgesLogs implements LogReader.
+func (b Base) JudgesLogs() bool { return b.ReadsLogs }
 
 // Name returns the checker name.
 func (b Base) Name() string { return b.ID }

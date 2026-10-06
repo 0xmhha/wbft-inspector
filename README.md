@@ -42,6 +42,15 @@ wbft-inspector check --events events/ --chain-config genesis.json --out report.j
   kind (`ROUND_ENTER`, `TIMER_ARM`, `SEND`, `MSG_OUTCOME`, ...). The
   [wbft](https://github.com/0xmhha/wbft) node and its simulator
   (`conformance/sim`) write this format.
+- `--logs NODE=PATH` (repeatable, with `--log-profile FILE`) reads the JSON
+  log of a node that has no event stream, through the implementation
+  profile its build publishes (`wbft-log-profile/1`; wbft's
+  `cmd/wbft-logprofile` writes it and `wbft_nodeInfo.logProfile` names it).
+  A log has no monotonic time, so only the checkers that use none judge a
+  log run, and only when the log shows both consensus modules at trace
+  from its start. Other log runs are `CANNOT_DECIDE`, with the reason
+  `NEEDS_NODE_FEATURE` (the checker needs the event stream) or `LOG_LEVEL`
+  (records may be missing).
 - `--chain-config FILE` is a genesis file (or its `config` object). The
   timer checkers need it to compute `round_timeout(config_at(h), r)` and
   `RT(h)`; without it those requirements are `CANNOT_DECIDE` with the reason

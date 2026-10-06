@@ -149,8 +149,12 @@ type Run struct {
 	Events []*Event
 	// FromLog marks a run read from a log file: see Event.FromLog.
 	FromLog bool
-	groups  map[groupKey][]int
-	seg     []int // engine segment of each event
+	// Complete reports, for a run read from logs, that no record is
+	// missing: the log shows both consensus modules at trace from its
+	// first line on (package logs).
+	Complete bool
+	groups   map[groupKey][]int
+	seg      []int // engine segment of each event
 }
 
 type groupKey struct {
@@ -422,6 +426,27 @@ func (s *Set) Add(in Input, r *Run) {
 	}
 	r.index()
 	s.Runs = append(s.Runs, r)
+}
+
+// Merge adds the inputs, runs, nodes and errors of o, whose input ids must
+// differ from s's.
+func (s *Set) Merge(o *Set) {
+	s.Inputs = append(s.Inputs, o.Inputs...)
+	s.Runs = append(s.Runs, o.Runs...)
+	s.Errors = append(s.Errors, o.Errors...)
+	for k, n := range o.Nodes {
+		if cur := s.Nodes[k]; cur == nil {
+			s.Nodes[k] = n
+		} else {
+			cur.Optional = cur.Optional || n.Optional
+			if cur.Impl == "" {
+				cur.Impl = n.Impl
+			}
+		}
+	}
+	for k, n := range o.UnknownKinds {
+		s.UnknownKinds[k] += n
+	}
 }
 
 // index assigns engine segments and step groups. A segment ends with an

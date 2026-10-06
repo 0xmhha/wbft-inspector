@@ -11,7 +11,7 @@ import (
 
 func init() {
 	ev := []check.Kind{check.Events}
-	check.Register(retryRC{check.Base{ID: "sm.retry_rc", Reqs: []string{"WBFT-SM-077", "WBFT-TIMER-021", "WBFT-TIMER-022"}, Kinds: ev}})
+	check.Register(retryRC{check.Base{ID: "sm.retry_rc", Reqs: []string{"WBFT-SM-077", "WBFT-TIMER-021", "WBFT-TIMER-022"}, Kinds: ev, ReadsLogs: true}})
 	check.Register(firstRCCause{check.Base{ID: "sm.first_rc_cause", Reqs: []string{"WBFT-SM-089"}, Kinds: ev}})
 }
 

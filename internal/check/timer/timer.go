@@ -16,12 +16,12 @@ func init() {
 	ev := []check.Kind{check.Events}
 	check.Register(roundTimeout{check.Base{ID: "timer.round_timeout", Reqs: []string{"WBFT-TIMER-002", "WBFT-TIMER-005", "WBFT-TIMER-006", "WBFT-TIMER-007"}, Kinds: ev}})
 	check.Register(cancelOnArm{check.Base{ID: "timer.cancel_on_arm", Reqs: []string{"WBFT-TIMER-013", "WBFT-TIMER-033"}, Kinds: ev}})
-	check.Register(staleExpiry{check.Base{ID: "timer.stale_expiry", Reqs: []string{"WBFT-TIMER-014"}, Kinds: ev}})
-	check.Register(expiryActions{check.Base{ID: "timer.expiry_actions", Reqs: []string{"WBFT-TIMER-015", "WBFT-TIMER-017"}, Kinds: ev}})
-	check.Register(stopOnEngineStop{check.Base{ID: "timer.stop_on_engine_stop", Reqs: []string{"WBFT-TIMER-018"}, Kinds: ev}})
-	check.Register(retryArm{check.Base{ID: "timer.retry_arm", Reqs: []string{"WBFT-TIMER-003", "WBFT-TIMER-020"}, Kinds: ev}})
-	check.Register(retryNotCancelOnQuorum{check.Base{ID: "timer.retry_not_cancel_on_quorum", Reqs: []string{"WBFT-TIMER-023"}, Kinds: ev}})
-	check.Register(buildNoWait{check.Base{ID: "timer.build_no_wait_r1", Reqs: []string{"WBFT-TIMER-041"}, Kinds: ev}})
+	check.Register(staleExpiry{check.Base{ID: "timer.stale_expiry", Reqs: []string{"WBFT-TIMER-014"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(expiryActions{check.Base{ID: "timer.expiry_actions", Reqs: []string{"WBFT-TIMER-015", "WBFT-TIMER-017"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(stopOnEngineStop{check.Base{ID: "timer.stop_on_engine_stop", Reqs: []string{"WBFT-TIMER-018"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(retryArm{check.Base{ID: "timer.retry_arm", Reqs: []string{"WBFT-TIMER-003", "WBFT-TIMER-020"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(retryNotCancelOnQuorum{check.Base{ID: "timer.retry_not_cancel_on_quorum", Reqs: []string{"WBFT-TIMER-023"}, Kinds: ev, ReadsLogs: true}})
+	check.Register(buildNoWait{check.Base{ID: "timer.build_no_wait_r1", Reqs: []string{"WBFT-TIMER-041"}, Kinds: ev, ReadsLogs: true}})
 }
 
 func isArm(kind string) func(*events.Event) bool {

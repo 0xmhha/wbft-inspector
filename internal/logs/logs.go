@@ -83,24 +83,31 @@ var levels = map[string]string{
 var lineKeys = map[string]bool{"time": true, "t": true, "level": true, "lvl": true, "msg": true, "module": true,
 	"h": true, "r": true, "step": true}
 
-// Load reads the log files of node with profile p into an event set: one
-// run per file, input ids log-1, log-2, ... A line of a module the profile
-// names that the profile does not map, or at another level, is an error;
-// lines of other modules (an application's) are skipped.
-func Load(p *Profile, node string, files []string) (*events.Set, error) {
+// File is a log file of a node.
+type File struct {
+	Node string
+	Path string
+}
+
+// Load reads log files with profile p into an event set: one run per file,
+// input ids log-1, log-2, ... A line of a module the profile names that the
+// profile does not map, or at another level, is an error; lines of other
+// modules (an application's) are skipped.
+func Load(p *Profile, files []File) (*events.Set, error) {
 	s := &events.Set{Nodes: map[string]*events.NodeInfo{}, UnknownKinds: map[string]int{}}
-	for i, path := range files {
+	for i, lf := range files {
 		id := fmt.Sprintf("log-%d", i+1)
-		f, err := os.Open(path)
+		f, err := os.Open(lf.Path)
 		if err != nil {
 			return nil, err
 		}
-		in, run, err := read(p, s, f, id, path, node)
+		in, run, err := read(p, s, f, id, lf.Path, lf.Node)
 		f.Close()
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", path, err)
+			return nil, fmt.Errorf("%s: %w", lf.Path, err)
 		}
 		if len(run.Events) > 0 {
+			run.Complete = complete(run)
 			s.Add(in, run)
 		} else {
 			s.Inputs = append(s.Inputs, in)
@@ -108,6 +115,35 @@ func Load(p *Profile, node string, files []string) (*events.Set, error) {
 	}
 	sort.SliceStable(s.Runs, func(i, j int) bool { return s.Runs[i].ID < s.Runs[j].ID })
 	return s, nil
+}
+
+// consensusModules are the modules whose lines are the consensus events.
+var consensusModules = []string{"consensus.round", "consensus.msg"}
+
+// complete reports whether no record of the run can be missing: its first
+// event is the log settings record, and every log settings record puts
+// both consensus modules at trace.
+func complete(r *events.Run) bool {
+	if r.Events[0].Kind != "LOG_CONFIG" {
+		return false
+	}
+	for _, e := range r.Events {
+		if e.Kind != "LOG_CONFIG" {
+			continue
+		}
+		var modules map[string]string
+		_ = json.Unmarshal(e.F["modules"], &modules)
+		for _, m := range consensusModules {
+			lv, ok := modules[m]
+			if !ok {
+				lv = e.Str("level")
+			}
+			if lv != "trace" {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func read(p *Profile, s *events.Set, r io.Reader, id, path, node string) (events.Input, *events.Run, error) {

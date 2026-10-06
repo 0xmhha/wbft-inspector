@@ -48,6 +48,16 @@ type Inputs struct {
 	Given  map[Kind]bool
 }
 
+// LogReader is implemented by a checker that can say whether it judges runs
+// read from logs (events.Run.FromLog). Only a checker that uses no
+// monotonic time judges them, and only a complete log run (events.Run.
+// Complete). For a log run it did not read, a checker gets CANNOT_DECIDE
+// instances: NEEDS_NODE_FEATURE (it needs the event stream's monotonic
+// time) or LOG_LEVEL (the log may miss records).
+type LogReader interface {
+	JudgesLogs() bool
+}
+
 // Emitter receives instance verdicts.
 type Emitter interface {
 	Emit(verdict.Instance)
@@ -207,7 +217,19 @@ func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 			want[r] = true
 		}
 		col := &collector{c: c, want: want, out: out, errs: &out.Errors}
-		if err := safeRun(ctx, c, in, col); err != nil {
+		cin, skipped := forChecker(in, c)
+		if cin.Events != nil && len(cin.Events.Runs) == 0 && len(skipped) > 0 {
+			// Only log runs this checker does not judge.
+			for _, r := range skipped {
+				skipLogRun(c, r, col)
+			}
+			out.Ran[c.Name()] = true
+			continue
+		}
+		for _, r := range skipped {
+			skipLogRun(c, r, col)
+		}
+		if err := safeRun(ctx, c, cin, col); err != nil {
 			out.Errors = append(out.Errors, fmt.Sprintf("checker %s: %v", c.Name(), err))
 			continue
 		}
@@ -215,6 +237,45 @@ func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 	}
 	applyOptional(in, out)
 	return out
+}
+
+// forChecker returns the inputs of checker c: without the log runs it does
+// not judge, which it returns.
+func forChecker(in *Inputs, c Checker) (*Inputs, []*events.Run) {
+	if in.Events == nil {
+		return in, nil
+	}
+	lr, ok := c.(LogReader)
+	judges := ok && lr.JudgesLogs()
+	var keep, skipped []*events.Run
+	for _, r := range in.Events.Runs {
+		if r.FromLog && (!judges || !r.Complete) {
+			skipped = append(skipped, r)
+		} else {
+			keep = append(keep, r)
+		}
+	}
+	if len(skipped) == 0 {
+		return in, nil
+	}
+	set := *in.Events
+	set.Runs = keep
+	cin := *in
+	cin.Events = &set
+	return &cin, skipped
+}
+
+// skipLogRun emits, for each requirement of c, a CANNOT_DECIDE instance
+// for log run r that c did not read.
+func skipLogRun(c Checker, r *events.Run, e Emitter) {
+	why, reason := "the checker measures monotonic time, which only the event stream carries", verdict.NeedsNodeFeature
+	if lr, ok := c.(LogReader); ok && lr.JudgesLogs() {
+		why, reason = "the log does not show both consensus modules at trace from its start, so records may be missing", verdict.LogLevel
+	}
+	for _, req := range c.Requirements() {
+		e.Emit(verdict.Instance{Requirement: req, Node: r.Node, Key: "logrun:" + r.ID, Verdict: verdict.CannotDecide,
+			Reason: reason, Message: fmt.Sprintf("log run %s (%s) not judged: %s", r.ID, r.Input, why)})
+	}
 }
 
 func safeRun(ctx context.Context, c Checker, in *Inputs, e Emitter) (err error) {
