@@ -79,6 +79,10 @@ type Event struct {
 	Imp   []string
 	Src   string
 	F     map[string]json.RawMessage // kind-specific fields
+	// FromLog marks an event read from a log line (package logs): TMono is
+	// not a monotonic time, Seq numbers the mapped lines, and a record the
+	// node did not log at its level is missing without a gap.
+	FromLog bool
 }
 
 // Str returns a string field, or "".
@@ -143,8 +147,10 @@ type Run struct {
 	ID     string
 	Input  string
 	Events []*Event
-	groups map[groupKey][]int
-	seg    []int // engine segment of each event
+	// FromLog marks a run read from a log file: see Event.FromLog.
+	FromLog bool
+	groups  map[groupKey][]int
+	seg     []int // engine segment of each event
 }
 
 type groupKey struct {
@@ -405,6 +411,17 @@ func (s *Set) note(e *Event) {
 			}
 		}
 	}
+}
+
+// Add adds a run read elsewhere (package logs) with its input; its events
+// are in order.
+func (s *Set) Add(in Input, r *Run) {
+	s.Inputs = append(s.Inputs, in)
+	for _, e := range r.Events {
+		s.note(e)
+	}
+	r.index()
+	s.Runs = append(s.Runs, r)
 }
 
 // index assigns engine segments and step groups. A segment ends with an

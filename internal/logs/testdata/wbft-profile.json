@@ -1,0 +1,150 @@
+{
+  "format": "wbft-log-profile/1",
+  "id": "wbft@61388e4ab295",
+  "keys": [
+    "module",
+    "h",
+    "r",
+    "step"
+  ],
+  "entries": [
+    {
+      "kind": "BACKLOG",
+      "module": "consensus.msg",
+      "level": "trace",
+      "msg": "message backlogged"
+    },
+    {
+      "kind": "BUILD_REQUEST",
+      "module": "consensus.round",
+      "level": "trace",
+      "msg": "block build requested"
+    },
+    {
+      "kind": "COMMIT_RESULT",
+      "module": "consensus.round",
+      "level": "info",
+      "msg": "block finalized"
+    },
+    {
+      "kind": "ENGINE_START",
+      "module": "consensus.round",
+      "level": "info",
+      "msg": "consensus engine started"
+    },
+    {
+      "kind": "ENGINE_STOP",
+      "module": "consensus.round",
+      "level": "info",
+      "msg": "consensus engine stopped"
+    },
+    {
+      "kind": "EVIDENCE",
+      "module": "consensus.msg",
+      "level": "warn",
+      "msg": "double signing evidence"
+    },
+    {
+      "kind": "EXTRA_SEAL",
+      "module": "consensus.msg",
+      "level": "trace",
+      "msg": "extra seal recorded"
+    },
+    {
+      "kind": "FINALIZE_HANDOVER",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "decided block handed to the application"
+    },
+    {
+      "kind": "HEALTH",
+      "module": "consensus.msg",
+      "level": "warn",
+      "msg": "receive path health"
+    },
+    {
+      "kind": "IMPORT_FAIL",
+      "module": "consensus.round",
+      "level": "warn",
+      "msg": "block import failed"
+    },
+    {
+      "kind": "LOG_CONFIG",
+      "module": "node",
+      "level": "info",
+      "msg": "log settings"
+    },
+    {
+      "kind": "MSG_OUTCOME",
+      "module": "consensus.msg",
+      "level": "trace",
+      "msg": "message handled"
+    },
+    {
+      "kind": "NEW_HEAD",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "new head"
+    },
+    {
+      "kind": "PREPREPARE_ACCEPT",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "proposal accepted"
+    },
+    {
+      "kind": "PROPOSAL_DEFERRED",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "proposal deferred"
+    },
+    {
+      "kind": "PROPOSAL_SUBMITTED",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "proposal submitted"
+    },
+    {
+      "kind": "QUORUM",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "quorum reached"
+    },
+    {
+      "kind": "ROUND_ENTER",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "round entered"
+    },
+    {
+      "kind": "SEND",
+      "module": "consensus.msg",
+      "level": "trace",
+      "msg": "message sent"
+    },
+    {
+      "kind": "STATE",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "round state changed"
+    },
+    {
+      "kind": "TIMER_ARM",
+      "module": "consensus.round",
+      "level": "trace",
+      "msg": "timer armed"
+    },
+    {
+      "kind": "TIMER_CANCEL",
+      "module": "consensus.round",
+      "level": "trace",
+      "msg": "timer cancelled"
+    },
+    {
+      "kind": "TIMER_FIRE",
+      "module": "consensus.round",
+      "level": "debug",
+      "msg": "timer fired"
+    }
+  ]
+}
