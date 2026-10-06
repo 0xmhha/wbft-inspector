@@ -8,7 +8,8 @@ import (
 )
 
 // TestLoadNodeLog reads the log of a wbft node run with every module at
-// trace (testdata/node.log: 51 lines, written by wbft's node tests) with the
+// trace (testdata/node.log: 51 lines, written by wbft's node tests, with
+// node.events.jsonl, the event stream of the same run) with the
 // profile of that build: every consensus and log settings line becomes an
 // event of the profile's kind, marked as read from a log.
 func TestLoadNodeLog(t *testing.T) {
@@ -16,7 +17,7 @@ func TestLoadNodeLog(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := Load(p, "0xaa", []string{filepath.Join("testdata", "node.log")})
+	s, err := Load(p, []File{{Node: "0xaa", Path: filepath.Join("testdata", "node.log")}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +25,7 @@ func TestLoadNodeLog(t *testing.T) {
 		t.Fatalf("errors %v, runs %d, unknown %v", s.Errors, len(s.Runs), s.UnknownKinds)
 	}
 	r := s.Runs[0]
-	if !r.FromLog || r.Node != "0xaa" || len(r.Events) != 51 || s.Inputs[0].Records != 51 {
+	if !r.FromLog || !r.Complete || r.Node != "0xaa" || len(r.Events) != 51 || s.Inputs[0].Records != 51 {
 		t.Fatalf("run %+v with %d events", r, len(r.Events))
 	}
 	kinds := map[string]int{}
@@ -67,7 +68,7 @@ not json
 	if err := os.WriteFile(f, []byte(lines), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	s, err := Load(p, "0xbb", []string{f})
+	s, err := Load(p, []File{{Node: "0xbb", Path: f}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,6 +96,43 @@ func TestLoadProfileFormat(t *testing.T) {
 		}
 		if _, err := LoadProfile(f); err == nil {
 			t.Fatalf("%s: accepted", name)
+		}
+	}
+}
+
+// TestComplete: a log run is complete when its first line is the log
+// settings and every settings line puts both consensus modules at trace,
+// by base level or by module.
+func TestComplete(t *testing.T) {
+	p, err := LoadProfile(filepath.Join("testdata", "wbft-profile.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const enter = `{"time":"2026-01-01T00:00:01Z","level":"DEBUG","msg":"round entered","module":"consensus.round","h":"1","r":"0"}` + "\n"
+	settings := func(base, modules string) string {
+		return `{"time":"2026-01-01T00:00:00Z","level":"INFO","msg":"log settings","module":"node","base_level":"` + base +
+			`","modules":` + modules + `,"source":"config"}` + "\n"
+	}
+	for name, c := range map[string]struct {
+		body string
+		want bool
+	}{
+		"trace":             {settings("trace", "{}") + enter, true},
+		"by module":         {settings("info", `{"consensus.round":"trace","consensus.msg":"trace"}`) + enter, true},
+		"one module lower":  {settings("trace", `{"consensus.msg":"debug"}`) + enter, false},
+		"no settings first": {enter + settings("trace", "{}"), false},
+		"lowered later":     {settings("trace", "{}") + enter + settings("info", "{}"), false},
+	} {
+		f := filepath.Join(t.TempDir(), "x.log")
+		if err := os.WriteFile(f, []byte(c.body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		s, err := Load(p, []File{{Node: "0xcc", Path: f}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := s.Runs[0].Complete; got != c.want {
+			t.Errorf("%s: complete %v, want %v", name, got, c.want)
 		}
 	}
 }

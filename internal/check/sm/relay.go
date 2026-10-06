@@ -12,11 +12,11 @@ import (
 )
 
 func init() {
-	check.Register(relayOnOK{check.Base{ID: "sm.relay_on_ok", Reqs: []string{"WBFT-SM-011"}, Kinds: []check.Kind{check.Events}}})
-	check.Register(relayBacklog{check.Base{ID: "sm.relay_backlog", Reqs: []string{"WBFT-SM-012"}, Kinds: []check.Kind{check.Events}}})
-	check.Register(noRelayOnErr{check.Base{ID: "sm.no_relay_on_err", Reqs: []string{"WBFT-SM-013"}, Kinds: []check.Kind{check.Events}}})
-	check.Register(selfDelivery{check.Base{ID: "sm.self_delivery", Reqs: []string{"WBFT-SM-014"}, Kinds: []check.Kind{check.Events}}})
-	check.Register(disposition{check.Base{ID: "sm.disposition", Reqs: []string{"WBFT-SM-020"}, Kinds: []check.Kind{check.Events}}})
+	check.Register(relayOnOK{check.Base{ID: "sm.relay_on_ok", Reqs: []string{"WBFT-SM-011"}, Kinds: []check.Kind{check.Events}, ReadsLogs: true}})
+	check.Register(relayBacklog{check.Base{ID: "sm.relay_backlog", Reqs: []string{"WBFT-SM-012"}, Kinds: []check.Kind{check.Events}, ReadsLogs: true}})
+	check.Register(noRelayOnErr{check.Base{ID: "sm.no_relay_on_err", Reqs: []string{"WBFT-SM-013"}, Kinds: []check.Kind{check.Events}, ReadsLogs: true}})
+	check.Register(selfDelivery{check.Base{ID: "sm.self_delivery", Reqs: []string{"WBFT-SM-014"}, Kinds: []check.Kind{check.Events}, ReadsLogs: true}})
+	check.Register(disposition{check.Base{ID: "sm.disposition", Reqs: []string{"WBFT-SM-020"}, Kinds: []check.Kind{check.Events}, ReadsLogs: true}})
 }
 
 // outcome reports whether e is a MSG_OUTCOME of a message that reached the

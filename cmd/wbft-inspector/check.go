@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/wbft-inspector/internal/buildinfo"
@@ -17,17 +18,23 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/check"
 	"github.com/0xmhha/wbft-inspector/internal/events"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
+	"github.com/0xmhha/wbft-inspector/internal/logs"
 	"github.com/0xmhha/wbft-inspector/internal/report"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
 
-const checkUsage = `Usage: wbft-inspector check --events PATH [--events PATH ...] [--frames DIR ...] [flags]
+const checkUsage = `Usage: wbft-inspector check --events PATH [--events PATH ...] [--frames DIR ...]
+       [--logs NODE=PATH ... --log-profile FILE] [flags]
 
 Decides the requirements of the checker catalog from consensus event
 streams (JSON Lines, one event per line; a directory stands for its *.jsonl
 files) and frame dumps in the R-01 format (frames-<run>.jsonl and payloads/)
-and writes the report. Requirements whose checker needs an input that
+and writes the report. For a node without an event stream, --logs gives its
+JSON log file, read through the implementation profile of --log-profile
+(wbft-log-profile/1). Only checkers that use no monotonic time judge a log
+run, and only a log that shows both consensus modules at trace from its
+start; other log runs are CANNOT_DECIDE (NEEDS_NODE_FEATURE or LOG_LEVEL). Requirements whose checker needs an input that
 was not given are CANNOT_DECIDE (MISSING_DATA); requirements without a
 checker in this build are NOT_RUN; requirement IDs this build does not know
 are CANNOT_DECIDE (NOT_IN_BUILD).
@@ -39,6 +46,9 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	fs := newFlags("check", stderr)
 	var evPaths multi
 	fs.Var(&evPaths, "events", "event stream file or directory (repeatable)")
+	var logPaths multi
+	fs.Var(&logPaths, "logs", "NODE=PATH: a JSON log file of the node with address NODE (repeatable; needs --log-profile)")
+	logProfile := fs.String("log-profile", "", "implementation profile of the logs (wbft-log-profile/1, e.g. from wbft-logprofile)")
 	var framePaths multi
 	fs.Var(&framePaths, "frames", "frame dump directory in the R-01 format (repeatable); format problems are reported as errors")
 	chainCfg := fs.String("chain-config", "", "genesis file or chain configuration (anzeon.wbft, transitions) for timer durations")
@@ -109,6 +119,52 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 				rep.Errors = append(rep.Errors, report.Error{Message: fmt.Sprintf("event kind %s (%d records) is not known to this build; its records were not interpreted", k, set.UnknownKinds[k])})
 			}
 			rep.Run.Nodes = nodesOf(set)
+		}
+	}
+	if len(logPaths) > 0 {
+		if *logProfile == "" {
+			fmt.Fprintln(stderr, "check: --logs needs --log-profile")
+			return report.ExitUsage
+		}
+		var lfs []logs.File
+		for _, a := range logPaths {
+			node, p, ok := strings.Cut(a, "=")
+			if !ok || node == "" || p == "" {
+				fmt.Fprintf(stderr, "check: --logs %q is not NODE=PATH\n", a)
+				return report.ExitUsage
+			}
+			lfs = append(lfs, logs.File{Node: strings.ToLower(node), Path: p})
+		}
+		prof, err := logs.LoadProfile(*logProfile)
+		var set *events.Set
+		if err == nil {
+			set, err = logs.Load(prof, lfs)
+		}
+		if err != nil {
+			rep.Errors = append(rep.Errors, report.Error{Message: "logs: " + err.Error()})
+			exit = report.ExitNoInput
+		} else {
+			for _, x := range set.Inputs {
+				ri := report.Input{ID: x.ID, Kind: "log", Path: x.Path, SHA256: x.SHA256, Records: x.Records}
+				if len(x.Nodes) == 1 {
+					ri.Node = x.Nodes[0]
+				}
+				if x.FirstWall != "" {
+					ri.TimeRange = &report.TimeRange{First: x.FirstWall, Last: x.LastWall}
+				}
+				rep.Run.Inputs = append(rep.Run.Inputs, ri)
+				idParts = append(idParts, x.SHA256)
+			}
+			for _, m := range set.Errors {
+				rep.Errors = append(rep.Errors, report.Error{Message: m})
+			}
+			if in.Events == nil {
+				in.Events = set
+			} else {
+				in.Events.Merge(set)
+			}
+			in.Given[check.Events] = true
+			rep.Run.Nodes = nodesOf(in.Events)
 		}
 	}
 	for _, dir := range framePaths {
