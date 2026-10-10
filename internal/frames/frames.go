@@ -64,6 +64,7 @@ type Record struct {
 	Cause      string  `json:"cause"`
 	RelayOf    *uint64 `json:"relay_of"`
 	Engine     string  `json:"engine"`
+	Dedup      *Dedup  `json:"dedup"`
 
 	// outcome
 	Of         *uint64 `json:"of"`
@@ -80,6 +81,14 @@ type Record struct {
 	Count *uint64 `json:"count"`
 
 	present map[string]bool // the top-level fields the line has
+}
+
+// Dedup is a received frame's hits in the node's two dedup caches before
+// its key was added: the known cache, and the recent cache of the peer it
+// came from.
+type Dedup struct {
+	KnownHit      *bool `json:"known_hit"`
+	PeerRecentHit *bool `json:"peer_recent_hit"`
 }
 
 // Has reports whether the line had the field.
@@ -306,9 +315,15 @@ func validateFrame(d *Dump, r *Record, add func(*Record, string, ...any), checke
 		if r.Engine != "" && !slices.Contains(engineStates, r.Engine) {
 			add(r, "engine %q", r.Engine)
 		}
+		if r.Dedup != nil && (r.Dedup.KnownHit == nil || r.Dedup.PeerRecentHit == nil) {
+			add(r, "dedup without known_hit or peer_recent_hit")
+		}
 	case "out":
 		if r.Has("outcome") {
 			add(r, "sent frame with an outcome")
+		}
+		if r.Has("dedup") {
+			add(r, "sent frame with dedup")
 		}
 		if r.Cause != "" && !slices.Contains(causes, r.Cause) {
 			add(r, "cause %q", r.Cause)
