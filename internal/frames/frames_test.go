@@ -137,6 +137,29 @@ func TestValidateFinds(t *testing.T) {
 			editLines(t, dir, first(isType("conn"), func(r map[string]any) { seq = r["seq"] }))
 			editLines(t, dir, first(isType("outcome"), func(r map[string]any) { r["seq"] = seq }))
 		}, "also at"},
+		{"close by self without a cause", func(t *testing.T, dir string) {
+			editLines(t, dir, first(isType("conn"), func(r map[string]any) { r["event"], r["by"] = "closed", "self" }))
+		}, `closed by self with cause ""`},
+		{"unknown closer", func(t *testing.T, dir string) {
+			editLines(t, dir, first(isType("conn"), func(r map[string]any) { r["event"], r["by"] = "closed", "them" }))
+		}, `closed by "them"`},
+		{"cause of a close by the peer", func(t *testing.T, dir string) {
+			editLines(t, dir, first(isType("conn"), func(r map[string]any) { r["event"], r["by"], r["cause"] = "closed", "peer", "frame" }))
+		}, `closed by "peer" with cause "frame"`},
+		{"of on a close for no frame", func(t *testing.T, dir string) {
+			var seq any
+			editLines(t, dir, first(isFrame("in"), func(r map[string]any) { seq = r["seq"] }))
+			editLines(t, dir, first(isType("conn"), func(r map[string]any) {
+				r["event"], r["by"], r["cause"], r["of"] = "closed", "self", "queue_overflow", seq
+			}))
+		}, `closed with cause "queue_overflow" and of`},
+		{"close naming a sent frame", func(t *testing.T, dir string) {
+			var seq any
+			editLines(t, dir, first(isFrame("out"), func(r map[string]any) { seq = r["seq"] }))
+			editLines(t, dir, first(isType("conn"), func(r map[string]any) {
+				r["event"], r["by"], r["cause"], r["of"] = "closed", "self", "frame", seq
+			}))
+		}, "is not a received frame of the run"},
 		{"unknown outcome", func(t *testing.T, dir string) {
 			editLines(t, dir, first(isFrame("in"), func(r map[string]any) { r["outcome"] = "ACCEPTED" }))
 		}, `outcome "ACCEPTED"`},

@@ -189,10 +189,13 @@ to the next copy, unless the cache may have evicted it or records were
 lost), -027 (the same
 stopped-engine rows), -028 (0x07 does not disconnect), -032 (the same key
 is not sent to the same peer twice in a run, a failed write included, unless
-the cache may have evicted it), and -043 (a received message that ended in
+the cache may have evicted it), -043 (a received message that ended in
 `DROP_SILENT` or `IGNORE` is not relayed; relays are matched by key, so a
 key that another copy got accepted for, or that is the node's own message,
-passes). The size
+passes), and -044 (the node does not close a peer's stream for a message
+that ended in `IGNORE`, from the `by`, `cause` and `of` of closed `conn`
+records; a close by the node for another reason before the peer's next
+frame is undecided, and a dump without `by` passes). The size
 is known from frames whose payload the dump holds and from frames recorded
 without their payload that carry their size. Chapter A-06: WBFT-TIMER-024
 (a retransmitted ROUND-CHANGE goes on the wire only to peers whose recent

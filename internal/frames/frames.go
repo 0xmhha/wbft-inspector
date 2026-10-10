@@ -74,8 +74,10 @@ type Record struct {
 	Row        *int64  `json:"row"`
 	Reason     string  `json:"reason"`
 
-	// conn
+	// conn; a closed one also has reason, by, cause (when by is self) and
+	// of (a close for one received frame)
 	Event string `json:"event"`
+	By    string `json:"by"`
 
 	// dropped
 	Count *uint64 `json:"count"`
@@ -176,6 +178,8 @@ var (
 	causes          = []string{"broadcast", "gossip", "relay", "retry", "reconnect", "replay", "direct"}
 	engineStates    = []string{"running", "stopped", "syncing"}
 	connEvents      = []string{"handshake", "hello", "eth_registered", "istanbul_attached", "closed"}
+	closedBys       = []string{"self", "peer", "unknown"}
+	closeCauses     = []string{"frame", "engine_stopped", "queue_overflow", "replaced", "write_error", "shutdown", "other"}
 	checkClasses    = []string{"", "PROCESS", "FUTURE", "OLD", "INVALID", "EXTRA_SEAL", "TOO_FAR", "prefilter"}
 	outcomeVias     = []string{"direct", "backlog", "future_block", "self"}
 	addressPattern  = regexp.MustCompile(`^0x[0-9a-f]{40}$`)
@@ -203,10 +207,11 @@ type Result struct {
 
 // Validate checks the dump: every line is a record of a known type with the
 // common fields and the fields of its type, values are in their sets, a
-// file holds one node and one run, seq is unique within a run, outcome.of
-// and frame.relay_of name a received frame of the run, a relay names its
-// frame, and every frame's payload file exists with the frame's sha256,
-// size and dedup key.
+// file holds one node and one run, seq is unique within a run, outcome.of,
+// frame.relay_of and conn.of name a received frame of the run, a relay
+// names its frame, a closed conn's by and cause are in their sets, and
+// every frame's payload file exists with the frame's sha256, size and dedup
+// key.
 func Validate(d *Dump) *Result {
 	res := &Result{Files: len(d.Files), Records: map[string]int{}, Problems: []string{}}
 	add := func(r *Record, format string, args ...any) {
@@ -278,6 +283,7 @@ func Validate(d *Dump) *Result {
 			if !slices.Contains(connEvents, r.Event) {
 				add(r, "conn event %q", r.Event)
 			}
+			validateClose(r, add)
 		case "send_suppressed":
 			if r.Cause != "" && !slices.Contains(causes, r.Cause) {
 				add(r, "cause %q", r.Cause)
@@ -301,9 +307,35 @@ func Validate(d *Dump) *Result {
 			ref("of", r.Of)
 		case "frame":
 			ref("relay_of", r.RelayOf)
+		case "conn":
+			ref("of", r.Of)
 		}
 	}
 	return res
+}
+
+// validateClose checks who closed a stream and why: by is optional (an
+// older dump), cause and of come only with a close by the node, and of only
+// with a cause for one frame.
+func validateClose(r *Record, add func(*Record, string, ...any)) {
+	if r.Event != "closed" {
+		if r.By != "" || r.Cause != "" || r.Of != nil {
+			add(r, "conn %s with by, cause or of", r.Event)
+		}
+		return
+	}
+	if r.By != "" && !slices.Contains(closedBys, r.By) {
+		add(r, "closed by %q", r.By)
+	}
+	switch {
+	case r.By == "self" && !slices.Contains(closeCauses, r.Cause):
+		add(r, "closed by self with cause %q", r.Cause)
+	case r.By != "self" && r.Cause != "":
+		add(r, "closed by %q with cause %q", r.By, r.Cause)
+	}
+	if r.Of != nil && r.Cause != "frame" && r.Cause != "engine_stopped" {
+		add(r, "closed with cause %q and of", r.Cause)
+	}
 }
 
 func validateFrame(d *Dump, r *Record, add func(*Record, string, ...any), checked map[string]bool, payloads *int) {
