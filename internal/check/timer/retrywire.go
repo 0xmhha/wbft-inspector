@@ -3,7 +3,6 @@ package timer
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"github.com/0xmhha/wbft-inspector/internal/check"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
@@ -15,10 +14,10 @@ func init() {
 		Kinds: []check.Kind{check.Frames}}})
 }
 
-// Sizes of the per-peer recent cache (A-07 §5.2, A-01).
+// Sizes of the per-peer recent cache.
 const (
-	inmemoryPeers    = 40
-	inmemoryMessages = 1024
+	inmemoryPeers    = check.InmemoryPeers
+	inmemoryMessages = check.InmemoryMessages
 )
 
 // retryWire decides WBFT-TIMER-024 from frame dumps: a ROUND-CHANGE the
@@ -51,31 +50,11 @@ type touch struct {
 
 func (c retryWire) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
 	for _, d := range in.Frames {
-		for _, recs := range runsOf(d) {
+		for _, recs := range check.FrameRuns(d) {
 			c.run(recs, out)
 		}
 	}
 	return nil
-}
-
-// runsOf groups the records of a dump by file and run, each in seq order.
-func runsOf(d *frames.Dump) [][]*frames.Record {
-	byRun := map[[2]string][]*frames.Record{}
-	var order [][2]string
-	for _, r := range d.Records {
-		k := [2]string{r.File, r.Run}
-		if _, ok := byRun[k]; !ok {
-			order = append(order, k)
-		}
-		byRun[k] = append(byRun[k], r)
-	}
-	out := make([][]*frames.Record, 0, len(order))
-	for _, k := range order {
-		recs := byRun[k]
-		sort.SliceStable(recs, func(i, j int) bool { return recs[i].Seq < recs[j].Seq })
-		out = append(out, recs)
-	}
-	return out
 }
 
 func (c retryWire) run(recs []*frames.Record, out check.Emitter) {

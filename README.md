@@ -178,7 +178,11 @@ From frame dumps (`check --frames`), chapter A-07: WBFT-NET-011 (only codes
 0x00..0x10 other than 0x07 are discarded; codes 0x11..0x15 received with the
 engine stopped are discarded while the node synchronises and disconnect the
 peer otherwise, decided from the frame's `engine` and its recorded outcome),
--021 (an empty consensus payload disconnects), -024 (a consensus frame whose
+-021 (an empty consensus payload disconnects), -023 (a key received from a
+peer enters that peer's recent cache before the known-cache check: the node
+leaves it out of sends to that peer and finds it on the peer's next copy,
+judged after receipts that carry `dedup` while the cache cannot have
+evicted the key), -024 (a consensus frame whose
 key the node already knew is discarded and does not reach the core, from the
 frame's `dedup` hits; the first-receipt row is not decided), -027 (the same
 stopped-engine rows) and -028 (0x07 does not disconnect). The size
