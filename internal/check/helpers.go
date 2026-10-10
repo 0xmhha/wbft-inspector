@@ -3,6 +3,7 @@ package check
 import (
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/0xmhha/wbft-inspector/internal/events"
 	"github.com/0xmhha/wbft-inspector/internal/evidence"
@@ -324,4 +325,32 @@ func FrameInstance(req string, r *frames.Record, v verdict.Verdict, reason verdi
 	}
 	return verdict.Instance{Requirement: req, Node: r.Node, Key: fmt.Sprintf("frame:%s:%d", r.Run, r.Seq), Verdict: v, Reason: reason,
 		Message: msg, Source: r.Input, Evidence: []evidence.Pointer{FramePointer(r)}}
+}
+
+// Sizes of the per-peer recent cache (A-07 §5.2, A-01): INMEMORY_PEERS
+// peers of INMEMORY_MESSAGES keys each.
+const (
+	InmemoryPeers    = 40
+	InmemoryMessages = 1024
+)
+
+// FrameRuns groups the records of a dump by file and run, each in seq
+// order.
+func FrameRuns(d *frames.Dump) [][]*frames.Record {
+	byRun := map[[2]string][]*frames.Record{}
+	var order [][2]string
+	for _, r := range d.Records {
+		k := [2]string{r.File, r.Run}
+		if _, ok := byRun[k]; !ok {
+			order = append(order, k)
+		}
+		byRun[k] = append(byRun[k], r)
+	}
+	out := make([][]*frames.Record, 0, len(order))
+	for _, k := range order {
+		recs := byRun[k]
+		sort.SliceStable(recs, func(i, j int) bool { return recs[i].Seq < recs[j].Seq })
+		out = append(out, recs)
+	}
+	return out
 }
