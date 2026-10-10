@@ -70,21 +70,7 @@ func (c noRelayCases) run(recs []*frames.Record, out check.Emitter) {
 			}
 		}
 	}
-	class := func(r *frames.Record) string {
-		if r.Outcome != "PENDING" {
-			return r.Outcome
-		}
-		outs := later[r.Seq]
-		for _, o := range outs {
-			if o == "ACCEPT" {
-				return o
-			}
-		}
-		if len(outs) == 0 {
-			return ""
-		}
-		return outs[len(outs)-1]
-	}
+	class := func(r *frames.Record) string { return finalClass(r, later[r.Seq]) }
 	var ended []*frames.Record
 	for _, r := range recs {
 		if r.Type != "frame" || r.Dir != "in" || r.DedupKey == "" {
