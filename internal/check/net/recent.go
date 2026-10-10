@@ -112,19 +112,26 @@ func judge(r *frames.Record, peer string, checked bool, since []use, key string,
 	default:
 		return // a receipt the node did not check
 	}
-	keys, peers := map[string]bool{}, map[string]bool{}
-	for _, u := range since {
-		if u.peer == peer && u.key != key {
-			keys[u.key] = true
-		}
-		if u.peer != peer {
-			peers[u.peer] = true
-		}
-	}
-	if len(keys) >= check.InmemoryMessages || len(peers) >= check.InmemoryPeers {
+	if keys, peers, gone := evictable(since, peer, key); gone {
 		out.Emit(check.FrameInstance(reqPeerCache, r, verdict.CannotDecide, verdict.ObserverScope,
-			fmt.Sprintf("%s after receiving the key from it; %d other keys of the peer and %d other peers were used since, so the cache may have evicted it", what, len(keys), len(peers))))
+			fmt.Sprintf("%s after receiving the key from it; %d other keys of the peer and %d other peers were used since, so the cache may have evicted it", what, keys, peers)))
 		return
 	}
 	emit(out, reqPeerCache, r, ok, what+" after receiving the key from it (the peer's recent cache holds it)")
+}
+
+// evictable counts the other keys of peer and the other peers used since
+// key was added to peer's cache, and reports whether that many could have
+// evicted it.
+func evictable(since []use, peer, key string) (keys, peers int, gone bool) {
+	ks, ps := map[string]bool{}, map[string]bool{}
+	for _, u := range since {
+		if u.peer == peer && u.key != key {
+			ks[u.key] = true
+		}
+		if u.peer != peer {
+			ps[u.peer] = true
+		}
+	}
+	return len(ks), len(ps), len(ks) >= check.InmemoryMessages || len(ps) >= check.InmemoryPeers
 }
