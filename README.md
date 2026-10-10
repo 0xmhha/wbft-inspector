@@ -185,7 +185,9 @@ judged after receipts that carry `dedup` while the cache cannot have
 evicted the key), -024 (a consensus frame whose
 key the node already knew is discarded and does not reach the core, from the
 frame's `dedup` hits; the first-receipt row is not decided), -027 (the same
-stopped-engine rows) and -028 (0x07 does not disconnect). The size
+stopped-engine rows), -028 (0x07 does not disconnect) and -032 (the same key
+is not sent to the same peer twice in a run, a failed write included, unless
+the cache may have evicted it). The size
 is known from frames whose payload the dump holds and from frames recorded
 without their payload that carry their size. Chapter A-06: WBFT-TIMER-024
 (a retransmitted ROUND-CHANGE goes on the wire only to peers whose recent
