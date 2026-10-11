@@ -202,10 +202,15 @@ without their payload that carry their size. Chapter A-06: WBFT-TIMER-024
 cache does not hold it), from the `cause` and `send_suppressed` records;
 a retransmission on the wire with no earlier copy for that peer in the
 dump, or after enough other keys or peers to evict it, is undecided.
+Chapter A-05: WBFT-SM-083 (a node does not send two PREPAREs, or two
+COMMITs, with different digests for one view within one run), from the
+payloads of the node's own sent frames: the signer is recovered from each
+payload (relays of other validators' messages are left out), and runs are
+judged apart because the property does not hold across a restart.
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,
--083 .. -088, -090; WBFT-TIMER-030, -031), headers or node RPC
+-084 .. -088, -090; WBFT-TIMER-030, -031), headers or node RPC
 (WBFT-SM-026, -047, -048, -067, -086; WBFT-TIMER-040, -042, -043), the `MAY`
 rules that give observations rather than verdicts (WBFT-SM-078, -080, -081,
 -082, -091), and WBFT-SM-049, WBFT-TIMER-001, -004, -008, -011, -032.
