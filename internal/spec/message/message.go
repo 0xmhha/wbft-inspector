@@ -35,6 +35,9 @@ type Message struct {
 	Digest    [32]byte
 	HasDigest bool
 	Signer    [20]byte
+	// Header is the RLP encoding of a PRE-PREPARE's proposal header, nil
+	// for other messages and a PRE-PREPARE without a proposal.
+	Header []byte
 }
 
 // Decode reads the message of code from payload and recovers its signer.
@@ -95,6 +98,7 @@ func Decode(code uint64, payload []byte) (*Message, error) {
 				return nil, errors.New("message: proposal header is not a list")
 			}
 			m.Digest, m.HasDigest = keccak.Sum256(block[0].Raw), true
+			m.Header = block[0].Raw
 		}
 		signed, sig = sp[0], sp[1].Content
 	case CodeRoundChange:
