@@ -42,6 +42,12 @@ wbft-inspector check --events events/ --chain-config genesis.json --out report.j
   kind (`ROUND_ENTER`, `TIMER_ARM`, `SEND`, `MSG_OUTCOME`, ...). The
   [wbft](https://github.com/0xmhha/wbft) node and its simulator
   (`conformance/sim`) write this format.
+  A node whose event writer fell behind writes
+  `{"type":"dropped","node":…,"run":…,"count":N,"from_seq":S}` in place of
+  the N records from seq S. Such spans, and seq gaps without such a
+  record (reported as input errors), are lost: a `FAIL` anchored at an
+  event of that run becomes `CANNOT_DECIDE` with the reason `MISSING_DATA`,
+  since the lost records may hold what the checker found missing.
 - `--logs NODE=PATH` (repeatable, with `--log-profile FILE`) reads the JSON
   log of a node that has no event stream, through the implementation
   profile its build publishes (`wbft-log-profile/1`; wbft's
