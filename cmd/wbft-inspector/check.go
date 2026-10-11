@@ -56,7 +56,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	fs.Var(&framePaths, "frames", "frame dump directory in the R-01 format (repeatable); format problems are reported as errors")
 	var rejPaths multi
 	fs.Var(&rejPaths, "rejections", "NODE=PATH: the rejected blocks and proposals of the node with address NODE: a wbft_rejections response, JSON Lines records or the node's rejections directory (repeatable)")
-	chainCfg := fs.String("chain-config", "", "genesis file or chain configuration (anzeon.wbft, transitions) for timer durations")
+	chainCfg := fs.String("chain-config", "", "genesis file or chain configuration (anzeon.wbft, transitions, chainId) for timer durations and the randao reveal of proposals")
 	checks := fs.String("checks", "", "comma-separated selection: requirement IDs, priorities (P0, P1, P2, V) or checker-name globs (e.g. timer.*); default: the whole catalog")
 	requireDecided := fs.String("require-decided", "", "file of requirement IDs that must be decided (PASS or FAIL); otherwise exit 2")
 	minCoverage := fs.Float64("min-coverage", 0, "lower bound of passed/instances for PASS results; otherwise exit 2")

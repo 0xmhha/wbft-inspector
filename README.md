@@ -69,6 +69,8 @@ wbft-inspector check --events events/ --chain-config genesis.json --out report.j
   timer checkers need it to compute `round_timeout(config_at(h), r)` and
   `RT(h)`; without it those requirements are `CANNOT_DECIDE` with the reason
   `MISSING_DATA`.
+  Its `chainId`, when present, lets WBFT-HDR-060 check the randao reveal
+  of proposals (step H18).
 - `--checks` selects requirement IDs, priorities (`P0`, `P1`, `P2`, `V`) or
   checker-name globs (`timer.*`); the default is the whole catalog.
 - `--require-decided FILE` lists requirement IDs (one per line, `#` starts a
@@ -243,7 +245,8 @@ With the same input, chapter A-08: WBFT-HDR-060 (a node verifies a
 proposal with the steps P1-P7 in order and takes the first failing step
 as the result), for the proposals the inspector finds invalid itself: it
 applies the header steps that need nothing but the proposal header (H3,
-H4, H5, H7, H13, H16). For a proposal failing step S, the node fails the
+H4, H5, H7, H13, H16) and, with the chain id of `--chain-config`, H18
+(the randao reveal recovers to the proposal's Coinbase). For a proposal failing step S, the node fails the
 requirement when it accepted the proposal or recorded a rejection at a
 step after S, and passes when it recorded one at S or before; without a
 rejection record the proposal is undecided (it may have failed the

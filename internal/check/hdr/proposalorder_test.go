@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/check"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
 	"github.com/0xmhha/wbft-inspector/internal/rejections"
+	"github.com/0xmhha/wbft-inspector/internal/spec/params"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
 
@@ -53,6 +55,10 @@ func payloads(t *testing.T) map[string][2]string {
 //     step: MISSING_DATA;
 //   - r9: a Difficulty-2 proposal in a run that lost records: MISSING_DATA;
 //   - r10: a relay of another validator's proposal: no instance.
+//
+// With the chain id of the payloads (8282) the verdicts are the same. With
+// another chain id the valid proposal of r6 fails H18, and its rejection
+// at H12 comes before it: PASS. The other proposals fail an earlier step.
 func TestProposalOrder(t *testing.T) {
 	p := payloads(t)
 	dir := t.TempDir()
@@ -121,18 +127,39 @@ func TestProposalOrder(t *testing.T) {
 	var got sink
 	c := proposalOrder{check.Base{ID: "hdr.proposal_verify_order"}}
 	in := &check.Inputs{Frames: []*frames.Dump{{Input: "in-1", Dir: dir, Records: recs}}, Rejections: []*rejections.Set{set}}
-	if err := c.Run(context.Background(), in, &got); err != nil {
-		t.Fatal(err)
-	}
-	var lines []string
-	for _, i := range got {
-		lines = append(lines, i.Key+" "+string(i.Verdict)+" "+string(i.Reason))
+	run := func() []string {
+		got = nil
+		if err := c.Run(context.Background(), in, &got); err != nil {
+			t.Fatal(err)
+		}
+		var lines []string
+		for _, i := range got {
+			lines = append(lines, i.Key+" "+string(i.Verdict)+" "+string(i.Reason))
+		}
+		return lines
 	}
 	want := []string{"frame:r1:1 PASS ", "frame:r2:1 FAIL ", "frame:r3:1 PASS ", "frame:r4:1 FAIL ",
 		"frame:r5:1 CANNOT_DECIDE OBSERVER_SCOPE", "frame:r7:1 FAIL ", "frame:r8:1 CANNOT_DECIDE MISSING_DATA",
 		"frame:r9:2 CANNOT_DECIDE MISSING_DATA"}
-	if strings.Join(lines, "\n") != strings.Join(want, "\n") {
-		t.Fatalf("instances\n%s\nwant\n%s", strings.Join(lines, "\n"), strings.Join(want, "\n"))
+	withR6 := append(append(append([]string(nil), want[:5]...), "frame:r6:1 PASS "), want[5:]...)
+	for _, c := range []struct {
+		chain *big.Int
+		want  []string
+	}{{big.NewInt(8282), want}, {big.NewInt(8283), withR6}, {nil, want}} {
+		in.Config = &params.Config{ChainID: c.chain}
+		if lines := run(); strings.Join(lines, "\n") != strings.Join(c.want, "\n") {
+			t.Fatalf("chain id %v: instances\n%s\nwant\n%s", c.chain, strings.Join(lines, "\n"), strings.Join(c.want, "\n"))
+		}
+	}
+	in.Config = &params.Config{ChainID: big.NewInt(8283)}
+	run()
+	if !strings.Contains(got[5].Message, "fails H18") || !strings.Contains(got[5].Message, "rejected it at H12") {
+		t.Fatalf("r6 with chain id 8283: %s", got[5].Message)
+	}
+	in.Config = nil
+	run()
+	if len(got) != len(want) {
+		t.Fatalf("without a chain configuration: %d instances", len(got))
 	}
 	if !strings.Contains(got[0].Message, "fails H4") || got[0].Evidence[1].Method != "wbft_rejections" || got[5].Evidence[1].FrameID != "r7:3" {
 		t.Fatalf("instances %+v", got)
