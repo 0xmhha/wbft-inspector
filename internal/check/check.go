@@ -10,6 +10,7 @@ package check
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -130,9 +131,12 @@ func ForRequirement(id string) (Checker, bool) {
 
 // Explainer decides whether a failed instance on a node that declared
 // optional behaviours is explained by those behaviours. The public build has
-// none: such a failure becomes CANNOT_DECIDE with the reason NOT_IN_BUILD,
-// because the public build cannot tell which requirements an optional
-// behaviour changes. A build that can tell registers an Explainer.
+// none. It knows only the behaviours of PublicBehaviours: a failure on a
+// node that declares only those stays a failure unless the requirement is
+// one they change. Any other failure on such a node becomes CANNOT_DECIDE
+// with the reason NOT_IN_BUILD, because the public build cannot tell which
+// requirements the behaviour changes. A build that can tell registers an
+// Explainer.
 type Explainer interface {
 	// Explain returns true and a note when the behaviours of the node
 	// explain the difference; the instance then becomes an observation.
@@ -347,6 +351,42 @@ func safeRun(ctx context.Context, c Checker, in *Inputs, e Emitter) (err error) 
 	return c.Run(ctx, in, e)
 }
 
+// PublicBehaviours are the optional behaviours a public wbft node always
+// declares, its restart-safety rules, with the requirements whose verdict
+// they change:
+//   - one_round0_proposal: the proposer sends no second PRE-PREPARE in a
+//     round-0 view, where the reference does on a second request
+//     (WBFT-SM-032 and the MAY of WBFT-SM-082).
+//   - bad_block_release_mark: the core marks a ROUND-CHANGE whose prepared
+//     pair the bad-block rule released, for the node's signer only; the
+//     messages are those of the reference.
+//
+// A refusal of the node's signer is not a behaviour of this list: the
+// node records it (HEALTH privval_refusal, sign_floor_skip) and the
+// checkers do not count the message it did not send.
+var PublicBehaviours = map[string][]string{
+	"one_round0_proposal":    {"WBFT-SM-032", "WBFT-SM-082"},
+	"bad_block_release_mark": nil,
+}
+
+// publicOnly reports whether the node declares only behaviours of
+// PublicBehaviours, and whether one of them changes requirement req.
+func publicOnly(node *events.NodeInfo, req string) (only, changes bool) {
+	if node.Unnamed {
+		return false, false
+	}
+	for _, b := range node.Behaviours {
+		reqs, ok := PublicBehaviours[b]
+		if !ok {
+			return false, false
+		}
+		if slices.Contains(reqs, req) {
+			changes = true
+		}
+	}
+	return true, changes
+}
+
 // applyOptional handles failures on nodes that declared optional
 // behaviours (see Explainer).
 func applyOptional(in *Inputs, out *Outcome) {
@@ -368,6 +408,10 @@ func applyOptional(in *Inputs, out *Outcome) {
 					out.Observations = append(out.Observations, obs)
 					continue
 				}
+			}
+			if only, changes := publicOnly(node, req); only && !changes {
+				kept = append(kept, x)
+				continue
 			}
 			x.Verdict, x.Reason = verdict.CannotDecide, verdict.NotInBuild
 			x.Message = "the node declares optional behaviours; this build cannot tell whether they explain the difference: " + x.Message

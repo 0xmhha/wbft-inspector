@@ -187,8 +187,24 @@ type NodeInfo struct {
 	Impl    string
 	// Optional reports that the node declared optional behaviours: a
 	// non-empty NODE_START "improvements" list or an "imp" field on any
-	// record. The public build cannot tell which requirements they change.
+	// record.
 	Optional bool
+	// Behaviours are the names in the NODE_START "improvements" lists, in
+	// the order first seen.
+	Behaviours []string
+	// Unnamed reports a declaration without a name: an "imp" field on a
+	// record or an "improvements" entry without a "name".
+	Unnamed bool
+}
+
+// addBehaviour adds name to the node's behaviours once.
+func (n *NodeInfo) addBehaviour(name string) {
+	for _, b := range n.Behaviours {
+		if b == name {
+			return
+		}
+	}
+	n.Behaviours = append(n.Behaviours, name)
 }
 
 // Set is the event streams of one check.
@@ -463,7 +479,7 @@ func (s *Set) note(e *Event) {
 		s.Nodes[e.Node] = n
 	}
 	if len(e.Imp) > 0 {
-		n.Optional = true
+		n.Optional, n.Unnamed = true, true
 	}
 	if e.Kind == "NODE_START" {
 		if impl := e.Str("impl"); impl != "" {
@@ -473,6 +489,16 @@ func (s *Set) note(e *Event) {
 			var list []json.RawMessage
 			if json.Unmarshal(raw, &list) == nil && len(list) > 0 {
 				n.Optional = true
+				for _, it := range list {
+					var b struct {
+						Name string `json:"name"`
+					}
+					if json.Unmarshal(it, &b) != nil || b.Name == "" {
+						n.Unnamed = true
+						continue
+					}
+					n.addBehaviour(b.Name)
+				}
 			}
 		}
 	}
@@ -500,6 +526,10 @@ func (s *Set) Merge(o *Set) {
 			s.Nodes[k] = n
 		} else {
 			cur.Optional = cur.Optional || n.Optional
+			cur.Unnamed = cur.Unnamed || n.Unnamed
+			for _, b := range n.Behaviours {
+				cur.addBehaviour(b)
+			}
 			if cur.Impl == "" {
 				cur.Impl = n.Impl
 			}

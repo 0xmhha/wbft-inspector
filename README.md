@@ -171,6 +171,11 @@ with the reason `NOT_IN_BUILD` instead of being decided. When a node declares
 optional behaviours (a non-empty `improvements` list in `NODE_START`, or an
 `imp` field on an event), a failure on that node is also `NOT_IN_BUILD`,
 because this build cannot tell which requirements those behaviours change.
+The exception is the restart-safety rules every wbft node declares,
+`one_round0_proposal` and `bad_block_release_mark` (`check.PublicBehaviours`).
+This build knows what they change: `one_round0_proposal` changes WBFT-SM-032
+and WBFT-SM-082, and `bad_block_release_mark` changes no requirement. A node
+that declares only these keeps its failures of every other requirement.
 
 Checkers and catalog rows are registered at init time (`check.Register`,
 `catalog.Register`). Another build can compile in further packages that
