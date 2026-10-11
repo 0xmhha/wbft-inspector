@@ -207,6 +207,13 @@ COMMITs, with different digests for one view within one run), from the
 payloads of the node's own sent frames: the signer is recovered from each
 payload (relays of other validators' messages are left out), and runs are
 judged apart because the property does not hold across a restart.
+With the event stream of the same run, chapter A-10: WBFT-SEC-041 (a
+node that receives two valid signatures of one validator on different
+digests for one view reports it), the cross-check of the node's EVIDENCE
+records with its received PRE-PREPARE, PREPARE and COMMIT frames: a pair
+without EVIDENCE fails while the node was at that sequence or next to it,
+and an EVIDENCE whose two messages the dump does not hold is undecided
+(INCONSISTENT_INPUT).
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,
