@@ -1,6 +1,6 @@
 // Package header decides the header rules of wbft-spec A-08 §6.2 that need
-// nothing but the header itself: no parent, state, validator set, chain
-// configuration or clock.
+// nothing but the header itself and, for the randao reveal, the chain id:
+// no parent, state, validator set, other chain configuration or clock.
 package header
 
 import (
@@ -11,7 +11,9 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/0xmhha/wbft-inspector/internal/spec/keccak"
 	"github.com/0xmhha/wbft-inspector/internal/spec/rlp"
+	"github.com/0xmhha/wbft-inspector/internal/spec/secp256k1"
 )
 
 // Field positions in the header list (A-03): the fifteen fields every
@@ -19,6 +21,7 @@ import (
 // it.
 const (
 	fUncleHash        = 1
+	fCoinbase         = 2
 	fDifficulty       = 7
 	fNumber           = 8
 	fGasLimit         = 9
@@ -28,6 +31,8 @@ const (
 	nRequired         = 15
 	fWithdrawalsHash  = 16
 	extraElements     = 10
+	xRandaoReveal     = 1 // position of the randao reveal in the extra (A-03)
+	randaoVersion     = 1
 	maxGasLimitBitLen = 63
 )
 
@@ -64,17 +69,18 @@ func Decode(raw []byte) (*Header, error) {
 
 // Failure is a rule a header breaks.
 type Failure struct {
-	Step string // "H3" .. "H16"
+	Step string // "H3" .. "H18"
 	Why  string
 }
 
-// FirstFailure returns the first of the steps H3, H4, H5, H7, H13 and H16
-// that the header fails, in the order of A-08 §6.2, or nil. The other
-// steps need more than the header; a node may fail one of them first,
-// which comes before or after the returned step as Order says. H13 and
-// H16 are not reached by a block number 0 mod 2^64 (H10 returns), so they
-// are not checked for one.
-func (h *Header) FirstFailure() *Failure {
+// FirstFailure returns the first of the steps H3, H4, H5, H7, H13, H16
+// and H18 that the header fails, in the order of A-08 §6.2, or nil. H18
+// (the randao reveal recovers to Coinbase) is checked only with a chain
+// id; chainID nil leaves it out. The other steps need more than the
+// header; a node may fail one of them first, which comes before or after
+// the returned step as Order says. H13, H16 and H18 are not reached by a
+// block number 0 mod 2^64 (H10 returns), so they are not checked for one.
+func (h *Header) FirstFailure(chainID *big.Int) *Failure {
 	f := h.fields
 	if f[fUncleHash].List || !bytes.Equal(f[fUncleHash].Content, emptyUncleHash) {
 		return &Failure{"H3", "UncleHash is not the hash of an empty list"}
@@ -101,10 +107,35 @@ func (h *Header) FirstFailure() *Failure {
 	if f[fExtra].List {
 		return &Failure{"H16", "Extra is a list, not bytes"}
 	}
-	if x, err := rlp.Items(f[fExtra].Content); err != nil || len(x) != extraElements {
+	x, err := rlp.Items(f[fExtra].Content)
+	if err != nil || len(x) != extraElements {
 		return &Failure{"H16", fmt.Sprintf("Extra does not decode as ten list elements (%d, %v)", len(x), err)}
 	}
+	reveal := x[xRandaoReveal]
+	if reveal.List {
+		return &Failure{"H16", "the randao reveal in Extra is a list, not bytes"}
+	}
+	if chainID == nil {
+		return nil
+	}
+	data := RandaoData(chainID, h.Number)
+	signer, err := secp256k1.Recover(keccak.Sum256(data[:]), reveal.Content)
+	if err != nil {
+		return &Failure{"H18", fmt.Sprintf("the randao reveal does not recover (%v)", err)}
+	}
+	if f[fCoinbase].List || !bytes.Equal(signer[:], f[fCoinbase].Content) {
+		return &Failure{"H18", fmt.Sprintf("the randao reveal recovers to 0x%x, not Coinbase 0x%x", signer, f[fCoinbase].Content)}
+	}
 	return nil
+}
+
+// RandaoData is randao_data(chain_id, number) of A-02 §7.1:
+// keccak256(be_min(chain_id) ‖ 0x01 ‖ be_min(number)), where be_min(0)
+// is empty. The reveal is the signature of its keccak256 (ecdsa_sign
+// hashes its input).
+func RandaoData(chainID, number *big.Int) [32]byte {
+	pre := append(append(chainID.Bytes(), randaoVersion), number.Bytes()...)
+	return keccak.Sum256(pre)
 }
 
 // value formats an integer field, or its bytes when it is not one.

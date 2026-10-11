@@ -43,6 +43,7 @@ type Transition struct {
 type Config struct {
 	Base        WBFT
 	Transitions []Transition
+	ChainID     *big.Int // the chain id of the configuration, nil when absent
 }
 
 // New returns a configuration with the transitions sorted by block.
@@ -105,7 +106,8 @@ func (c *Config) At(number *big.Int) Resolved {
 // ParseGenesis reads the consensus part of a chain configuration: either a
 // genesis file (its "config" object is used) or the configuration object
 // itself, with the camel-case field names of the genesis file
-// (anzeon.wbft.requestTimeoutSeconds, transitions[].block, ...).
+// (anzeon.wbft.requestTimeoutSeconds, transitions[].block, ...), and its
+// chainId when present.
 func ParseGenesis(raw []byte) (*Config, error) {
 	var top map[string]json.RawMessage
 	if err := decode(raw, &top); err != nil {
@@ -119,6 +121,7 @@ func ParseGenesis(raw []byte) (*Config, error) {
 			WBFT *wbftJSON `json:"wbft"`
 		} `json:"anzeon"`
 		Transitions []transitionJSON `json:"transitions"`
+		ChainID     *json.Number     `json:"chainId"`
 	}
 	if err := decode(raw, &cc); err != nil {
 		return nil, fmt.Errorf("params: %w", err)
@@ -147,7 +150,18 @@ func ParseGenesis(raw []byte) (*Config, error) {
 			EpochLength: w.EpochLength, AllowedFutureBlockTime: w.AllowedFutureBlockTime, ProposerPolicy: w.ProposerPolicy,
 			MaxRequestTimeoutSeconds: w.MaxRequestTimeoutSeconds})
 	}
-	return New(base, ts)
+	c, err := New(base, ts)
+	if err != nil {
+		return nil, err
+	}
+	if cc.ChainID != nil {
+		id, ok := new(big.Int).SetString(cc.ChainID.String(), 10)
+		if !ok || id.Sign() < 0 {
+			return nil, fmt.Errorf("params: bad chainId %s", cc.ChainID)
+		}
+		c.ChainID = id
+	}
+	return c, nil
 }
 
 func decode(raw []byte, v any) error {

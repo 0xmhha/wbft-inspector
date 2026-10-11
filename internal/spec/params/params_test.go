@@ -49,9 +49,28 @@ func TestRequestTimeoutWraps(t *testing.T) {
 
 func TestParseErrors(t *testing.T) {
 	for _, raw := range []string{`{}`, `{"anzeon":{}}`, `{"anzeon":{"wbft":{"requestTimeoutSeconds":-1}}}`,
-		`{"anzeon":{"wbft":{}},"transitions":[{"requestTimeoutSeconds":1}]}`} {
+		`{"anzeon":{"wbft":{}},"transitions":[{"requestTimeoutSeconds":1}]}`,
+		`{"chainId":-1,"anzeon":{"wbft":{}}}`, `{"chainId":1.5,"anzeon":{"wbft":{}}}`} {
 		if _, err := ParseGenesis([]byte(raw)); err == nil {
 			t.Errorf("%s: accepted", raw)
+		}
+	}
+}
+
+// TestChainID reads chainId from a genesis file and from the
+// configuration object, and leaves it nil when absent.
+func TestChainID(t *testing.T) {
+	for raw, want := range map[string]string{
+		`{"config":{"chainId":8282,"anzeon":{"wbft":{}}}}`:      "8282",
+		`{"chainId":18446744073709551617,"anzeon":{"wbft":{}}}`: "18446744073709551617",
+		`{"config":{"anzeon":{"wbft":{}}}}`:                     "<nil>",
+	} {
+		c, err := ParseGenesis([]byte(raw))
+		if err != nil {
+			t.Fatalf("%s: %v", raw, err)
+		}
+		if got := c.ChainID.String(); got != want {
+			t.Errorf("%s: chain id %s, want %s", raw, got, want)
 		}
 	}
 }

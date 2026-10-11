@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -32,7 +33,8 @@ const rowPreprepareAccept = 15
 // for the proposals the inspector can find invalid itself. It reads the
 // proposal header of each PRE-PREPARE in a node's frame dump and applies
 // the header steps that need nothing but the header (header.FirstFailure:
-// H3, H4, H5, H7, H13, H16). For a proposal that fails one of them,
+// H3, H4, H5, H7, H13, H16) and, when the chain configuration gives the
+// chain id, H18 (the randao reveal recovers to Coinbase). For a proposal that fails one of them,
 // step S, the node must reject it at S or at an earlier step the
 // inspector cannot evaluate. It is the R-09 cross-check of the node's
 // rejection records with the inspector's own verdict on the proposal.
@@ -64,6 +66,10 @@ type group struct {
 }
 
 func (c proposalOrder) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
+	var chainID *big.Int
+	if in.Config != nil {
+		chainID = in.Config.ChainID
+	}
 	byNode := map[string][]*rejections.Record{}
 	given := map[string]bool{}
 	for _, s := range in.Rejections {
@@ -80,13 +86,13 @@ func (c proposalOrder) Run(_ context.Context, in *check.Inputs, out check.Emitte
 			if len(recs) == 0 {
 				continue
 			}
-			c.run(d, recs, byNode[recs[0].Node], given[recs[0].Node], cache, out)
+			c.run(d, recs, byNode[recs[0].Node], given[recs[0].Node], chainID, cache, out)
 		}
 	}
 	return nil
 }
 
-func (c proposalOrder) run(d *frames.Dump, recs []*frames.Record, rejs []*rejections.Record, given bool,
+func (c proposalOrder) run(d *frames.Dump, recs []*frames.Record, rejs []*rejections.Record, given bool, chainID *big.Int,
 	cache map[string]*message.Message, out check.Emitter) {
 	node := recs[0].Node
 	groups := map[groupKey]*group{}
@@ -131,7 +137,7 @@ func (c proposalOrder) run(d *frames.Dump, recs []*frames.Record, rejs []*reject
 				if err != nil || h.Number.Cmp(m.Sequence) != 0 {
 					continue
 				}
-				g = &group{first: r, own: r.Dir == "out", fail: h.FirstFailure()}
+				g = &group{first: r, own: r.Dir == "out", fail: h.FirstFailure(chainID)}
 				groups[k] = g
 				order = append(order, k)
 			}
