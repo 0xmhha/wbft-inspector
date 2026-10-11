@@ -271,6 +271,16 @@ after the record, or proposed itself, fails when the node accepted it
 or rejected it at a step after P2. It passes when the node rejected it at
 P1 or P2. A proposal after ten higher bad blocks were recorded is left
 out, since the record may have been dropped.
+From the event stream alone, chapter A-09: WBFT-APP-100 (after a finalized
+block fails import, consensus does not decide it again at the same height
+and goes on through a ROUND-CHANGE started by its round timer). The
+failure is an `IMPORT_FAIL` with path `sealed_locally` or a
+`COMMIT_RESULT` with `ok` false. It fails when the block is decided again
+(`FINALIZE_HANDOVER`) or becomes the head. It also fails when the next
+round of the height is entered with cause `finalize_fail`. It passes when
+that round comes by `timeout` or `f_plus_one`, or when the height ends with
+another block. The wbft simulator records neither failure record, so its
+streams do not exercise it.
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,
