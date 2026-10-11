@@ -254,3 +254,6 @@ rows:
   - requirement: "WBFT-HDR-060"
     checker: "hdr.proposal_verify_order"
     priority: "P2"
+  - requirement: "WBFT-HDR-061"
+    checker: "hdr.bad_block_proposal_reject"
+    priority: "P2"

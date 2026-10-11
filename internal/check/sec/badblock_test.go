@@ -137,17 +137,17 @@ func TestNoReprepareBadBlockUndecided(t *testing.T) {
 
 	b = newBadBlockInputs(t)
 	b.importFail("5", digest1, 1, true)
-	for i := 0; i < badRetention; i++ {
+	for i := 0; i < check.BadRetention; i++ {
 		b.importFail(fmt.Sprint(10+i), fmt.Sprintf("0x%064x", 100+i), 2+i, true)
 	}
 	b.frame("frame", "0x13", prepA5r0d1, 30)
 	got := b.run()
 	if got[0].Key != "event:r1:1" || got[0].Verdict != verdict.CannotDecide || got[0].Reason != verdict.ObserverScope {
-		t.Fatalf("after %d higher bad blocks: %s", badRetention, lines(got))
+		t.Fatalf("after %d higher bad blocks: %s", check.BadRetention, lines(got))
 	}
 	// With one higher bad block fewer the protection still holds.
 	b.evs = b.evs[:len(b.evs)-1]
 	if got := b.run(); got[0].Verdict != verdict.Fail {
-		t.Fatalf("after %d higher bad blocks: %s", badRetention-1, lines(got))
+		t.Fatalf("after %d higher bad blocks: %s", check.BadRetention-1, lines(got))
 	}
 }
