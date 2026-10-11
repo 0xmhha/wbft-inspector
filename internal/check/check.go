@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/0xmhha/wbft-inspector/internal/events"
@@ -238,8 +239,64 @@ func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 		}
 		out.Ran[c.Name()] = true
 	}
+	applyLost(in, out)
 	applyOptional(in, out)
 	return out
+}
+
+// applyLost turns a FAIL anchored at an event of a run that lost records
+// (events.Run.Lost: the node's writer dropped them) into CANNOT_DECIDE
+// MISSING_DATA: the lost records may hold what the checker found missing,
+// or change the state it reconstructed. A FAIL anchored elsewhere (frames,
+// rejections) is left to its checker, which reads the frame dump's own
+// dropped records.
+func applyLost(in *Inputs, out *Outcome) {
+	if in.Events == nil {
+		return
+	}
+	lost := map[string][]events.Span{}
+	for _, r := range in.Events.Runs {
+		if len(r.Lost) > 0 {
+			lost[r.Node+"/"+r.ID] = r.Lost
+		}
+	}
+	if len(lost) == 0 {
+		return
+	}
+	for req, insts := range out.Instances {
+		for i, x := range insts {
+			run, ok := eventRun(x.Key)
+			if x.Verdict != verdict.Fail || !ok {
+				continue
+			}
+			spans := lost[x.Node+"/"+run]
+			if len(spans) == 0 {
+				continue
+			}
+			n := uint64(0)
+			for _, sp := range spans {
+				n += sp.To - sp.From + 1
+			}
+			x.Verdict, x.Reason = verdict.CannotDecide, verdict.MissingData
+			x.Message = fmt.Sprintf("run %s lost %d event records (first seq %d); they may explain the difference: %s", run, n, spans[0].From, x.Message)
+			insts[i] = x
+		}
+		out.Instances[req] = insts
+	}
+}
+
+// eventRun returns the run of an instance key of an event record
+// ("event:<run>:<seq>", Key).
+func eventRun(key string) (string, bool) {
+	rest, ok := strings.CutPrefix(key, "event:")
+	if !ok {
+		return "", false
+	}
+	i := strings.LastIndexByte(rest, ':')
+	if i < 0 {
+		return "", false
+	}
+	return rest[:i], true
 }
 
 // forChecker returns the inputs of checker c: without the log runs it does

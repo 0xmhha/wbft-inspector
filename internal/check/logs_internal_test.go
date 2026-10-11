@@ -74,3 +74,29 @@ func TestLogRunGate(t *testing.T) {
 		t.Fatal("inputs without log runs were copied")
 	}
 }
+
+// TestApplyLost: a FAIL anchored at an event of a run that lost records
+// becomes MISSING_DATA; a PASS there, a FAIL of another run and a FAIL
+// anchored at a frame are kept.
+func TestApplyLost(t *testing.T) {
+	in := &Inputs{Events: &events.Set{Runs: []*events.Run{
+		{ID: "r1", Node: "0xaa", Lost: []events.Span{{From: 7, To: 9}}},
+		{ID: "r2", Node: "0xaa"},
+	}}}
+	out := &Outcome{Instances: map[string][]verdict.Instance{"R-1": {
+		{Requirement: "R-1", Node: "0xaa", Key: "event:r1:3", Verdict: verdict.Fail, Message: "m"},
+		{Requirement: "R-1", Node: "0xaa", Key: "event:r1:4", Verdict: verdict.Pass},
+		{Requirement: "R-1", Node: "0xaa", Key: "event:r2:3", Verdict: verdict.Fail},
+		{Requirement: "R-1", Node: "0xaa", Key: "frame:r1:3", Verdict: verdict.Fail},
+	}}}
+	applyLost(in, out)
+	got := out.Instances["R-1"]
+	if got[0].Verdict != verdict.CannotDecide || got[0].Reason != verdict.MissingData || got[0].Message == "m" {
+		t.Errorf("lost run FAIL %+v", got[0])
+	}
+	for _, x := range got[1:] {
+		if x.Reason != "" {
+			t.Errorf("changed %+v", x)
+		}
+	}
+}

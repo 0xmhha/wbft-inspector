@@ -153,9 +153,17 @@ type Run struct {
 	// missing: the log shows both consensus modules at trace from its
 	// first line on (package logs).
 	Complete bool
-	groups   map[groupKey][]int
-	seg      []int // engine segment of each event
+	// Lost are the seq spans of records the node's writer dropped: the
+	// spans of its dropped records ({"type":"dropped","count":N,
+	// "from_seq":S}) and the seq gaps they stand for. A checker cannot
+	// tell what a lost span held.
+	Lost   []Span
+	groups map[groupKey][]int
+	seg    []int // engine segment of each event
 }
+
+// Span is a range of seq, both ends included.
+type Span struct{ From, To uint64 }
 
 type groupKey struct {
 	seg  int
@@ -191,6 +199,13 @@ type Set struct {
 	Errors []string
 	// UnknownKinds counts records of kinds this build does not know.
 	UnknownKinds map[string]int
+	drops        map[[2]string][]dropRec // dropped records by node and run
+}
+
+// dropRec is a dropped record and where it is.
+type dropRec struct {
+	span Span
+	ref  string
 }
 
 // Known kinds of the event vocabulary.
@@ -240,7 +255,7 @@ func Expand(paths []string) ([]string, error) {
 // Load reads event files. Input ids are in-1, in-2, ... in the order of
 // files. Malformed lines are reported in Set.Errors and skipped.
 func Load(files []string) (*Set, error) {
-	s := &Set{Nodes: map[string]*NodeInfo{}, UnknownKinds: map[string]int{}}
+	s := &Set{Nodes: map[string]*NodeInfo{}, UnknownKinds: map[string]int{}, drops: map[[2]string][]dropRec{}}
 	runs := map[[2]string]*Run{}
 	for i, path := range files {
 		id := fmt.Sprintf("in-%d", i+1)
@@ -255,18 +270,52 @@ func Load(files []string) (*Set, error) {
 		}
 		s.Inputs = append(s.Inputs, in)
 	}
-	for _, r := range runs {
+	for k, r := range runs {
 		sort.SliceStable(r.Events, func(i, j int) bool { return r.Events[i].Seq < r.Events[j].Seq })
+		drops := s.drops[k]
+		used := make([]bool, len(drops))
 		for i := 1; i < len(r.Events); i++ {
 			if r.Events[i].Seq == r.Events[i-1].Seq {
 				s.Errors = append(s.Errors, fmt.Sprintf("%s: run %s repeats seq %d", r.Events[i].Ref(), r.ID, r.Events[i].Seq))
 			} else if r.Events[i].Seq != r.Events[i-1].Seq+1 {
-				s.Errors = append(s.Errors, fmt.Sprintf("%s: run %s skips from seq %d to %d (records missing)", r.Events[i].Ref(), r.ID, r.Events[i-1].Seq, r.Events[i].Seq))
+				gap := Span{r.Events[i-1].Seq + 1, r.Events[i].Seq - 1}
+				r.Lost = append(r.Lost, gap)
+				explained := false
+				for j, d := range drops {
+					if d.span == gap {
+						used[j], explained = true, true
+					}
+				}
+				if !explained {
+					s.Errors = append(s.Errors, fmt.Sprintf("%s: run %s skips from seq %d to %d (records missing; judged as lost)", r.Events[i].Ref(), r.ID, r.Events[i-1].Seq, r.Events[i].Seq))
+				}
 			}
 		}
+		// A dropped record that matches no gap: the records lost at the
+		// end of the run, or a record that does not fit the stream.
+		for j, d := range drops {
+			if used[j] {
+				continue
+			}
+			if last := r.Events[len(r.Events)-1].Seq; d.span.From > last {
+				r.Lost = append(r.Lost, d.span)
+			} else {
+				s.Errors = append(s.Errors, fmt.Sprintf("%s: dropped record of seq %d..%d matches no gap of run %s; judged as lost", d.ref, d.span.From, d.span.To, r.ID))
+				r.Lost = append(r.Lost, d.span)
+			}
+		}
+		delete(s.drops, k)
 		r.index()
 		s.Runs = append(s.Runs, r)
 	}
+	var orphans []string
+	for k, ds := range s.drops {
+		for _, d := range ds {
+			orphans = append(orphans, fmt.Sprintf("%s: dropped record of node %s run %s, which has no event record", d.ref, k[0], k[1]))
+		}
+	}
+	sort.Strings(orphans)
+	s.Errors = append(s.Errors, orphans...)
 	sort.Slice(s.Runs, func(i, j int) bool {
 		a, b := s.Runs[i], s.Runs[j]
 		if a.Node != b.Node {
@@ -332,7 +381,19 @@ func (s *Set) parse(line []byte, id string, no int) *Event {
 		return nil
 	}
 	if t, ok := m["type"]; ok && m["kind"] == nil {
-		s.Errors = append(s.Errors, fmt.Sprintf("%s:%d: record of type %s (records were dropped by the writer; the checks treat the stream as complete)", id, no, t))
+		var d struct {
+			Type    string `json:"type"`
+			Node    string `json:"node"`
+			Run     string `json:"run"`
+			Count   uint64 `json:"count"`
+			FromSeq uint64 `json:"from_seq"`
+		}
+		if json.Unmarshal(line, &d) != nil || d.Type != "dropped" || d.Node == "" || d.Run == "" || d.Count == 0 {
+			s.Errors = append(s.Errors, fmt.Sprintf("%s:%d: record of type %s that this build does not read", id, no, t))
+			return nil
+		}
+		k := [2]string{d.Node, d.Run}
+		s.drops[k] = append(s.drops[k], dropRec{span: Span{d.FromSeq, d.FromSeq + d.Count - 1}, ref: fmt.Sprintf("%s:%d", id, no)})
 		return nil
 	}
 	e := &Event{Input: id, Line: no, F: map[string]json.RawMessage{}}
