@@ -41,7 +41,11 @@ wbft-inspector check --events events/ --chain-config genesis.json --out report.j
   optionally `view`, `step`, `imp`, `src`, followed by the fields of the
   kind (`ROUND_ENTER`, `TIMER_ARM`, `SEND`, `MSG_OUTCOME`, ...). The
   [wbft](https://github.com/0xmhha/wbft) node and its simulator
-  (`conformance/sim`) write this format.
+  (`conformance/sim`) write this format; its schema is wbft's
+  `observe/event/schema/events-v1.json`. A copy pinned to a wbft commit is
+  in `internal/events/testdata` (`events-v1.ref` names the commit), and the
+  tests check that the kinds, the field names and the compared values the
+  checkers use are in it.
   A node whose event writer fell behind writes
   `{"type":"dropped","node":…,"run":…,"count":N,"from_seq":S}` in place of
   the N records from seq S. Such spans, and seq gaps without such a
