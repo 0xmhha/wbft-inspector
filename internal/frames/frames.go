@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -116,6 +117,21 @@ func (d *Dump) SetInput(id string) {
 		r.Input = id
 	}
 }
+
+// Payload returns the payload bytes of a frame record from the dump's
+// payloads directory; ErrNoPayload when the frame was recorded without them.
+func (d *Dump) Payload(r *Record) ([]byte, error) {
+	if r.Payload == "" {
+		return nil, ErrNoPayload
+	}
+	if !sha256Pattern.MatchString(r.Payload) {
+		return nil, fmt.Errorf("frames: payload_sha256 %q", r.Payload)
+	}
+	return os.ReadFile(filepath.Join(d.Dir, payloadsDirName, r.Payload[:2], r.Payload))
+}
+
+// ErrNoPayload is returned by Payload for a frame recorded without its bytes.
+var ErrNoPayload = errors.New("frames: frame recorded without its payload")
 
 // Load reads the frames-*.jsonl files of dir in name order.
 func Load(dir string) (*Dump, error) {
