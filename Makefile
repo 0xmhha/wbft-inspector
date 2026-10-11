@@ -27,10 +27,13 @@ deps:
 e2e:
 	cd test/e2e && WBFT_SPEC_DIR=$(WBFT_SPEC_DIR) go test -count=1 -timeout 30m -v ./...
 
-# The inspector's own model against the vectors of the handlers it implements.
+# The inspector's own model against the vectors of the handlers it
+# implements, and its signer recovery and message reading against the
+# crypto/ecdsa_recover and encoding/message_codec cases.
 vectors: build
 	bin/wbft-inspector vectors --impl bin/self-adapter --vectors $(WBFT_SPEC_DIR)/spec/vectors --runner timers --handler round_timeout --out /dev/null
 	bin/wbft-inspector vectors --impl bin/self-adapter --vectors $(WBFT_SPEC_DIR)/spec/vectors --runner chain --handler config_at --out /dev/null
+	WBFT_SPEC_VECTORS=$(WBFT_SPEC_DIR)/spec/vectors go test -count=1 -run TestSpecVectors ./internal/spec/secp256k1/ ./internal/spec/message/
 
 # The embedded requirement list against the specification, and a catalog
 # row for every Observable requirement of A-05 and A-06.
