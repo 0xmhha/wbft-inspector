@@ -235,6 +235,13 @@ records with its received PRE-PREPARE, PREPARE and COMMIT frames: a pair
 without EVIDENCE fails while the node was at that sequence or next to it,
 and an EVIDENCE whose two messages the dump does not hold is undecided
 (INCONSISTENT_INPUT).
+Also with the event stream, chapter A-10: WBFT-SEC-081 (after a node
+records a block at height h as bad, it sends no PREPARE or COMMIT for it
+at h). The bad blocks are the node's `IMPORT_FAIL` records with
+`recorded_bad`. A vote for one sent after its record fails, in any later
+run too. A bad block is undecided when the dump has no record after it,
+or lost records, and when the vote came after ten higher bad blocks were
+recorded (the reference keeps ten, so the record may have been dropped).
 With the node's rejections (`--rejections`), chapter A-09: WBFT-APP-051
 (a node sends no PREPARE for a proposal the application found invalid):
 each received PRE-PREPARE of a rejected block whose outcome is row 13 of
