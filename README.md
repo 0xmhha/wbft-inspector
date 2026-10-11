@@ -229,6 +229,15 @@ the run holds the node's PREPARE for that view and block. A
 rejection stamped within a run whose dump holds no such PRE-PREPARE is
 undecided (INCONSISTENT_INPUT). That the round then ends by timeout is
 not decided.
+With the same input, chapter A-08: WBFT-HDR-060 (a node verifies a
+proposal with the steps P1-P7 in order and takes the first failing step
+as the result), for the proposals the inspector finds invalid itself: it
+applies the header steps that need nothing but the proposal header (H3,
+H4, H5, H7, H13, H16). For a proposal failing step S, the node fails the
+requirement when it accepted the proposal or recorded a rejection at a
+step after S, and passes when it recorded one at S or before; without a
+rejection record the proposal is undecided (it may have failed the
+message checks first).
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,

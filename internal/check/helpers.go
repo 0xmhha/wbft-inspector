@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"time"
 
 	"github.com/0xmhha/wbft-inspector/internal/events"
 	"github.com/0xmhha/wbft-inspector/internal/evidence"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
+	"github.com/0xmhha/wbft-inspector/internal/rejections"
 	"github.com/0xmhha/wbft-inspector/internal/spec/message"
 	"github.com/0xmhha/wbft-inspector/internal/spec/timers"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
@@ -374,4 +376,52 @@ func Decode(d *frames.Dump, r *frames.Record, code uint64, cache map[string]*mes
 		cache[key] = m
 	}
 	return m
+}
+
+// WallRange returns the first and last wall-clock time of a run.
+func WallRange(recs []*frames.Record) (first, last time.Time, ok bool) {
+	for _, r := range recs {
+		t, err := time.Parse(time.RFC3339Nano, r.TWall)
+		if err != nil {
+			continue
+		}
+		if !ok || t.Before(first) {
+			first = t
+		}
+		if !ok || t.After(last) {
+			last = t
+		}
+		ok = true
+	}
+	return first, last, ok
+}
+
+// rejectionSlack widens a run's wall-clock range when rejections are
+// matched to it: a rejection is stamped when the proposal is verified,
+// which is close to, but not inside, the frame records around it.
+const rejectionSlack = time.Second
+
+// InRun reports whether rejection r was stamped within the wall-clock
+// range [first, last] of a run (WallRange), with a second of slack.
+func InRun(r *rejections.Record, first, last time.Time) bool {
+	return !r.At.Before(first.Add(-rejectionSlack)) && !r.At.After(last.Add(rejectionSlack))
+}
+
+// RejectionCause describes the failed step and error class of a rejection
+// record.
+func RejectionCause(r *rejections.Record) string {
+	s := "step " + r.Step
+	if r.Step == "" {
+		s = "step unknown"
+	}
+	if r.Class != "" {
+		s += ", " + r.Class
+	}
+	return s
+}
+
+// RejectionPointer returns the evidence pointer of a rejection record.
+func RejectionPointer(r *rejections.Record) evidence.Pointer {
+	return evidence.Pointer{Kind: evidence.KindRPC, Method: "wbft_rejections", Input: r.Input, Node: r.Node, Number: r.Number,
+		Hash: r.Hash, Line: r.Line, T: r.Time, Msg: RejectionCause(r) + ", path " + r.Path}
 }

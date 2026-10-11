@@ -248,3 +248,6 @@ rows:
   - requirement: "WBFT-APP-051"
     checker: "app.no_prepare_on_invalid"
     priority: "P2"
+  - requirement: "WBFT-HDR-060"
+    checker: "hdr.proposal_verify_order"
+    priority: "P2"

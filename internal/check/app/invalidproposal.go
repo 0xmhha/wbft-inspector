@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/0xmhha/wbft-inspector/internal/check"
 	"github.com/0xmhha/wbft-inspector/internal/evidence"
@@ -32,11 +31,6 @@ const (
 	rowPreprepareReject = 13
 	rowPreprepareAccept = 15
 )
-
-// windowSlack widens a run's wall-clock range when rejections are matched
-// to it: a rejection is stamped when the proposal is verified, which is
-// close to, but not inside, the frame records around it.
-const windowSlack = time.Second
 
 // noPrepareOnInvalid decides WBFT-APP-051 from a node's frame dump and its
 // rejection records (`wbft_rejections`, R-09): when the application finds
@@ -110,14 +104,14 @@ func (c noPrepareOnInvalid) Run(_ context.Context, in *check.Inputs, out check.E
 }
 
 func (c noPrepareOnInvalid) run(d *frames.Dump, recs []*frames.Record, rejs []*rejections.Record, cache map[string]*message.Message, out check.Emitter) {
-	first, last, ok := wallRange(recs)
+	first, last, ok := check.WallRange(recs)
 	if !ok {
 		return
 	}
 	byHash := map[string][]*rejections.Record{}
 	var hashes []string
 	for _, r := range rejs {
-		if r.At.Before(first.Add(-windowSlack)) || r.At.After(last.Add(windowSlack)) {
+		if !check.InRun(r, first, last) {
 			continue
 		}
 		if byHash[r.Hash] == nil {
@@ -184,18 +178,18 @@ func (c noPrepareOnInvalid) run(d *frames.Dump, recs []*frames.Record, rejs []*r
 				continue
 			}
 			judged = true
-			what := fmt.Sprintf("PRE-PREPARE of block %s at %s, rejected (%s)", h, x.view, why(rec))
+			what := fmt.Sprintf("PRE-PREPARE of block %s at %s, rejected (%s)", h, x.view, check.RejectionCause(rec))
 			if x.own {
 				what = "the node's own " + what
 			}
 			if v := prepareAfter(x, copies, votes); v != nil {
 				inst := check.FrameInstance(reqNoPrepare, v.r, verdict.Fail, "", what+"; the node then sent its PREPARE for it")
-				inst.Evidence = append(inst.Evidence, check.FramePointer(x.r), pointer(rec))
+				inst.Evidence = append(inst.Evidence, check.FramePointer(x.r), check.RejectionPointer(rec))
 				out.Emit(inst)
 				continue
 			}
 			inst := check.FrameInstance(reqNoPrepare, x.r, verdict.Pass, "", what+"; the node sent no PREPARE for it")
-			inst.Evidence = append(inst.Evidence, pointer(rec))
+			inst.Evidence = append(inst.Evidence, check.RejectionPointer(rec))
 			out.Emit(inst)
 		}
 		if judged {
@@ -207,8 +201,8 @@ func (c noPrepareOnInvalid) run(d *frames.Dump, recs []*frames.Record, rejs []*r
 		}
 		for _, r := range byHash[h] {
 			out.Emit(verdict.Instance{Requirement: reqNoPrepare, Node: r.Node, Key: fmt.Sprintf("rejection:%s:%d", r.Input, r.Line),
-				Verdict: verdict.CannotDecide, Reason: reason, Source: r.Input, Evidence: []evidence.Pointer{pointer(r)},
-				Message: fmt.Sprintf("rejection of block %s (%s): run %s of the dump holds no PRE-PREPARE of it that the node rejected", h, why(r), recs[0].Run)})
+				Verdict: verdict.CannotDecide, Reason: reason, Source: r.Input, Evidence: []evidence.Pointer{check.RejectionPointer(r)},
+				Message: fmt.Sprintf("rejection of block %s (%s): run %s of the dump holds no PRE-PREPARE of it that the node rejected", h, check.RejectionCause(r), recs[0].Run)})
 		}
 	}
 }
@@ -238,44 +232,8 @@ func prepareAfter(x *copyOf, copies []*copyOf, votes []vote) *vote {
 	return nil
 }
 
-// wallRange returns the first and last wall-clock time of a run.
-func wallRange(recs []*frames.Record) (first, last time.Time, ok bool) {
-	for _, r := range recs {
-		t, err := time.Parse(time.RFC3339Nano, r.TWall)
-		if err != nil {
-			continue
-		}
-		if !ok || t.Before(first) {
-			first = t
-		}
-		if !ok || t.After(last) {
-			last = t
-		}
-		ok = true
-	}
-	return first, last, ok
-}
-
 func viewOf(m *message.Message) string {
 	return fmt.Sprintf("(%s, %s)", m.Sequence, m.Round)
 }
 
 func hashOf(m *message.Message) string { return "0x" + hex.EncodeToString(m.Digest[:]) }
-
-// why describes a rejection record.
-func why(r *rejections.Record) string {
-	s := "step " + r.Step
-	if r.Step == "" {
-		s = "step unknown"
-	}
-	if r.Class != "" {
-		s += ", " + r.Class
-	}
-	return s
-}
-
-// pointer returns the evidence pointer of a rejection record.
-func pointer(r *rejections.Record) evidence.Pointer {
-	return evidence.Pointer{Kind: evidence.KindRPC, Method: "wbft_rejections", Input: r.Input, Node: r.Node, Number: r.Number,
-		Hash: r.Hash, Line: r.Line, T: r.Time, Msg: why(r) + ", path " + r.Path}
-}
