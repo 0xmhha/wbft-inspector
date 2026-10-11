@@ -3,6 +3,7 @@ package events
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -34,7 +35,7 @@ not json
 	if s.UnknownKinds["NEW_THING"] != 1 {
 		t.Errorf("unknown kinds %v", s.UnknownKinds)
 	}
-	if n := s.Nodes["0xaa"]; n.Impl != "x" || !n.Optional {
+	if n := s.Nodes["0xaa"]; n.Impl != "x" || !n.Optional || !n.Unnamed {
 		t.Errorf("node %+v", n)
 	}
 	r := s.Runs[0]
@@ -100,4 +101,36 @@ func itoa(n int) string {
 		b = append([]byte{byte('0' + n%10)}, b...)
 	}
 	return string(b)
+}
+
+// TestBehaviours reads the names of NODE_START "improvements", once each
+// across runs, and marks a declaration without a name.
+func TestBehaviours(t *testing.T) {
+	dir := t.TempDir()
+	start := func(run, imps string) string {
+		return `{"v":1,"node":"0xaa","run":"` + run + `","seq":0,"t_wall":"2023-01-01T00:00:00Z","t_mono_ns":0,"kind":"NODE_START","impl":"wbft","improvements":` + imps + "}\n"
+	}
+	load := func(lines string) *NodeInfo {
+		t.Helper()
+		p := filepath.Join(dir, "e.jsonl")
+		if err := os.WriteFile(p, []byte(lines), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		s, err := Load([]string{p})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return s.Nodes["0xaa"]
+	}
+	n := load(start("r1", `[{"name":"a","source":"profile"},{"name":"b","source":"app"}]`) +
+		start("r2", `[{"name":"b","source":"app"},{"name":"c","source":"node"}]`))
+	if !n.Optional || n.Unnamed || strings.Join(n.Behaviours, ",") != "a,b,c" {
+		t.Errorf("named: %+v", n)
+	}
+	if n := load(start("r1", `[{"id":"X","source":"node"}]`)); !n.Optional || !n.Unnamed {
+		t.Errorf("without a name: %+v", n)
+	}
+	if n := load(start("r1", `[]`)); n.Optional || n.Unnamed || len(n.Behaviours) != 0 {
+		t.Errorf("empty list: %+v", n)
+	}
 }
