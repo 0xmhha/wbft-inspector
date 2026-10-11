@@ -96,7 +96,7 @@ func (c equivocationReported) run(d *frames.Dump, recs []*frames.Record, er *eve
 		if err != nil || codeNames[code] == "" {
 			continue
 		}
-		m := decode(d, r, code, cache)
+		m := check.Decode(d, r, code, cache)
 		if m == nil || !m.HasDigest {
 			continue
 		}

@@ -51,6 +51,10 @@ wbft-inspector check --events events/ --chain-config genesis.json --out report.j
   from its start. Other log runs are `CANNOT_DECIDE`, with the reason
   `NEEDS_NODE_FEATURE` (the checker needs the event stream) or `LOG_LEVEL`
   (records may be missing).
+- `--rejections NODE=PATH` (repeatable) reads the blocks and proposals a
+  node rejected (`wbft_rejections`): the RPC response, a file of its
+  records as JSON Lines, or the node's `rejections` store directory. It is
+  read with the node's frame dump.
 - `--chain-config FILE` is a genesis file (or its `config` object). The
   timer checkers need it to compute `round_timeout(config_at(h), r)` and
   `RT(h)`; without it those requirements are `CANNOT_DECIDE` with the reason
@@ -214,6 +218,17 @@ records with its received PRE-PREPARE, PREPARE and COMMIT frames: a pair
 without EVIDENCE fails while the node was at that sequence or next to it,
 and an EVIDENCE whose two messages the dump does not hold is undecided
 (INCONSISTENT_INPUT).
+With the node's rejections (`--rejections`), chapter A-09: WBFT-APP-051
+(a node sends no PREPARE for a proposal the application found invalid):
+each received PRE-PREPARE of a rejected block whose outcome is row 13 of
+the outcome table fails when the node then sent its own PREPARE for that
+view and block before accepting a later copy, and passes otherwise. The
+node's own rejected proposal has no received frame (it is delivered to the
+node without one), so its sent PRE-PREPARE is judged instead: it fails when
+the run holds the node's PREPARE for that view and block. A
+rejection stamped within a run whose dump holds no such PRE-PREPARE is
+undecided (INCONSISTENT_INPUT). That the round then ends by timeout is
+not decided.
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,

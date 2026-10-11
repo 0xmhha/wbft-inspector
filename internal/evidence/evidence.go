@@ -19,6 +19,7 @@ type Pointer struct {
 	VectorPath string `json:"vector_path,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Value      string `json:"value,omitempty"`
+	Method     string `json:"method,omitempty"` // RPC evidence: the method that returned it
 	// Frame evidence: the record ("<run>:<seq>"), direction, peer, code
 	// and payload hash of a frame dump record.
 	FrameID       string `json:"frame_id,omitempty"`
@@ -35,4 +36,5 @@ const (
 	KindVector   = "vector"
 	KindComputed = "computed"
 	KindConfig   = "config"
+	KindRPC      = "rpc"
 )

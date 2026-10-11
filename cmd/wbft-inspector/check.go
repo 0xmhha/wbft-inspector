@@ -19,13 +19,14 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/events"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
 	"github.com/0xmhha/wbft-inspector/internal/logs"
+	"github.com/0xmhha/wbft-inspector/internal/rejections"
 	"github.com/0xmhha/wbft-inspector/internal/report"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
 
 const checkUsage = `Usage: wbft-inspector check --events PATH [--events PATH ...] [--frames DIR ...]
-       [--logs NODE=PATH ... --log-profile FILE] [flags]
+       [--logs NODE=PATH ... --log-profile FILE] [--rejections NODE=PATH ...] [flags]
 
 Decides the requirements of the checker catalog from consensus event
 streams (JSON Lines, one event per line; a directory stands for its *.jsonl
@@ -34,7 +35,9 @@ and writes the report. For a node without an event stream, --logs gives its
 JSON log file, read through the implementation profile of --log-profile
 (wbft-log-profile/1). Only checkers that use no monotonic time judge a log
 run, and only a log that shows both consensus modules at trace from its
-start; other log runs are CANNOT_DECIDE (NEEDS_NODE_FEATURE or LOG_LEVEL). Requirements whose checker needs an input that
+start; other log runs are CANNOT_DECIDE (NEEDS_NODE_FEATURE or LOG_LEVEL).
+--rejections gives a node's rejected blocks and proposals (R-09), read with
+its frame dump. Requirements whose checker needs an input that
 was not given are CANNOT_DECIDE (MISSING_DATA); requirements without a
 checker in this build are NOT_RUN; requirement IDs this build does not know
 are CANNOT_DECIDE (NOT_IN_BUILD).
@@ -51,6 +54,8 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	logProfile := fs.String("log-profile", "", "implementation profile of the logs (wbft-log-profile/1, e.g. from wbft-logprofile)")
 	var framePaths multi
 	fs.Var(&framePaths, "frames", "frame dump directory in the R-01 format (repeatable); format problems are reported as errors")
+	var rejPaths multi
+	fs.Var(&rejPaths, "rejections", "NODE=PATH: the rejected blocks and proposals of the node with address NODE: a wbft_rejections response, JSON Lines records or the node's rejections directory (repeatable)")
 	chainCfg := fs.String("chain-config", "", "genesis file or chain configuration (anzeon.wbft, transitions) for timer durations")
 	checks := fs.String("checks", "", "comma-separated selection: requirement IDs, priorities (P0, P1, P2, V) or checker-name globs (e.g. timer.*); default: the whole catalog")
 	requireDecided := fs.String("require-decided", "", "file of requirement IDs that must be decided (PASS or FAIL); otherwise exit 2")
@@ -194,6 +199,28 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		idParts = append(idParts, sum)
 		for _, p := range frames.Validate(d).Problems {
 			rep.Errors = append(rep.Errors, report.Error{Message: "frames " + dir + ": " + p})
+		}
+	}
+	for _, a := range rejPaths {
+		node, p, ok := strings.Cut(a, "=")
+		if !ok || node == "" || p == "" {
+			fmt.Fprintf(stderr, "check: --rejections %q is not NODE=PATH\n", a)
+			return report.ExitUsage
+		}
+		set, err := rejections.Load(node, p)
+		if err != nil {
+			rep.Errors = append(rep.Errors, report.Error{Message: "rejections: " + err.Error()})
+			exit = report.ExitNoInput
+			continue
+		}
+		id := fmt.Sprintf("in-%d", len(rep.Run.Inputs)+1)
+		set.SetInput(id)
+		in.Rejections = append(in.Rejections, set)
+		in.Given[check.Rejections] = true
+		rep.Run.Inputs = append(rep.Run.Inputs, report.Input{ID: id, Kind: "rpc", Node: set.Node, Path: p, SHA256: set.SHA256, Records: len(set.Records)})
+		idParts = append(idParts, set.SHA256)
+		for _, m := range set.Problems {
+			rep.Errors = append(rep.Errors, report.Error{Message: "rejections " + p + ": " + m})
 		}
 	}
 	if *chainCfg != "" {

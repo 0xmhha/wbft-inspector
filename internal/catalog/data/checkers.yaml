@@ -245,3 +245,6 @@ rows:
   - requirement: "WBFT-NET-028"
     checker: "net.frame_codes"
     priority: "P2"
+  - requirement: "WBFT-APP-051"
+    checker: "app.no_prepare_on_invalid"
+    priority: "P2"
