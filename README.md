@@ -263,6 +263,14 @@ requirement when it accepted the proposal or recorded a rejection at a
 step after S, and passes when it recorded one at S or before; without a
 rejection record the proposal is undecided (it may have failed the
 message checks first).
+With the event stream as well, WBFT-HDR-061 (a node rejects a proposal
+whose hash it recorded as a bad block, at P2, before any check but the
+type check). The bad blocks are the node's `IMPORT_FAIL` records with
+`recorded_bad`. Each PRE-PREPARE of such a block that the node received
+after the record, or proposed itself, fails when the node accepted it
+or rejected it at a step after P2. It passes when the node rejected it at
+P1 or P2. A proposal after ten higher bad blocks were recorded is left
+out, since the record may have been dropped.
 
 Not implemented yet: the requirements that need message payloads or frame
 captures (WBFT-SM-003, -035, -037, -040, -044, -053, -054, -059, -062, -064,
