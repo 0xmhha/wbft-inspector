@@ -200,6 +200,36 @@ func TestCheckFrames(t *testing.T) {
 	}
 }
 
+// TestCheckRejections reads a node's rejections with its frame dump: a
+// rejection of a block the dump does not hold leaves WBFT-APP-051
+// undecided, the input is listed as an RPC input, and a malformed record
+// is reported. Without --rejections the checker lacks its input.
+func TestCheckRejections(t *testing.T) {
+	node := "0x448389b6f807d345035a9f428a22c5d033e5be5c"
+	p := filepath.Join(t.TempDir(), "rejections.json")
+	rec := `{"number":"2","hash":"0x6284d1a2d0a027e77a8249b3ab24207ef68a2f5b98236cc4b044b6aaf5a10a1e","step":"P3","errorClass":"ErrInvalidProposal","path":"preprepare","time":"2026-10-04T16:53:22.5Z"}`
+	if err := os.WriteFile(p, []byte("["+rec+`,{"number":"x"}]`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	code, r, stderr := runCLI(t, "check", "--frames", testdata("frames/wbft-kvstore"), "--rejections", node+"="+p, "--checks", "WBFT-APP-051")
+	if code != report.ExitOK {
+		t.Fatalf("exit %d: %s", code, stderr)
+	}
+	if len(r.Run.Inputs) != 2 || r.Run.Inputs[1].Kind != "rpc" || r.Run.Inputs[1].Node != node || r.Run.Inputs[1].Records != 1 || len(r.Errors) != 1 {
+		t.Fatalf("inputs %+v errors %+v", r.Run.Inputs, r.Errors)
+	}
+	if x := r.Results[0]; x.Verdict != "CANNOT_DECIDE" || x.Coverage.Instances != 1 || x.Coverage.CannotDecide != 1 {
+		t.Errorf("WBFT-APP-051: %+v", x)
+	}
+	_, r, _ = runCLI(t, "check", "--frames", testdata("frames/wbft-kvstore"), "--checks", "WBFT-APP-051")
+	if x := r.Results[0]; x.Verdict != "CANNOT_DECIDE" || x.Reason == nil || x.Reason.Code != "MISSING_DATA" {
+		t.Errorf("without rejections: %+v", x)
+	}
+	if code, _, _ := runCLI(t, "check", "--frames", testdata("frames/wbft-kvstore"), "--rejections", p); code != report.ExitUsage {
+		t.Errorf("--rejections without NODE=: exit %d", code)
+	}
+}
+
 // TestCheckRetryWire decides WBFT-TIMER-024 from the dump of a stalled
 // wbft network: every retransmission was left off the wire.
 func TestCheckRetryWire(t *testing.T) {

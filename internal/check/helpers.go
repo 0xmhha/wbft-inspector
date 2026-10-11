@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/events"
 	"github.com/0xmhha/wbft-inspector/internal/evidence"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
+	"github.com/0xmhha/wbft-inspector/internal/spec/message"
 	"github.com/0xmhha/wbft-inspector/internal/spec/timers"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
@@ -353,4 +354,24 @@ func FrameRuns(d *frames.Dump) [][]*frames.Record {
 		out = append(out, recs)
 	}
 	return out
+}
+
+// Decode returns the message of frame r of dump d read with code, or nil
+// when the frame has no payload or it does not decode. cache keeps each
+// payload decoded once per code.
+func Decode(d *frames.Dump, r *frames.Record, code uint64, cache map[string]*message.Message) *message.Message {
+	key := r.Code + "/" + r.Payload
+	if m, ok := cache[key]; ok {
+		return m
+	}
+	var m *message.Message
+	if b, err := d.Payload(r); err == nil {
+		if x, err := message.Decode(code, b); err == nil {
+			m = x
+		}
+	}
+	if r.Payload != "" {
+		cache[key] = m
+	}
+	return m
 }

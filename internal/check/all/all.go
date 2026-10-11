@@ -3,6 +3,7 @@ package all
 
 import (
 	// Checkers register themselves in their init functions.
+	_ "github.com/0xmhha/wbft-inspector/internal/check/app"
 	_ "github.com/0xmhha/wbft-inspector/internal/check/net"
 	_ "github.com/0xmhha/wbft-inspector/internal/check/sec"
 	_ "github.com/0xmhha/wbft-inspector/internal/check/sm"

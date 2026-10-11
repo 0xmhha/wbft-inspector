@@ -64,7 +64,7 @@ func (c noDoubleVote) run(d *frames.Dump, recs []*frames.Record, cache map[strin
 		if err != nil || (code != message.CodePrepare && code != message.CodeCommit) {
 			continue
 		}
-		m := decode(d, r, code, cache)
+		m := check.Decode(d, r, code, cache)
 		if m == nil || "0x"+hex.EncodeToString(m.Signer[:]) != r.Node {
 			continue
 		}
@@ -99,22 +99,4 @@ func (c noDoubleVote) run(d *frames.Dump, recs []*frames.Record, cache map[strin
 		inst.Evidence = append(inst.Evidence, check.FramePointer(first[k]))
 		out.Emit(inst)
 	}
-}
-
-// decode returns the message of a frame, decoding each payload once.
-func decode(d *frames.Dump, r *frames.Record, code uint64, cache map[string]*message.Message) *message.Message {
-	key := r.Code + "/" + r.Payload
-	if m, ok := cache[key]; ok {
-		return m
-	}
-	var m *message.Message
-	if b, err := d.Payload(r); err == nil {
-		if x, err := message.Decode(code, b); err == nil {
-			m = x
-		}
-	}
-	if r.Payload != "" {
-		cache[key] = m
-	}
-	return m
 }
