@@ -84,6 +84,7 @@ type Spec struct {
 // Input is one input of the run.
 type Input struct {
 	Endpoint  string     `json:"endpoint,omitempty"`
+	Profile   string     `json:"profile,omitempty"`
 	ID        string     `json:"id"`
 	Kind      string     `json:"kind"`
 	Node      string     `json:"node,omitempty"`

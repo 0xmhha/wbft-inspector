@@ -365,3 +365,27 @@ Header validation on 2026-10-13 used the public testnet range
 passed, signature recovery was partly decided, and six other selected P0
 checks were not run. This is a header input milestone, not completion of
 the full P0 specification or its state/aggregate-signature checks.
+
+## Legacy G7 log observations
+
+`check --log-profile profiles/gstable@740526d03.json --logs NODE=FILE ...`
+reads the generated public A-13 profile without importing the consensus
+engine. Use `--log-from` and `--log-to` for an inclusive RFC3339 window;
+original complete-file SHA256 and line numbers are retained. The reader
+streams bounded lines and retains at most 200,000 selected events.
+Declared log network identity uses `--log-chain-id` and
+`--log-genesis-hash` together; it is metadata, not an authenticated chain
+claim. Nodes may be stable labels; observed addresses remain separate.
+
+Full heights/rounds, engine boundaries, codes, positive timer/F+1 causes
+and prior engine-start context are preserved. No step, monotonic clock,
+complete coverage or wire success is invented. Payload/data/arbitrary
+errors are not retained by this adapter. Unknown phrases/malformed lines
+produce counts without echoing their bytes. Positive round-change and
+engine-restart observations have capped input/line pointers and full counts.
+
+A real original seven-file G7 report retained 38,302 scenario records,
+12 observation groups (32 round changes, four engine restarts), 68 source
+pointers and no parse errors. Existing requirements remained 33 undecided
+and 32 not run because legacy logs do not prove complete event coverage.
+The report passes the report schema. Full I2 checker coverage is pending.

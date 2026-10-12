@@ -14,13 +14,17 @@ package logs
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/0xmhha/wbft-inspector/internal/events"
 )
@@ -37,14 +41,18 @@ type Profile struct {
 
 	byLine  map[[2]string]Entry
 	modules map[string]bool
+	legacy  bool
 }
 
 // Entry is one line of the profile.
 type Entry struct {
-	Kind   string `json:"kind"`
-	Module string `json:"module"`
-	Level  string `json:"level"`
-	Msg    string `json:"msg"`
+	Kind     string            `json:"kind"`
+	Module   string            `json:"module"`
+	Level    string            `json:"level"`
+	Msg      string            `json:"msg"`
+	Template bool              `json:"template,omitempty"`
+	Fields   map[string]string `json:"fields,omitempty"`
+	pattern  *regexp.Regexp
 }
 
 // LoadProfile reads a profile file.
@@ -60,8 +68,26 @@ func LoadProfile(path string) (*Profile, error) {
 	if p.Format != ProfileFormat {
 		return nil, fmt.Errorf("%s: profile format %q, want %q", path, p.Format, ProfileFormat)
 	}
+	p.legacy = p.ID == "gstable@740526d03"
 	p.byLine, p.modules = map[[2]string]Entry{}, map[string]bool{}
-	for _, e := range p.Entries {
+	for i, e := range p.Entries {
+		if p.legacy && (!events.Known[e.Kind] || e.Module != "" || !strings.HasPrefix(e.Msg, "WBFT: ")) {
+			return nil, fmt.Errorf("invalid legacy profile entry")
+		}
+		if e.Template {
+			if e.Msg != "WBFT:   - candidates[%d]" {
+				return nil, fmt.Errorf("unsupported profile template")
+			}
+			e.pattern = regexp.MustCompile(`^WBFT:   - candidates\[[0-9]+\]$`)
+		}
+		if p.legacy {
+			for key, value := range e.Fields {
+				if !legacyDefault(key, value) {
+					return nil, fmt.Errorf("invalid legacy profile metadata")
+				}
+			}
+		}
+		p.Entries[i] = e
 		k := [2]string{e.Msg, e.Module}
 		if _, dup := p.byLine[k]; dup {
 			return nil, fmt.Errorf("%s: two entries for %q of %s", path, e.Msg, e.Module)
@@ -95,6 +121,21 @@ type File struct {
 // profile does not map, or at another level, is an error; lines of other
 // modules (an application's) are skipped.
 func Load(p *Profile, files []File) (*events.Set, error) {
+	return LoadWindow(context.Background(), p, files, Window{})
+}
+
+type Window struct {
+	From, To  time.Time
+	MaxEvents int
+}
+
+func LoadWindow(ctx context.Context, p *Profile, files []File, w Window) (*events.Set, error) {
+	if p.legacy {
+		return loadLegacy(ctx, p, files, w)
+	}
+	if !w.From.IsZero() || !w.To.IsZero() {
+		return nil, fmt.Errorf("log time windows currently require the legacy profile")
+	}
 	s := &events.Set{Nodes: map[string]*events.NodeInfo{}, UnknownKinds: map[string]int{}}
 	for i, lf := range files {
 		id := fmt.Sprintf("log-%d", i+1)
