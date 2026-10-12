@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -55,8 +56,12 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	var evPaths multi
 	fs.Var(&evPaths, "events", "event stream file or directory (repeatable)")
 	var logPaths multi
-	fs.Var(&logPaths, "logs", "NODE=PATH: a JSON log file of the node with address NODE (repeatable; needs --log-profile)")
+	fs.Var(&logPaths, "logs", "NODE=PATH: a JSON log file of node identifier NODE (repeatable; needs --log-profile)")
 	logProfile := fs.String("log-profile", "", "implementation profile of the logs (wbft-log-profile/1, e.g. from wbft-logprofile)")
+	logFrom := fs.String("log-from", "", "inclusive RFC3339 legacy log window start (original hashes/lines retained)")
+	logTo := fs.String("log-to", "", "inclusive RFC3339 legacy log window end")
+	logChain := fs.String("log-chain-id", "", "declared decimal chain ID of log inputs (needs log-genesis-hash)")
+	logGenesis := fs.String("log-genesis-hash", "", "declared genesis hash of log inputs (needs log-chain-id)")
 	var framePaths multi
 	fs.Var(&framePaths, "frames", "frame dump directory in the R-01 format (repeatable); format problems are reported as errors")
 	var rejPaths multi
@@ -98,6 +103,17 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	defer stop()
 	started := time.Now().UTC()
 	rep := &report.Report{Schema: report.SchemaID}
+	if (*logChain == "") != (*logGenesis == "") {
+		fmt.Fprintln(stderr, "check: log network identity needs both fields")
+		return report.ExitUsage
+	}
+	if *logChain != "" {
+		if !regexp.MustCompile(`^(0|[1-9][0-9]{0,155})$`).MatchString(*logChain) || !regexp.MustCompile(`^0x[0-9a-fA-F]{64}$`).MatchString(*logGenesis) {
+			fmt.Fprintln(stderr, "check: invalid log network identity")
+			return report.ExitUsage
+		}
+		rep.Run.Network = &report.Network{Name: *headerName, ChainID: *logChain, GenesisHash: strings.ToLower(*logGenesis)}
+	}
 	exit := report.ExitOK
 
 	// Inputs.
@@ -159,14 +175,33 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		prof, err := logs.LoadProfile(*logProfile)
 		var set *events.Set
 		if err == nil {
-			set, err = logs.Load(prof, lfs)
+			var window logs.Window
+			if (*logFrom == "") != (*logTo == "") {
+				fmt.Fprintln(stderr, "check: log-from/log-to must be supplied together")
+				return report.ExitUsage
+			}
+			if *logFrom != "" {
+				var e1, e2 error
+				window.From, e1 = time.Parse(time.RFC3339Nano, *logFrom)
+				window.To, e2 = time.Parse(time.RFC3339Nano, *logTo)
+				if e1 != nil || e2 != nil || window.To.Before(window.From) {
+					fmt.Fprintln(stderr, "check: invalid log window")
+					return report.ExitUsage
+				}
+				idParts = append(idParts, *logFrom, *logTo)
+				if rep.Run.Options == nil {
+					rep.Run.Options = map[string]any{}
+				}
+				rep.Run.Options["log_from"], rep.Run.Options["log_to"] = *logFrom, *logTo
+			}
+			set, err = logs.LoadWindow(ctx, prof, lfs, window)
 		}
 		if err != nil {
 			rep.Errors = append(rep.Errors, report.Error{Message: "logs: " + err.Error()})
 			exit = report.ExitNoInput
 		} else {
 			for _, x := range set.Inputs {
-				ri := report.Input{ID: x.ID, Kind: "log", Path: x.Path, SHA256: x.SHA256, Records: x.Records}
+				ri := report.Input{ID: x.ID, Kind: "log", Path: x.Path, SHA256: x.SHA256, Records: x.Records, Profile: prof.ID}
 				if len(x.Nodes) == 1 {
 					ri.Node = x.Nodes[0]
 				}
@@ -186,6 +221,9 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 			}
 			in.Given[check.Events] = true
 			rep.Run.Nodes = nodesOf(in.Events)
+			if prof.ID == "gstable@740526d03" {
+				rep.Observations = append(rep.Observations, logs.Observations(set)...)
+			}
 		}
 	}
 	for _, dir := range framePaths {
@@ -428,7 +466,7 @@ func nodesOf(set *events.Set) []report.Node {
 		if senders[n] {
 			role = "validator"
 		}
-		out = append(out, report.Node{ID: n, Address: n, Impl: info.Impl, Role: role, Inputs: inputs[n]})
+		out = append(out, report.Node{ID: n, Address: info.Address, Impl: info.Impl, Role: role, Inputs: inputs[n]})
 	}
 	return out
 }
