@@ -35,6 +35,27 @@ go build -o bin/self-adapter ./adapters/self    # optional, see "vectors"
 wbft-inspector check --events events/ --chain-config genesis.json --out report.json
 ```
 
+- `--rpc URL --from N --to M --chain-config FILE` reads bounded canonical
+  header ranges. Use `--blocks DIR` for zero-padded block RLP files, or
+  `--header-cache DIR --offline` to repeat a captured snapshot. A cache
+  is bound to chain ID, genesis hash, node label and sanitized RPC origin;
+  checksums detect corrupt files. `--header-node LABEL` identifies whose
+  current seals are observed. RPC batches have at most 100 requests, at
+  most five per second, transport retries and optional-method probes.
+  Network and range metadata connect the report to analyzer header views.
+- The independent header model checks eight public content requirements:
+  difficulty, uncle hash, gas-limit bound, forbidden optional fields,
+  gas-used bound, extra decoding, and signature recovery to Coinbase.
+  Recovery does not bind Coinbase to the actual proposer's node key:
+  that part remains `PARTLY_DECIDED` with `OBSERVER_SCOPE`. Genesis is
+  excluded from proposal/import checks. These are content checks; node
+  rejection order, aggregate signatures, execution state and the other
+  P0 checks are not inferred from valid headers.
+- Header observations compare scheduled/actual proposers and own/child
+  previous seals. They do not turn schedule differences or late seals
+  into failures. All occurrences are counted; evidence retains at most
+  20 pointers per group, including the validator address and both the
+  own header and child proof. Header payload/state values are not copied.
 - `--events PATH` (repeatable) is an event stream file or a directory of
   `*.jsonl` files. Each line is one event with the common fields `v` (format
   version 1), `node`, `run`, `seq`, `t_wall`, `t_mono_ns`, `kind` and
@@ -338,3 +359,9 @@ adapter. `WBFT_E2E_SEEDS` sets the number of seeds per scenario.
 version 3 or (at your option) any later version (SPDX: `LGPL-3.0-or-later`,
 [LICENSE](LICENSE)). The LGPL supplements the GNU General Public License
 v3.0 ([COPYING](COPYING)).
+
+Header validation on 2026-10-13 used the public testnet range
+22044761..22144760 and real G7 nodes. The implemented seven content checks
+passed, signature recovery was partly decided, and six other selected P0
+checks were not run. This is a header input milestone, not completion of
+the full P0 specification or its state/aggregate-signature checks.

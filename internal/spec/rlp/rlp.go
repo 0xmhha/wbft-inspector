@@ -133,6 +133,13 @@ func EncodeList(items ...[]byte) []byte {
 }
 
 // EncodeUint returns the encoding of v.
+func EncodeBytes(b []byte) []byte {
+	if len(b) == 1 && b[0] < 0x80 {
+		return append([]byte{}, b...)
+	}
+	return append(header(0x80, len(b)), b...)
+}
+
 func EncodeUint(v uint64) []byte {
 	switch {
 	case v == 0:

@@ -40,6 +40,8 @@ type Report struct {
 
 // Run describes what was run on which inputs with which tool.
 type Run struct {
+	Network    *Network       `json:"network,omitempty"`
+	Range      *BlockRange    `json:"range,omitempty"`
 	ID         string         `json:"id"`
 	StartedAt  string         `json:"started_at"`
 	FinishedAt string         `json:"finished_at"`
@@ -50,6 +52,15 @@ type Run struct {
 	Nodes      []Node         `json:"nodes"`
 	Clock      Clock          `json:"clock"`
 	Options    map[string]any `json:"options"`
+}
+type Network struct {
+	Name        string `json:"name,omitempty"`
+	ChainID     string `json:"chain_id"`
+	GenesisHash string `json:"genesis_hash"`
+}
+type BlockRange struct {
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 // Inspector identifies the tool and its build.
@@ -72,6 +83,7 @@ type Spec struct {
 
 // Input is one input of the run.
 type Input struct {
+	Endpoint  string     `json:"endpoint,omitempty"`
 	ID        string     `json:"id"`
 	Kind      string     `json:"kind"`
 	Node      string     `json:"node,omitempty"`

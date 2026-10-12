@@ -30,7 +30,7 @@ import (
 const usage = `wbft-inspector checks WBFT implementations against the public wbft-spec.
 
 Commands:
-  check     decide requirements from consensus event streams (JSON Lines)
+  check     decide requirements from headers, consensus events, logs and frames
   vectors   run conformance vectors against implementation adapters (wbft-vector/1)
   catalog   list the checker catalog, check it against a specification, or extract requirements
   frames    validate frame dumps in the R-01 format

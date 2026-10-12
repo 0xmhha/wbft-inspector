@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"sort"
@@ -18,14 +19,18 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/check"
 	"github.com/0xmhha/wbft-inspector/internal/events"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
+	"github.com/0xmhha/wbft-inspector/internal/headers"
 	"github.com/0xmhha/wbft-inspector/internal/logs"
 	"github.com/0xmhha/wbft-inspector/internal/rejections"
 	"github.com/0xmhha/wbft-inspector/internal/report"
+	"github.com/0xmhha/wbft-inspector/internal/rpc"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
 
-const checkUsage = `Usage: wbft-inspector check --events PATH [--events PATH ...] [--frames DIR ...]
+const checkUsage = `Usage: wbft-inspector check [--rpc URL --from N --to M --chain-config FILE]
+       [--blocks DIR | --header-cache DIR --offline] [header flags]
+       [--events PATH ...] [--frames DIR ...]
        [--logs NODE=PATH ... --log-profile FILE] [--rejections NODE=PATH ...] [flags]
 
 Decides the requirements of the checker catalog from consensus event
@@ -56,6 +61,15 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	fs.Var(&framePaths, "frames", "frame dump directory in the R-01 format (repeatable); format problems are reported as errors")
 	var rejPaths multi
 	fs.Var(&rejPaths, "rejections", "NODE=PATH: the rejected blocks and proposals of the node with address NODE: a wbft_rejections response, JSON Lines records or the node's rejections directory (repeatable)")
+	headerRPC := fs.String("rpc", "", "header JSON-RPC endpoint")
+	headerBlocks := fs.String("blocks", "", "block RLP directory (zero-padded indices)")
+	headerCache := fs.String("header-cache", "", "header-only RLP cache directory; repeat without RPC using --offline")
+	headerOffline := fs.Bool("offline", false, "read header cache or blocks without network")
+	headerFrom := fs.String("from", "", "first decimal canonical header index")
+	headerTo := fs.String("to", "", "last decimal canonical header index")
+	headerNode := fs.String("header-node", "rpc", "label of the node providing header copies")
+	headerName := fs.String("network-name", "", "display name of the header network")
+	headerRate := fs.Float64("rate", 5, "header RPC batches per second, at most 5")
 	chainCfg := fs.String("chain-config", "", "genesis file or chain configuration (anzeon.wbft, transitions, chainId) for timer durations and the randao reveal of proposals")
 	checks := fs.String("checks", "", "comma-separated selection: requirement IDs, priorities (P0, P1, P2, V) or checker-name globs (e.g. timer.*); default: the whole catalog")
 	requireDecided := fs.String("require-decided", "", "file of requirement IDs that must be decided (PASS or FAIL); otherwise exit 2")
@@ -80,6 +94,8 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "check: unknown clock model %q\n", *clockModel)
 		return report.ExitUsage
 	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 	started := time.Now().UTC()
 	rep := &report.Report{Schema: report.SchemaID}
 	exit := report.ExitOK
@@ -241,6 +257,17 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 
+	if *headerRPC != "" || *headerBlocks != "" || *headerOffline || *headerCache != "" {
+		fingerprint, err := loadHeaders(ctx, in, rep, headerOptions{RPC: *headerRPC, Blocks: *headerBlocks, Cache: *headerCache, Offline: *headerOffline, From: *headerFrom, To: *headerTo, Node: *headerNode, Name: *headerName, Rate: *headerRate})
+		if err != nil {
+			fmt.Fprintf(stderr, "headers: %v\n", err)
+			rep.Errors = append(rep.Errors, report.Error{Message: "header input unavailable or invalid; see command output"})
+			exit = report.ExitNoInput
+		} else {
+			idParts = append(idParts, fingerprint)
+		}
+	}
+
 	// Selection.
 	var sel []string
 	if *checks != "" {
@@ -265,7 +292,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	}
 
 	// Checkers.
-	out := check.Run(context.Background(), in, selected)
+	out := check.Run(ctx, in, selected)
 	for _, m := range out.Errors {
 		rep.Errors = append(rep.Errors, report.Error{Message: m})
 		exit = maxExit(exit, report.ExitInternal)
@@ -324,6 +351,9 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	rep.Summary = sum
 
 	options := map[string]any{"checks": sel, "fail_on": splitList(*failOn), "min_coverage": *minCoverage}
+	for k, v := range rep.Run.Options {
+		options[k] = v
+	}
 	if *requireDecided != "" {
 		options["require_decided"] = required
 	}
@@ -422,7 +452,7 @@ func fillRun(rep *report.Report, command string, idParts []string, started time.
 		Build: buildinfo.Build(), CatalogSHA256: catalog.SHA256()}
 	rep.Run.Spec = report.Spec{Repo: spec.Repo, Commit: spec.Commit, ReferenceCommit: spec.ReferenceCommit,
 		RequirementCount: all, ObservableCount: obs}
-	rep.Run.Command = append([]string{"wbft-inspector"}, os.Args[1:]...)
+	rep.Run.Command = sanitizedCommand(os.Args[1:])
 }
 
 // combineExit returns the smallest non-zero exit code of a and b.
@@ -474,5 +504,22 @@ func frameNodes(d *frames.Dump) []string {
 		}
 	}
 	sort.Strings(out)
+	return out
+}
+
+func sanitizedCommand(args []string) []string {
+	out := append([]string{"wbft-inspector"}, args...)
+	for i := 1; i < len(out); i++ {
+		if out[i] == "--rpc" && i+1 < len(out) {
+			c, _ := rpc.New(out[i+1], 5)
+			src := headers.Source{Client: c}
+			out[i+1] = src.Endpoint()
+			i++
+		} else if strings.HasPrefix(out[i], "--rpc=") {
+			c, _ := rpc.New(strings.TrimPrefix(out[i], "--rpc="), 5)
+			src := headers.Source{Client: c}
+			out[i] = "--rpc=" + src.Endpoint()
+		}
+	}
 	return out
 }
