@@ -6,14 +6,21 @@
 // requirement verdict is aggregated from those instances:
 //
 //   - any FAIL instance makes the requirement FAIL;
-//   - otherwise at least one PASS instance makes it PASS, and the undecided
-//     instances are counted in the coverage;
+//   - otherwise, when every instance passed, it is PASS;
+//   - otherwise, when some instances passed and the others could not be
+//     decided, it is CANNOT_DECIDE with the reason PARTLY_DECIDED: the
+//     instances that were not decided may hide a failure, so the
+//     requirement is not reported as passed;
 //   - otherwise (all instances undecided, or no instance) it is
 //     CANNOT_DECIDE, with the most frequent reason as the representative
 //     reason, or NOT_EXERCISED when there was no instance.
+//
+// The coverage keeps the counts of passed, failed and undecided instances
+// apart in every case.
 package verdict
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/0xmhha/wbft-inspector/internal/evidence"
@@ -50,11 +57,12 @@ const (
 	VectorOnly        Reason = "VECTOR_ONLY"        // leaves no evidence on a running chain
 	InconsistentInput Reason = "INCONSISTENT_INPUT" // inputs contradict each other
 	NotInBuild        Reason = "NOT_IN_BUILD"       // this build has no checker for the requirement ID
+	PartlyDecided     Reason = "PARTLY_DECIDED"     // some instances passed, the others could not be decided
 )
 
 // Reasons lists every reason code in the order of the report schema.
 var Reasons = []Reason{MissingData, MissingAncestor, ArchiveRequired, NotExercised, ClockUncertainty,
-	ObserverScope, LogLevel, ImplProfile, RPCUnavailable, NeedsNodeFeature, VectorOnly, InconsistentInput, NotInBuild}
+	ObserverScope, LogLevel, ImplProfile, RPCUnavailable, NeedsNodeFeature, VectorOnly, InconsistentInput, NotInBuild, PartlyDecided}
 
 // Instance is the verdict of one application of a requirement.
 type Instance struct {
@@ -138,8 +146,13 @@ func Aggregate(in []Instance) Result {
 	switch {
 	case r.Fail > 0:
 		r.Verdict = Fail
-	case r.Pass > 0:
+	case r.CannotDecide == 0 && r.Pass > 0:
 		r.Verdict = Pass
+	case r.Pass > 0:
+		// The undecided instances' own reasons stay in Reasons.
+		r.Verdict, r.Reason = CannotDecide, PartlyDecided
+		r.Detail = fmt.Sprintf("%d of %d instances passed and %d could not be decided (most often %s); none failed",
+			r.Pass, r.Instances, r.CannotDecide, representative(r.Reasons))
 	case r.Instances == 0:
 		r.Verdict, r.Reason = CannotDecide, NotExercised
 		r.Detail = "no instance of the requirement occurred in the input"

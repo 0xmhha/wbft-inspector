@@ -76,16 +76,35 @@ wbft-inspector check --events events/ --chain-config genesis.json --out report.j
 - `--require-decided FILE` lists requirement IDs (one per line, `#` starts a
   comment) that must end `PASS` or `FAIL`; otherwise the exit code is 2. Use
   it to state which requirements a scenario must exercise.
-- `--min-coverage`, `--fail-on` (default `critical,high,medium`),
-  `--clock-model`, `--sched-ms`, `--margin-ms`: see `wbft-inspector check -h`.
+- `--min-coverage R` sets the lowest share of passed instances a partly
+  decided requirement may have (below it the exit code is 2).
+- `--fail-on` (default `critical,high,medium`), `--clock-model`,
+  `--sched-ms`, `--margin-ms`: see `wbft-inspector check -h`.
 
 Every requirement gets one verdict. A checker decides each instance of a
-requirement (a timer, a message, a view change); any failed instance makes the
-requirement `FAIL`, otherwise one passed instance makes it `PASS` (the
-undecided instances are counted in `coverage`), otherwise it is
-`CANNOT_DECIDE` with a reason code such as `NOT_EXERCISED` (the situation did
-not occur), `MISSING_DATA`, `OBSERVER_SCOPE` or `CLOCK_UNCERTAINTY`.
-A requirement whose checker is not implemented yet is `NOT_RUN`.
+requirement (a timer, a message, a view change), and the instances give the
+verdict:
+
+| Instances | Verdict |
+|---|---|
+| any failed | `FAIL` |
+| all passed | `PASS` |
+| some passed, the others undecided, none failed | `CANNOT_DECIDE`, reason `PARTLY_DECIDED` |
+| all undecided | `CANNOT_DECIDE`, with the most frequent reason, such as `MISSING_DATA`, `OBSERVER_SCOPE` or `CLOCK_UNCERTAINTY` |
+| none | `CANNOT_DECIDE`, reason `NOT_EXERCISED` (the situation did not occur) |
+
+A requirement whose checker is not implemented yet is `NOT_RUN`. A
+requirement is `PASS` only when every instance was decided and passed: an
+undecided instance may hide a failure. Each result's `coverage` counts the
+passed, failed and undecided instances apart, with the reasons of the
+undecided ones. A `PARTLY_DECIDED` result also says in its `detail` how
+many instances passed and how many could not be decided. The summary counts
+`partly_decided` as part of `cannot_decide`. `check` ends by writing the
+counts on standard error in one line, for example:
+
+```
+check: 87 requirements: 16 passed, 0 failed, 35 could not be decided (2 of them partly passed), 36 not run
+```
 
 Time comparisons use the monotonic clock of one node: a measured duration
 `d` against an expected `t` passes within `[t, t + sched]`, fails beyond a

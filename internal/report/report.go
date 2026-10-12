@@ -117,16 +117,19 @@ type Clock struct {
 	MarginMs float64 `json:"margin_ms"`
 }
 
-// Counts counts requirement verdicts.
+// Counts counts requirement verdicts. PartlyDecided is the part of
+// CannotDecide whose instances passed or could not be decided, none
+// failing: not a pass, and not the same as nothing decided.
 type Counts struct {
-	Total        int `json:"total"`
-	Pass         int `json:"pass"`
-	Fail         int `json:"fail"`
-	CannotDecide int `json:"cannot_decide"`
-	NotRun       int `json:"not_run"`
+	Total         int `json:"total"`
+	Pass          int `json:"pass"`
+	Fail          int `json:"fail"`
+	CannotDecide  int `json:"cannot_decide"`
+	PartlyDecided int `json:"partly_decided"`
+	NotRun        int `json:"not_run"`
 }
 
-func (c *Counts) add(v verdict.Verdict) {
+func (c *Counts) add(v verdict.Verdict, why verdict.Reason) {
 	c.Total++
 	switch v {
 	case verdict.Pass:
@@ -135,9 +138,19 @@ func (c *Counts) add(v verdict.Verdict) {
 		c.Fail++
 	case verdict.CannotDecide:
 		c.CannotDecide++
+		if why == verdict.PartlyDecided {
+			c.PartlyDecided++
+		}
 	default:
 		c.NotRun++
 	}
+}
+
+// Line writes the counts as one line that keeps passed, failed and
+// undecided requirements apart.
+func (c Counts) Line() string {
+	return fmt.Sprintf("%d requirements: %d passed, %d failed, %d could not be decided (%d of them partly passed), %d not run",
+		c.Total, c.Pass, c.Fail, c.CannotDecide, c.PartlyDecided, c.NotRun)
 }
 
 // Summary aggregates the results.
@@ -301,7 +314,7 @@ func finding(x verdict.Instance) Finding {
 type Policy struct {
 	FailOn         map[string]bool // severities that make exit code 1
 	RequireDecided []string        // requirement IDs that must not stay undecided
-	MinCoverage    float64         // lower bound of pass/instances of PASS results
+	MinCoverage    float64         // lower bound of pass/instances of partly decided results
 }
 
 // Exit codes.
@@ -323,17 +336,21 @@ func Summarize(results []Result, entries []Entry, p Policy) (Summary, []string) 
 	failing := false
 	for _, r := range results {
 		v := verdict.Verdict(r.Verdict)
-		s.Requirements.add(v)
+		var why verdict.Reason
+		if r.Reason != nil {
+			why = verdict.Reason(r.Reason.Code)
+		}
+		s.Requirements.add(v, why)
 		prio := "none"
 		if r.Priority != nil {
 			prio = *r.Priority
 		}
 		c := s.ByPriority[prio]
-		c.add(v)
+		c.add(v, why)
 		s.ByPriority[prio] = c
 		for _, t := range r.Tags {
 			c := s.ByTag[t]
-			c.add(v)
+			c.add(v, why)
 			s.ByTag[t] = c
 		}
 		if v == verdict.Fail {
@@ -342,7 +359,7 @@ func Summarize(results []Result, entries []Entry, p Policy) (Summary, []string) 
 				failing = true
 			}
 		}
-		if v == verdict.Pass && p.MinCoverage > 0 && r.Coverage.Instances > 0 {
+		if why == verdict.PartlyDecided && p.MinCoverage > 0 && r.Coverage.Instances > 0 {
 			if ratio := float64(r.Coverage.Pass) / float64(r.Coverage.Instances); ratio < p.MinCoverage {
 				problems = append(problems, fmt.Sprintf("%s: coverage %.4f below %.4f", r.Requirement, ratio, p.MinCoverage))
 			}
@@ -379,7 +396,8 @@ func Summarize(results []Result, entries []Entry, p Policy) (Summary, []string) 
 		for n, reqs := range nodes {
 			var c Counts
 			for _, insts := range reqs {
-				c.add(verdict.Aggregate(insts).Verdict)
+				a := verdict.Aggregate(insts)
+				c.add(a.Verdict, a.Reason)
 			}
 			s.ByNode[n] = c
 		}

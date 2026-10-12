@@ -59,7 +59,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	chainCfg := fs.String("chain-config", "", "genesis file or chain configuration (anzeon.wbft, transitions, chainId) for timer durations and the randao reveal of proposals")
 	checks := fs.String("checks", "", "comma-separated selection: requirement IDs, priorities (P0, P1, P2, V) or checker-name globs (e.g. timer.*); default: the whole catalog")
 	requireDecided := fs.String("require-decided", "", "file of requirement IDs that must be decided (PASS or FAIL); otherwise exit 2")
-	minCoverage := fs.Float64("min-coverage", 0, "lower bound of passed/instances for PASS results; otherwise exit 2")
+	minCoverage := fs.Float64("min-coverage", 0, "lower bound of passed/instances for partly decided results; otherwise exit 2")
 	failOn := fs.String("fail-on", "critical,high,medium", "severities whose FAIL gives exit code 1")
 	clockModel := fs.String("clock-model", "shared-host", "clock model of the nodes: shared-host, ntp or unknown")
 	skew := fs.Float64("clock-skew-ms", 0, "upper bound of the clock skew between nodes (ms)")
@@ -334,6 +334,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "check: %v\n", err)
 		return report.ExitInternal
 	}
+	fmt.Fprintf(stderr, "check: %s\n", sum.Requirements.Line())
 	return exit
 }
 

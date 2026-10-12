@@ -92,7 +92,8 @@
         "NEEDS_NODE_FEATURE",
         "VECTOR_ONLY",
         "INCONSISTENT_INPUT",
-        "NOT_IN_BUILD"
+        "NOT_IN_BUILD",
+        "PARTLY_DECIDED"
       ]
     },
     "severity": {
@@ -514,6 +515,10 @@
         },
         "cannot_decide": {
           "type": "integer"
+        },
+        "partly_decided": {
+          "type": "integer",
+          "description": "of cannot_decide: requirements with passed and undecided instances and no failure"
         },
         "not_run": {
           "type": "integer"
