@@ -1,0 +1,1 @@
+These first five public StableNet testnet blocks (chain ID 8283) are RLP fixtures. The consensus config is the public preset recorded in wbft/tools/headerscan at 800141cb6e65. Block 0 hash: 0x2bdf79b3d3cc49f9e6638ff81f3bb85065c79945a8fe4556cd0ff47bbfc02490. They contain no test signing keys.

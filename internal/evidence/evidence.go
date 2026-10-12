@@ -7,6 +7,7 @@ package evidence
 // Pointer is one piece of evidence. Kind is required; the other fields
 // depend on the kind (report schema, "$defs/evidence").
 type Pointer struct {
+	Address    string `json:"address,omitempty"`
 	Kind       string `json:"kind"`
 	Input      string `json:"input,omitempty"`
 	Node       string `json:"node,omitempty"`
