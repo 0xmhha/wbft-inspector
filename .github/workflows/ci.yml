@@ -77,6 +77,10 @@ jobs:
           ref: ${{ steps.lock.outputs.commit }}
           path: wbft-spec
       - run: make catalog-check vectors WBFT_SPEC_DIR="$PWD/wbft-spec"
+      - name: generated legacy log profile
+        run: |
+          python3 tools/logprofile/generate.py wbft-spec/spec/A-13-appendix.md --check
+          python3 -m unittest discover -s tools/logprofile -v
 
   e2e:
     # The wbft simulator writes the event streams of every scenario of its

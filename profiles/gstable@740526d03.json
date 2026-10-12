@@ -1,0 +1,1840 @@
+{
+  "format": "wbft-log-profile/1",
+  "id": "gstable@740526d03",
+  "keys": [],
+  "source": {
+    "spec": "A-13-appendix.md",
+    "spec_sha256": "e5f3f28b8bb0bdfeba4f3b6bc9429851d2aef9277a0ade64e9087568de053df6",
+    "reference": "740526d03",
+    "rows": 184
+  },
+  "entries": [
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid validator",
+      "locations": [
+        "backend/backend.go:155"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: invalid block proposal",
+      "locations": [
+        "backend/backend.go:217",
+        "backend/backend.go:262"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "NEW_HEAD",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: block proposal committed",
+      "locations": [
+        "backend/backend.go:231"
+      ],
+      "fields": {
+        "path": "sealed_locally"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: bad block proposal",
+      "locations": [
+        "backend/backend.go:268"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: last block proposal invalid",
+      "locations": [
+        "backend/backend.go:335"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "ENGINE_START",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: activate WBFT",
+      "locations": [
+        "backend/backend.go:356"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: set ProposerPolicy sorter to ValidatorSortByByteFunc",
+      "locations": [
+        "backend/backend.go:357"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to activate WBFT",
+      "locations": [
+        "backend/backend.go:362"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "ENGINE_STOP",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: deactivate",
+      "locations": [
+        "backend/backend.go:374"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to deactivate",
+      "locations": [
+        "backend/backend.go:376"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "ENGINE_START",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: start",
+      "locations": [
+        "backend/engine.go:265",
+        "core/handler.go:36"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: received NewBlockMsg",
+      "locations": [
+        "backend/handler.go:107"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: unable to decode the NewBlockMsg",
+      "locations": [
+        "backend/handler.go:120"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: block already proposed",
+      "locations": [
+        "backend/handler.go:125"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: initial epoch info",
+      "locations": [
+        "config.go:275"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT:   - candidates[%d]",
+      "locations": [
+        "config.go:277",
+        "engine/engine.go:908"
+      ],
+      "fields": {},
+      "template": true
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: future message too far ahead in sequence, dropped",
+      "locations": [
+        "core/backlog.go:82"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: future sequence message too far ahead in round, dropped",
+      "locations": [
+        "core/backlog.go:92"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: future message too far ahead in round, dropped",
+      "locations": [
+        "core/backlog.go:103"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: backlog from self",
+      "locations": [
+        "core/backlog.go:212"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: new backlog message",
+      "locations": [
+        "core/backlog.go:216"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: duplicate backlog message, dropping",
+      "locations": [
+        "core/backlog.go:233"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: backlog is full, dropping message",
+      "locations": [
+        "core/backlog.go:238"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: process backlog",
+      "locations": [
+        "core/backlog.go:268"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: stop processing backlog",
+      "locations": [
+        "core/backlog.go:290"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: skip backlog message",
+      "locations": [
+        "core/backlog.go:297"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: post backlog event",
+      "locations": [
+        "core/backlog.go:301"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to encode payload of COMMIT message",
+      "locations": [
+        "core/commit.go:56"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to sign COMMIT message",
+      "locations": [
+        "core/commit.go:62"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to encode COMMIT message",
+      "locations": [
+        "core/commit.go:70"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "SEND",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: broadcast COMMIT message",
+      "locations": [
+        "core/commit.go:74"
+      ],
+      "fields": {
+        "phase": "COMMIT",
+        "cause": "broadcast"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: COMMIT payload",
+      "locations": [
+        "core/commit.go:75"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to broadcast COMMIT message",
+      "locations": [
+        "core/commit.go:79"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: handle COMMIT message",
+      "locations": [
+        "core/commit.go:93"
+      ],
+      "fields": {
+        "phase": "COMMIT",
+        "action": "handle"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: invalid COMMIT message digest",
+      "locations": [
+        "core/commit.go:97"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: failed to cast proposal from COMMIT message to *types.Block",
+      "locations": [
+        "core/commit.go:104"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: failed to verify seal from COMMIT message",
+      "locations": [
+        "core/commit.go:110"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to save COMMIT message",
+      "locations": [
+        "core/commit.go:116"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "QUORUM",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: received quorum of COMMIT messages",
+      "locations": [
+        "core/commit.go:124"
+      ],
+      "fields": {
+        "phase": "COMMIT",
+        "what": "COMMIT"
+      }
+    },
+    {
+      "kind": "MSG_OUTCOME",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: accepted new COMMIT messages",
+      "locations": [
+        "core/commit.go:127"
+      ],
+      "fields": {
+        "phase": "COMMIT",
+        "outcome": "ACCEPT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: error committing proposal",
+      "locations": [
+        "core/commit.go:174"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: initialize new round",
+      "locations": [
+        "core/core.go:183"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: start at the initial round",
+      "locations": [
+        "core/core.go:186"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: catch up last block proposal",
+      "locations": [
+        "core/core.go:195"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: same round, no need to start new round",
+      "locations": [
+        "core/core.go:199"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: next round is inferior to current round",
+      "locations": [
+        "core/core.go:202"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: next sequence is before last block proposal",
+      "locations": [
+        "core/core.go:207"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "ROUND_ENTER",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: start new round",
+      "locations": [
+        "core/core.go:273"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: Discarding prepared block due to bad proposal",
+      "locations": [
+        "core/core.go:280"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "STATE",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: changed state",
+      "locations": [
+        "core/core.go:302"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: newRoundChangeTimer skipped: current view not initialized",
+      "locations": [
+        "core/core.go:359"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: Possible request timeout overflow detected, setting timeout value to maxRequestTimeout",
+      "locations": [
+        "core/core.go:385"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: Timeout overflow detected, setting timeout value to MaxInt64",
+      "locations": [
+        "core/core.go:395"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "TIMER_ARM",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: start new ROUND-CHANGE timer",
+      "locations": [
+        "core/core.go:404"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE",
+        "timer": "round"
+      }
+    },
+    {
+      "kind": "TIMER_ARM",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: set ROUND-CHANGE retry timer",
+      "locations": [
+        "core/core.go:442"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE",
+        "timer": "retry"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid extra PREPARE message digest",
+      "locations": [
+        "core/extraseal.go:55"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: PREPARE seal verify failed",
+      "locations": [
+        "core/extraseal.go:61"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid extra COMMIT message digest",
+      "locations": [
+        "core/extraseal.go:71"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: COMMIT seal verify failed",
+      "locations": [
+        "core/extraseal.go:77"
+      ],
+      "fields": {
+        "phase": "COMMIT"
+      }
+    },
+    {
+      "kind": "EXTRA_SEAL",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: new extra prepare seal message",
+      "locations": [
+        "core/extraseal.go:100"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "EXTRA_SEAL",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: new extra commit seal message",
+      "locations": [
+        "core/extraseal.go:114"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: clear extra prepare seal",
+      "locations": [
+        "core/extraseal.go:192"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: clear extra commit seal",
+      "locations": [
+        "core/extraseal.go:200"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "FINALIZE_HANDOVER",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: handle final committed",
+      "locations": [
+        "core/final_committed.go:28"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: stopping...",
+      "locations": [
+        "core/handler.go:51"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "ENGINE_STOP",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: stopped",
+      "locations": [
+        "core/handler.go:57"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "BACKLOG",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: can not encode backlog message",
+      "locations": [
+        "core/handler.go:145"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid message event code",
+      "locations": [
+        "core/handler.go:192"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid message",
+      "locations": [
+        "core/handler.go:199"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid messages code",
+      "locations": [
+        "core/handler.go:243"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "TIMER_FIRE",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: TIMER CHANGING ROUND",
+      "locations": [
+        "core/handler.go:256"
+      ],
+      "fields": {
+        "timer": "round"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: TIMER CHANGED ROUND",
+      "locations": [
+        "core/handler.go:258"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid message payload",
+      "locations": [
+        "core/handler.go:275"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid message signature",
+      "locations": [
+        "core/handler.go:280"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: hasQuorumOfRoundChangeMessagesForNil",
+      "locations": [
+        "core/justification.go:99"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: hasQuorumOfRoundChangeMessagesForPreparedRoundAndBlock",
+      "locations": [
+        "core/justification.go:116"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: duplicate ROUND-CHANGE from same source, skipping",
+      "locations": [
+        "core/justification.go:162"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: duplicate PREPARE from same source, skipping",
+      "locations": [
+        "core/justification.go:180"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to encode payload of PREPARE message",
+      "locations": [
+        "core/prepare.go:54"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to sign PREPARE message",
+      "locations": [
+        "core/prepare.go:59"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to encode PREPARE message",
+      "locations": [
+        "core/prepare.go:67"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "SEND",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: broadcast PREPARE message",
+      "locations": [
+        "core/prepare.go:71"
+      ],
+      "fields": {
+        "phase": "PREPARE",
+        "cause": "broadcast"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: PREPARE payload",
+      "locations": [
+        "core/prepare.go:72"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to broadcast PREPARE message",
+      "locations": [
+        "core/prepare.go:76"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: handle PREPARE message",
+      "locations": [
+        "core/prepare.go:90"
+      ],
+      "fields": {
+        "phase": "PREPARE",
+        "action": "handle"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: invalid PREPARE message digest",
+      "locations": [
+        "core/prepare.go:94"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: failed to cast proposal from PREPARE message to *types.Block",
+      "locations": [
+        "core/prepare.go:101"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: failed to verify seal from PREPARE message",
+      "locations": [
+        "core/prepare.go:107"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to save PREPARE message",
+      "locations": [
+        "core/prepare.go:113"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "QUORUM",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: received quorum of PREPARE messages",
+      "locations": [
+        "core/prepare.go:122"
+      ],
+      "fields": {
+        "phase": "PREPARE",
+        "what": "PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: PREPARE message matches proposal",
+      "locations": [
+        "core/prepare.go:135"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "MSG_OUTCOME",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: accepted PREPARE messages",
+      "locations": [
+        "core/prepare.go:142"
+      ],
+      "fields": {
+        "phase": "PREPARE",
+        "outcome": "ACCEPT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to encode payload of PRE-PREPARE message",
+      "locations": [
+        "core/preprepare.go:60"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to sign PRE-PREPARE message",
+      "locations": [
+        "core/preprepare.go:65"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: add ROUND-CHANGE justification",
+      "locations": [
+        "core/preprepare.go:75"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: extended PRE-PREPARE message with ROUND-CHANGE justifications",
+      "locations": [
+        "core/preprepare.go:77"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: extended PRE-PREPARE message with PREPARE justification",
+      "locations": [
+        "core/preprepare.go:83"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to encode PRE-PREPARE message",
+      "locations": [
+        "core/preprepare.go:89"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "SEND",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: broadcast PRE-PREPARE message",
+      "locations": [
+        "core/preprepare.go:95"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE",
+        "cause": "broadcast"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: PRE-PREPARE payload",
+      "locations": [
+        "core/preprepare.go:96"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to broadcast PRE-PREPARE message",
+      "locations": [
+        "core/preprepare.go:100"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: handle PRE-PREPARE message",
+      "locations": [
+        "core/preprepare.go:120"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE",
+        "action": "handle"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: ignore PRE-PREPARE message from non proposer",
+      "locations": [
+        "core/preprepare.go:124"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: ignore PRE-PREPARE with mismatched sequence and proposal number",
+      "locations": [
+        "core/preprepare.go:130"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: invalid PRE-PREPARE message justification",
+      "locations": [
+        "core/preprepare.go:139",
+        "core/preprepare.go:141"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "PROPOSAL_DEFERRED",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: PRE-PREPARE block proposal is in the future (will be treated again later)",
+      "locations": [
+        "core/preprepare.go:151"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: invalid PRE-PREPARE block proposal",
+      "locations": [
+        "core/preprepare.go:165"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE"
+      }
+    },
+    {
+      "kind": "PREPREPARE_ACCEPT",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: accepted PRE-PREPARE message",
+      "locations": [
+        "core/preprepare.go:173"
+      ],
+      "fields": {
+        "phase": "PRE-PREPARE",
+        "outcome": "ACCEPT"
+      }
+    },
+    {
+      "kind": "BUILD_REQUEST",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: handle block proposal request",
+      "locations": [
+        "core/request.go:36"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid request",
+      "locations": [
+        "core/request.go:40"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: unexpected request",
+      "locations": [
+        "core/request.go:43"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: store block proposal request for future treatment",
+      "locations": [
+        "core/request.go:84"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: lookup for pending block proposal requests",
+      "locations": [
+        "core/request.go:99"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: stop looking up for pending block proposal request",
+      "locations": [
+        "core/request.go:107"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: skip pending invalid block proposal request",
+      "locations": [
+        "core/request.go:111"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: found pending block proposal request",
+      "locations": [
+        "core/request.go:114"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: invalid past target round",
+      "locations": [
+        "core/roundchange.go:59"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to encode ROUND-CHANGE message",
+      "locations": [
+        "core/roundchange.go:68",
+        "core/roundchange.go:87"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to sign ROUND-CHANGE message",
+      "locations": [
+        "core/roundchange.go:73"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: extended ROUND-CHANGE message with PREPARE justification",
+      "locations": [
+        "core/roundchange.go:81"
+      ],
+      "fields": {
+        "phase": "PREPARE"
+      }
+    },
+    {
+      "kind": "SEND",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: broadcast ROUND-CHANGE message",
+      "locations": [
+        "core/roundchange.go:91"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE",
+        "cause": "broadcast"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to broadcast ROUND-CHANGE message",
+      "locations": [
+        "core/roundchange.go:95"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: handle ROUND-CHANGE message",
+      "locations": [
+        "core/roundchange.go:115"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE",
+        "action": "handle"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: round-change validation failed",
+      "locations": [
+        "core/roundchange.go:130",
+        "core/roundchange.go:139"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: failed to add ROUND-CHANGE message",
+      "locations": [
+        "core/roundchange.go:148"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "QUORUM",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: received F+1 ROUND-CHANGE messages",
+      "locations": [
+        "core/roundchange.go:166"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE",
+        "what": "F_PLUS_ONE"
+      }
+    },
+    {
+      "kind": "QUORUM",
+      "module": "",
+      "level": "info",
+      "msg": "WBFT: received quorum of ROUND-CHANGE messages",
+      "locations": [
+        "core/roundchange.go:171"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE",
+        "what": "ROUND_CHANGE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: round change returns an error: no proposal as pending request is nil",
+      "locations": [
+        "core/roundchange.go:183"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: invalid ROUND-CHANGE message justification",
+      "locations": [
+        "core/roundchange.go:200",
+        "core/roundchange.go:202"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "MSG_OUTCOME",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: accepted ROUND-CHANGE messages",
+      "locations": [
+        "core/roundchange.go:214"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE",
+        "outcome": "ACCEPT"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: ROUND-CHANGE prepared justification mismatch, ignoring prepared state",
+      "locations": [
+        "core/roundchange.go:278"
+      ],
+      "fields": {
+        "phase": "ROUND-CHANGE"
+      }
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: Skipping blacklisted signer verification due to unavailable state",
+      "locations": [
+        "engine/engine.go:297"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: Skipping gas tip verification due to unavailable state",
+      "locations": [
+        "engine/engine.go:347"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to verify previous prepared seal",
+      "locations": [
+        "engine/engine.go:396"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to verify previous committed seal",
+      "locations": [
+        "engine/engine.go:406"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to verify prepared seal",
+      "locations": [
+        "engine/engine.go:431"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to verify committed seal",
+      "locations": [
+        "engine/engine.go:444"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to determine epoch block",
+      "locations": [
+        "engine/engine.go:653"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to get latest epoch info",
+      "locations": [
+        "engine/engine.go:673"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to extract wbft extra data",
+      "locations": [
+        "engine/engine.go:684"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to get proposer",
+      "locations": [
+        "engine/engine.go:690"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to get previous epoch info",
+      "locations": [
+        "engine/engine.go:700"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to get previous prepare signers",
+      "locations": [
+        "engine/engine.go:719"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to get previous commit signers",
+      "locations": [
+        "engine/engine.go:731"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: Seals count",
+      "locations": [
+        "engine/engine.go:739"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: failed to get prior epoch info",
+      "locations": [
+        "engine/engine.go:763"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Invalid round",
+      "locations": [
+        "engine/engine.go:784"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: Seals counts in epoch",
+      "locations": [
+        "engine/engine.go:799"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Failed to decide validators",
+      "locations": [
+        "engine/engine.go:887"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "warn",
+      "msg": "WBFT: no BLS public key for the validator",
+      "locations": [
+        "engine/engine.go:896"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "trace",
+      "msg": "WBFT: update epoch info",
+      "locations": [
+        "engine/engine.go:906"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Failed to compute shuffled index",
+      "locations": [
+        "engine/engine.go:1272"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error List() Signed Payload",
+      "locations": [
+        "messages/roundchange.go:90",
+        "messages/roundchange.go:212"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Raw()",
+      "locations": [
+        "messages/roundchange.go:97",
+        "messages/roundchange.go:219",
+        "messages/roundchange.go:279",
+        "messages/roundchange.go:299"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error List() Payload",
+      "locations": [
+        "messages/roundchange.go:104",
+        "messages/roundchange.go:226"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Decode(&m.Sequence)",
+      "locations": [
+        "messages/roundchange.go:109",
+        "messages/roundchange.go:231"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Decode(&m.Round)",
+      "locations": [
+        "messages/roundchange.go:113",
+        "messages/roundchange.go:235"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error List() Prepared",
+      "locations": [
+        "messages/roundchange.go:120",
+        "messages/roundchange.go:242"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Decode(&m.PreparedRound)",
+      "locations": [
+        "messages/roundchange.go:125",
+        "messages/roundchange.go:247"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Decode(&p.PreparedDigest)",
+      "locations": [
+        "messages/roundchange.go:129"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "debug",
+      "msg": "WBFT: Correctly decoded SignedRoundChangePayload",
+      "locations": [
+        "messages/roundchange.go:153"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Decode(&m.PreparedDigest)",
+      "locations": [
+        "messages/roundchange.go:251",
+        "messages/roundchange.go:284"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Kind()",
+      "locations": [
+        "messages/roundchange.go:274",
+        "messages/roundchange.go:294"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error m.PreparedDigest.Hash() != digest",
+      "locations": [
+        "messages/roundchange.go:288"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Error Decode(&m.Justification)",
+      "locations": [
+        "messages/roundchange.go:304"
+      ],
+      "fields": {}
+    },
+    {
+      "kind": "HEALTH",
+      "module": "",
+      "level": "error",
+      "msg": "WBFT: Failed to get signer address",
+      "locations": [
+        "utils.go:63"
+      ],
+      "fields": {}
+    }
+  ]
+}
