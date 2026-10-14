@@ -40,11 +40,51 @@ func (sb *Backend) Start(notifyNewRound func(waitTime time.Duration, round *big.
  return nil
 }
 func (sb *Backend) Stop() error { return nil }
+func (sb *Backend) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
+	go func() {
+		go sb.EventMux().Post(wbft.RequestEvent{
+			Proposal: block,
+		})
+		if true { if true { if true {
+						results <- sealed
+						return
+		} } }
+		if true { if true {
+				results <- nil
+				return
+		} }
+	}()
+ return nil
+}
 '''.replace(" sb.coreStarted", "\tsb.coreStarted").replace(" return nil", "\treturn nil"),
             "miner/worker.go": '''package miner
 import (
 "github.com/ethereum/go-ethereum/log"
 )
+type environment struct {}
+type task struct {}
+func (env *environment) copy() *environment {
+	cpy := &environment{}
+ return cpy
+}
+func (w *worker) stub() {
+ select {
+		case task := <-w.taskCh:
+			if sealHash == prev {
+				continue
+ }
+			if w.skipSealHook != nil && w.skipSealHook(task) {
+				continue
+ }
+ w.engine.Seal(w.chain, task.block, w.resultCh, stopCh)
+ }
+			select {
+			case w.taskCh <- &task{}:
+				fees := totalFees()
+ case <-w.exitCh:
+ log.Info("Worker has exited")
+ }
+}
 func (w *worker) commitWork(interrupt *atomic.Int32, timestamp int64) {
 \tif w.syncing.Load() {
 \t\treturn

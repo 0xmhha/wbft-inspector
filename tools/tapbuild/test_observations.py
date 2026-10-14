@@ -36,6 +36,22 @@ class ObservationTest(unittest.TestCase):
         self.assertFalse(result['application_request_completion_proven'])
         self.assertFalse(result['delivery_coverage_proven'])
 
+    def test_stages_require_exact_worker_parent(self):
+        rows = self.rows()
+        rows[1]['operation'] = 'worker_commit_work'
+        stage = dict(rows[2], type='operation_stage', id=1, stage='seal_return', height='17', hash='0x'+'2'*64)
+        for key in ['result','index']:
+            stage.pop(key, None)
+        rows.insert(3, stage)
+        for i, row in enumerate(rows):
+            row['seq'] = i
+        result = self.inspect(rows)
+        self.assertFalse(result['problems'])
+        self.assertEqual(result['format'], 'wbft-tap-observations/2')
+        self.assertFalse(result['application_request_completion_proven'])
+        rows[3]['id'] = 2
+        self.assertTrue(self.inspect(rows)['problems'])
+
     def test_noop_close_does_not_establish_engine_stop(self):
         rows = self.rows()
         rows[3].pop('result')

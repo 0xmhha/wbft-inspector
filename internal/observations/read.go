@@ -42,6 +42,7 @@ type Record struct {
 	Config        *Config `json:"config,omitempty"`
 	ID            uint64  `json:"id,omitempty"`
 	Operation     string  `json:"operation,omitempty"`
+	Stage         string  `json:"stage,omitempty"`
 	Height        string  `json:"height,omitempty"`
 	Hash          string  `json:"hash,omitempty"`
 	Count         uint64  `json:"count,omitempty"`
@@ -61,6 +62,7 @@ type Call struct {
 	Hash        string `json:"hash"`
 }
 type Result struct {
+	Tasks                              []Task   `json:"tasks"`
 	Format                             string   `json:"format"`
 	Node                               string   `json:"node"`
 	Run                                string   `json:"run"`
@@ -157,6 +159,8 @@ func decode(raw []byte, line int) (Record, error) {
 		keys = append(keys, "id", "operation", "height", "hash", "count")
 	case "operation_end":
 		keys = append(keys, "id", "result", "height", "hash", "index")
+	case "operation_stage":
+		keys = append(keys, "id", "stage", "height", "hash")
 	case "capture_end":
 		keys = append(keys, "dropped")
 	default:
@@ -203,9 +207,19 @@ func decode(raw []byte, line int) (Record, error) {
 		if r.Result != "ok" && r.Result != "error" {
 			return r, errors.New("invalid runtime result")
 		}
-	case "operation_start", "operation_end":
+	case "operation_start", "operation_end", "operation_stage":
 		if r.ID == 0 || r.Height != "" && !decimal.MatchString(r.Height) || r.Hash != "" && !hash.MatchString(r.Hash) {
 			return r, errors.New("invalid operation identity")
+		}
+		if r.Type == "operation_stage" {
+			if r.Height == "" || r.Hash == "" {
+				return r, errors.New("task stage identity unavailable")
+			}
+			switch r.Stage {
+			case "task_offer", "task_sent", "task_received", "task_duplicate", "task_skipped", "task_abandoned", "seal_enter", "seal_return", "seal_unsupported", "request_post_enter", "request_post_return", "seal_result", "seal_cancel":
+			default:
+				return r, errors.New("invalid task stage")
+			}
 		}
 		if r.Type == "operation_start" {
 			switch r.Operation {
@@ -319,6 +333,38 @@ func Read(input io.Reader) (Result, error) {
 			return out, errors.New("operation interval reversed")
 		}
 		out.Calls = append(out.Calls, Call{ID: strconv.FormatUint(start.ID, 10), Operation: start.Operation, StartLine: start.Line, EndLine: end.Line, Nanoseconds: strconv.FormatUint(end.Mono-start.Mono, 10), Result: end.Result, Height: end.Height, Hash: end.Hash})
+	}
+	out.Tasks = []Task{}
+	groups := map[uint64][]Record{}
+	order := []uint64{}
+	for _, r := range out.Records {
+		if r.Type != "operation_stage" {
+			continue
+		}
+		start, ok := starts[r.ID]
+		if !ok || start.Operation != "worker_commit_work" || start.Line >= r.Line {
+			return out, errors.New("task stage without exact worker call")
+		}
+		if len(groups[r.ID]) == 0 {
+			order = append(order, r.ID)
+		}
+		groups[r.ID] = append(groups[r.ID], r)
+	}
+	for _, id := range order {
+		task := projectTask(id, groups[id])
+		start := starts[id]
+		end, ok := ends[id]
+		task.StartLine = start.Line
+		task.EndLine = end.Line
+		if !ok {
+			task.State = "incomplete"
+		} else if (start.Height != "" && start.Height != groups[id][0].Height) || (end.Height != "" && end.Height != groups[id][0].Height) || (start.Hash != "" && start.Hash != groups[id][0].Hash) || (end.Hash != "" && end.Hash != groups[id][0].Hash) {
+			task.State = "ambiguous"
+		}
+		out.Tasks = append(out.Tasks, task)
+	}
+	if len(out.Tasks) > 0 {
+		out.Format = "wbft-tap-observations/2"
 	}
 	for id := range ends {
 		if _, ok := starts[id]; !ok {

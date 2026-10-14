@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"strings"
 	"testing"
 	"time"
 )
@@ -303,4 +304,20 @@ func TestWBFTTapObservationDisabledAndFailedOpen(t *testing.T) {
 	if WBFTTapClose() == nil {
 		t.Fatal("failed observation setup hidden at flush")
 	}
+}
+
+func TestWBFTTapStagesKeepExactRequestAcrossCopiesAndClose(t *testing.T) {
+ root:=t.TempDir();if err:=os.Chmod(root,0700);err!=nil{t.Fatal(err)}
+ w,err:=wbftTapOpen(root,"0x1111111111111111111111111111111111111111");if err!=nil{t.Fatal(err)}
+ op:=&WBFTTapOperation{writer:w,id:9}
+ copy:=op
+ copy.Stage("seal_return","1","0x"+strings.Repeat("2",64))
+ op.Stage("request_post_enter","1","0x"+strings.Repeat("2",64))
+ copy.Stage("seal_cancel","1","0x"+strings.Repeat("2",64))
+ if err=w.close();err!=nil{t.Fatal(err)}
+ // Late callbacks retain the closed writer instead of moving to a new run.
+ copy.Stage("seal_result","1","0x"+strings.Repeat("2",64))
+ data,err:=os.ReadFile(filepath.Join(root,"observations-"+w.run+".jsonl"));if err!=nil{t.Fatal(err)}
+ if bytes.Count(data,[]byte(`"type":"operation_stage"`))!=3||bytes.Count(data,[]byte(`"id":9`))!=3||bytes.Contains(data,[]byte(`"stage":"seal_result"`)){t.Fatal(string(data))}
+ var disabled *WBFTTapOperation;disabled.Stage("seal_enter",""," ")
 }
