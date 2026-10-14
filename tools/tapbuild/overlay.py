@@ -62,7 +62,7 @@ def render(source, output):
                 "source_sha256": hashes,
                 "overlay_sha256": {str(Path(k).relative_to(source)): hashlib.sha256(Path(v).read_bytes()).hexdigest()
                                    for k, v in replacements.items()},
-                "captures": ["wire_frames", "write_result", "stream_lifecycle"],
+                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals"],
                 "unavailable": ["engine_outcomes", "send_cause", "delivery_coverage", "paired_stream_order"]}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (output / "manifest.json").chmod(0o600)
