@@ -57,6 +57,24 @@ func (c relayOnOK) Run(_ context.Context, in *check.Inputs, out check.Emitter) e
 			out.Emit(check.Fail(req, e, "relayed with other bytes than received (dedup key "+other.Str("dedup_key")+", received "+key+")", other))
 			return
 		}
+		plans := []*events.Event{}
+		for _, index := range st.Idx {
+			candidate := r.Events[index]
+			if candidate.Kind == "RELAY_TARGETS" && candidate.Code() == e.Code() && candidate.Str("dedup_key") == key {
+				plans = append(plans, candidate)
+			}
+		}
+		if len(plans) == 1 && len(r.Lost) == 0 && !r.FromLog {
+			targets, valid := relaySelection(plans[0])
+			if valid && !targets {
+				out.Emit(check.Pass(req, e, "relay procedure selected no target after explicit peer-cache filtering", plans[0]))
+				return
+			}
+			if valid && targets {
+				out.Emit(check.Fail(req, e, "relay procedure selected targets without a matching relay send record", plans[0]))
+				return
+			}
+		}
 		out.Emit(check.Undecided(req, e, verdict.ObserverScope, "no relay record; every target may already have held the message (A-07 target filtering)"))
 	})
 	return nil
