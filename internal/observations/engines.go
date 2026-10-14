@@ -8,11 +8,13 @@ import (
 // Engine preserves all candidates for a concrete core instance. Started and
 // stopped describe local lifecycle evidence, never full execution or delivery.
 type Engine struct {
-	ID          string   `json:"id"`
-	ParentID    string   `json:"parent_id"`
-	CreatedLine int      `json:"created_line"`
-	State       string   `json:"state"`
-	Stages      []Record `json:"stages"`
+	Configuration string   `json:"configuration"`
+	Configs       []Record `json:"configs"`
+	ID            string   `json:"id"`
+	ParentID      string   `json:"parent_id"`
+	CreatedLine   int      `json:"created_line"`
+	State         string   `json:"state"`
+	Stages        []Record `json:"stages"`
 }
 
 func engineStopStage(s string) bool {
@@ -42,7 +44,18 @@ func projectEngines(records []Record, starts, ends map[uint64]Record, complete b
 				return nil, errors.New("engine without exact start parent")
 			}
 			created[r.ID] = len(out)
-			out = append(out, Engine{ID: strconv.FormatUint(r.ID, 10), ParentID: strconv.FormatUint(r.ParentID, 10), CreatedLine: r.Line, State: "incomplete", Stages: []Record{}})
+			out = append(out, Engine{ID: strconv.FormatUint(r.ID, 10), ParentID: strconv.FormatUint(r.ParentID, 10), CreatedLine: r.Line, Configuration: "unavailable", Configs: []Record{}, State: "incomplete", Stages: []Record{}})
+		}
+		if r.Type == "engine_config" {
+			index, ok := created[r.ID]
+			if !ok {
+				return nil, errors.New("configuration without exact engine instance")
+			}
+			e := &out[index]
+			if strconv.FormatUint(r.ParentID, 10) != e.ParentID || starts[r.ParentID].Line >= r.Line {
+				return nil, errors.New("engine configuration parent mismatch")
+			}
+			e.Configs = append(e.Configs, r)
 		}
 		if r.Type != "engine_stage" {
 			continue
@@ -87,6 +100,14 @@ func projectEngines(records []Record, starts, ends map[uint64]Record, complete b
 				stopParent = s.ParentID
 			}
 		}
+		switch len(e.Configs) {
+		case 0:
+		case 1:
+			e.Configuration = "incomplete"
+
+		default:
+			e.Configuration = "ambiguous"
+		}
 		if duplicate {
 			e.State = "ambiguous"
 			continue
@@ -112,6 +133,12 @@ func projectEngines(records []Record, starts, ends map[uint64]Record, complete b
 		}
 		if by["start_return"].Mono > end.Mono || records[e.CreatedLine-1].Mono < starts[parent].Mono || by["start_enter"].Mono < records[e.CreatedLine-1].Mono || by["handler_enter"].Mono < by["subscribed"].Mono {
 			continue
+		}
+		if len(e.Configs) == 1 {
+			config := e.Configs[0]
+			if config.Mono >= by["start_return"].Mono && config.Mono <= end.Mono {
+				e.Configuration = "observed"
+			}
 		}
 		e.State = "observed_started"
 		if by["stop_enter"].Line == 0 {

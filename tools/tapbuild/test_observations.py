@@ -67,6 +67,19 @@ class ObservationTest(unittest.TestCase):
         rows[3]['parent_id']=2
         self.assertTrue(self.inspect(rows)['problems'])
 
+    def test_instance_configuration_requires_its_own_start_parent(self):
+        rows=self.rows()
+        rows[1]['operation']='backend_start';rows[2]['result']='ok'
+        common={key:rows[1][key] for key in verifier.COMMON}
+        rows[2:2]=[dict(common,type='engine_created',id=7,parent_id=1),dict(common,type='engine_config',id=7,parent_id=1,config=rows[0]['config'])]
+        for i,r in enumerate(rows):r.update(seq=i,t_mono_ns=i)
+        result=self.inspect(rows)
+        self.assertEqual(result['problems'],[])
+        self.assertEqual(result['format'],'wbft-tap-observations/4')
+        self.assertEqual(len(result['engine_configs']),1)
+        rows[3]['parent_id']=2
+        self.assertTrue(self.inspect(rows)['problems'])
+
     def test_noop_close_does_not_establish_engine_stop(self):
         rows = self.rows()
         rows[3].pop('result')

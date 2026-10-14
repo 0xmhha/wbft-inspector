@@ -63,6 +63,7 @@ type Call struct {
 	Hash        string `json:"hash"`
 }
 type Result struct {
+	Startups                           []Record `json:"startups"`
 	Engines                            []Engine `json:"engines"`
 	Tasks                              []Task   `json:"tasks"`
 	Format                             string   `json:"format"`
@@ -163,6 +164,8 @@ func decode(raw []byte, line int) (Record, error) {
 		keys = append(keys, "id", "result", "height", "hash", "index")
 	case "operation_stage":
 		keys = append(keys, "id", "stage", "height", "hash")
+	case "engine_config":
+		keys = append(keys, "id", "parent_id", "config")
 	case "engine_created":
 		keys = append(keys, "id", "parent_id")
 	case "engine_stage":
@@ -188,7 +191,10 @@ func decode(raw []byte, line int) (Record, error) {
 		return r, errors.New("invalid wall clock")
 	}
 	switch r.Type {
-	case "runtime_start":
+	case "runtime_start", "engine_config":
+		if r.Type == "engine_config" && (r.ID == 0 || r.ParentID == 0) {
+			return r, errors.New("invalid engine configuration identity")
+		}
 		ckeys := []string{"Address", "Height", "RequestTimeoutMS", "BlockPeriodSeconds", "Epoch", "AllowedFutureBlockSeconds", "MaxRequestTimeoutSeconds", "ProposerPolicy", "Transitions", "SystemContractUpgrades"}
 		if _, e = fields(m["config"], ckeys); e != nil {
 			return r, e
@@ -255,7 +261,7 @@ func decode(raw []byte, line int) (Record, error) {
 // Read preserves known call boundaries and missing evidence separately. It
 // never converts complete capture bytes into a complete execution model.
 func Read(input io.Reader) (Result, error) {
-	out := Result{Format: "wbft-tap-observations/1", Records: []Record{}, Calls: []Call{}, Unavailable: []string{}}
+	out := Result{Format: "wbft-tap-observations/1", Records: []Record{}, Startups: []Record{}, Calls: []Call{}, Unavailable: []string{}}
 	limited := &io.LimitedReader{R: input, N: MaxBytes + 1}
 	scan := bufio.NewScanner(limited)
 	scan.Buffer(make([]byte, 65536), 65537)
@@ -291,9 +297,7 @@ func Read(input io.Reader) (Result, error) {
 		previous = r.Seq
 		switch r.Type {
 		case "runtime_start":
-			if runtimeStart {
-				return out, errors.New("duplicate runtime start")
-			}
+			out.Startups = append(out.Startups, r)
 			runtimeStart = true
 		case "runtime_stop", "runtime_close":
 			stop = true
@@ -392,6 +396,12 @@ func Read(input io.Reader) (Result, error) {
 	}
 	if len(out.Engines) > 0 {
 		out.Format = "wbft-tap-observations/3"
+	}
+	for _, engine := range out.Engines {
+		if len(engine.Configs) > 0 {
+			out.Format = "wbft-tap-observations/4"
+			break
+		}
 	}
 	return out, nil
 }

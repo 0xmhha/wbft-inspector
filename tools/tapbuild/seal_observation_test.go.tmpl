@@ -77,3 +77,31 @@ func TestWBFTTapActualCoreLifecycleAndDisabledReturns(t *testing.T) {
  if len(engines)!=1{t.Fatal("duplicate start created core",engines)}
  for _,s:=range []string{"start_enter","subscribed","handler_enter","initial_round_return","start_return","stop_enter","timers_stopped","unsubscribed","handler_exit","handler_joined","stop_return"}{if stages[s]!=1{t.Fatal(s,stages)}}
 }
+
+func TestWBFTTapRestartConfigurationKeepsDistinctInstances(t *testing.T) {
+ if os.Getenv("WBFT_TAP_CONFIG_TEST")!="1" {
+  cmd:=exec.Command(os.Args[0],"-test.run=^TestWBFTTapRestartConfigurationKeepsDistinctInstances$","-test.v")
+  cmd.Env=append(os.Environ(),"WBFT_TAP_CONFIG_TEST=1")
+  if out,err:=cmd.CombinedOutput();err!=nil{t.Fatalf("isolated restart: %v\n%s",err,out)}
+  return
+ }
+ t.Setenv("WBFT_TAP_DIR","")
+ chain,b,_:=newBlockChain(1);defer chain.Stop();defer b.broadcaster.(*fakeBroadcaster).blockFetcher.Stop()
+ if err:=b.Stop();err!=nil{t.Fatal(err)}
+ original:=chain.Genesis().Hash()
+ restart:=func(){for i:=0;i<2;i++{b.config.AllowedFutureBlockTime=uint64(i+1);if err:=b.Start(chain,chain.CurrentFullBlock,rawdb.HasBadBlock,nil);err!=nil{t.Fatal(err)};if err:=b.Stop();err!=nil{t.Fatal(err)}}}
+ restart()
+ root:=t.TempDir();if err:=os.Chmod(root,0700);err!=nil{t.Fatal(err)}
+ t.Setenv("WBFT_TAP_DIR",root);t.Setenv("WBFT_TAP_NODE",strings.ToLower(b.Address().Hex()))
+ restart()
+ if err:=p2p.WBFTTapClose();err!=nil{t.Fatal(err)}
+ files,_:=filepath.Glob(filepath.Join(root,"observations-*.jsonl"));if len(files)!=1{t.Fatal(files)}
+ data,err:=os.ReadFile(files[0]);if err!=nil{t.Fatal(err)}
+ parents:=map[uint64]uint64{};configIDs:=map[uint64]bool{};values:=[]string{};startups:=0
+ for _,line:=range bytes.Split(data,[]byte("\n")){
+  var r struct{Type string `json:"type"`;ID uint64 `json:"id"`;Parent uint64 `json:"parent_id"`;Config struct{Value string `json:"AllowedFutureBlockSeconds"`} `json:"config"`}
+  if json.Unmarshal(line,&r)!=nil{continue}
+  switch r.Type{case "runtime_start":startups++;case "engine_created":parents[r.ID]=r.Parent;case "engine_config":if parents[r.ID]==0||parents[r.ID]!=r.Parent||configIDs[r.ID]{t.Fatal("wrong instance config",r)};configIDs[r.ID]=true;values=append(values,r.Config.Value)}
+ }
+ if len(configIDs)!=2||startups!=2||len(values)!=2||values[0]!="1"||values[1]!="2"||chain.Genesis().Hash()!=original{t.Fatal("restart snapshot lost or disabled behavior changed",values,startups)}
+}
