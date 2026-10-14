@@ -433,14 +433,7 @@ func WBFTTapRuntimeStart(c WBFTTapRuntimeConfig) {
 	if w == nil {
 		return
 	}
-	now := time.Now()
-	if !strings.EqualFold(w.node, c.Address) {
-		wbftTapGlobal.Lock()
-		wbftTapGlobal.err = errors.Join(wbftTapGlobal.err, errors.New("tap: runtime identity differs from recording node"))
-		wbftTapGlobal.Unlock()
-		return
-	}
-	w.observe("runtime_start", now, map[string]any{"config": c})
+ w.runtimeConfig(c,nil)
 }
 
 func WBFTTapRuntimeStop(err error) {
@@ -536,4 +529,19 @@ func (e *WBFTTapEngine) Stage(parent *WBFTTapOperation, stage string) {
  if parent == nil && !stop { parent=e.parent }
  if parent != nil { if parent.writer != e.writer { return };parentID=parent.id }
  e.writer.observe("engine_stage",time.Now(),map[string]any{"id":e.id,"parent_id":parentID,"stage":stage})
+}
+
+// Config records this instance's effective startup snapshot and also retains the
+// unbound historical startup row for older inspection workflows.
+func (e *WBFTTapEngine) Config(c WBFTTapRuntimeConfig) {
+ if e == nil { return }
+ e.writer.runtimeConfig(c,e)
+}
+func (w *wbftTapWriter) runtimeConfig(c WBFTTapRuntimeConfig,e *WBFTTapEngine) {
+ now:=time.Now()
+ if !strings.EqualFold(w.node,c.Address) {
+  wbftTapGlobal.Lock();wbftTapGlobal.err=errors.Join(wbftTapGlobal.err,errors.New("tap: runtime identity differs from recording node"));wbftTapGlobal.Unlock();return
+ }
+ w.observe("runtime_start",now,map[string]any{"config":c})
+ if e!=nil {w.observe("engine_config",now,map[string]any{"id":e.id,"parent_id":e.parent.id,"config":c})}
 }

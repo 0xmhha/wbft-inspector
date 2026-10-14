@@ -115,3 +115,22 @@ reversed local clocks remain incomplete; duplicates remain ambiguous. Every
 candidate retains its original line. Backend Close and capture flush remain
 separate from these engine boundaries. Full runtime options, input processing,
 application queues, native WAL/sign floor and receiver coverage remain unproved.
+
+
+## Startup configuration history
+
+Each successful core start records `engine_config` with the exact concrete
+instance and its original backend-start parent. The snapshot uses the effective
+configuration at its full recorded height. Repeated Start/Stop cycles keep
+separate instances and snapshots, including changed scalar values. The unbound
+`runtime_start` rows are retained as historical candidates; older recordings
+with several such rows are readable without guessing their engine association.
+
+Configuration-aware output uses `wbft-tap-observations/4`. Every engine exposes
+all configuration candidates and a separate configuration state: `observed`,
+`unavailable`, `incomplete`, or `ambiguous`. Duplicate snapshots are never reduced
+to a preferred value. `observed` establishes the local startup snapshot and its
+exact parent interval; it does not verify chain membership or later effective
+configuration. The reader preserves the full startup history instead of applying
+the first settings to the whole run. Native engine options, input processing,
+application queues, WAL/sign floor and receiver coverage remain unproved.

@@ -14,6 +14,7 @@ FIELDS = {
     'operation_end': {'id', 'result', 'height', 'hash', 'index'},
     'capture_end': {'dropped'},
     'engine_created': {'id','parent_id'},
+    'engine_config': {'id','parent_id','config'},
     'engine_stage': {'id','parent_id','stage'},
     'operation_stage': {'id','stage','height','hash'},
 }
@@ -55,6 +56,8 @@ def inspect(path):
     stages=[]
     engines={}
     engine_stages=[]
+    engine_configs=[]
+    startups=[]
     kinds = Counter()
     previous = -1
     identity = None
@@ -88,7 +91,7 @@ def inspect(path):
             previous = r['seq']
             if final is not None:
                 raise ValueError('record after capture end')
-            if kind == 'runtime_start':
+            if kind in {'runtime_start','engine_config'}:
                 c = r['config']
                 if not isinstance(c, dict) or set(c) != CONFIG or c['Address'].lower() != r['node']:
                     raise ValueError('invalid runtime identity/configuration')
@@ -97,6 +100,12 @@ def inspect(path):
                         raise ValueError('invalid configuration ' + key)
                 if not integer(c['Transitions']) or not integer(c['SystemContractUpgrades']):
                     raise ValueError('invalid transition counts')
+                if kind=='runtime_start':
+                    startups.append(r)
+                else:
+                    if not integer(r['id']) or not integer(r['parent_id']) or r['id'] not in engines or r['parent_id']!=engines[r['id']]['parent_id']:
+                        raise ValueError('engine configuration parent mismatch')
+                    engine_configs.append(r)
             elif kind.startswith('operation_'):
                 if not integer(r['id']) or r['id'] == 0 or not decimal(r['height'], True):
                     raise ValueError('invalid operation identity or height')
@@ -168,7 +177,7 @@ def inspect(path):
     for stage in stages:
         if stage['id'] not in starts or starts[stage['id']]['operation']!='worker_commit_work':
             problems.append({'error':'stage has no exact worker operation'})
-    return {'format': 'wbft-tap-observations/3' if engines else 'wbft-tap-observations/2' if stages else 'wbft-tap-observations/1', 'engine_instances': len(engines), 'engine_stage_count':len(engine_stages), 'identity': identity,
+    return {'format': 'wbft-tap-observations/4' if engine_configs else 'wbft-tap-observations/3' if engines else 'wbft-tap-observations/2' if stages else 'wbft-tap-observations/1', 'engine_instances': len(engines), 'engine_stage_count':len(engine_stages), 'engine_configs':engine_configs, 'startups':startups, 'identity': identity,
             'records': sum(kinds.values()), 'kinds': dict(kinds), 'sequence_gaps': missing,
             'problems': problems, 'unavailable': unavailable,
             'capture_complete': not problems and not unavailable,

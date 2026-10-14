@@ -69,7 +69,7 @@ def render(source, output):
             text = replace_once(text, "\tc.unsubscribeEvents()", '\tc.unsubscribeEvents()\n\tc.wbftTapEngine.Stage(parent, "unsubscribed")')
             text = replace_once(text, "\tc.handlerWg.Wait()", '\tc.handlerWg.Wait()\n\tc.wbftTapEngine.Stage(parent, "handler_joined")\n\tc.wbftTapEngine.Stage(parent, "stop_return")')
             text = replace_once(text, "\t\tc.handlerWg.Done()", '\t\tc.wbftTapEngine.Stage(nil, "handler_exit")\n\t\tc.handlerWg.Done()')
-            text += '\n// Bind before starting the handler; the instance token remains immutable.\nfunc (c *Core) SetWBFTTapEngine(e *p2p.WBFTTapEngine) { c.wbftTapEngine=e }\n'
+            text += '\n// Bind before starting the handler; the instance token remains immutable.\nfunc (c *Core) SetWBFTTapEngine(e *p2p.WBFTTapEngine) { c.wbftTapEngine=e }\nfunc (c *Core) SnapshotWBFTTapConfig(config p2p.WBFTTapRuntimeConfig) { c.wbftTapEngine.Config(config) }\n'
         elif name.endswith("engine.go"):
             text = replace_once(text, "notifyNewRound func(waitTime time.Duration, round *big.Int)) error {",
                 "notifyNewRound func(waitTime time.Duration, round *big.Int)) (tapErr error) {\n"
@@ -80,7 +80,7 @@ def render(source, output):
 \ttapConfig := sb.config.GetConfig(tapHeight)
 \ttapPolicy := ""
 \tif tapConfig.ProposerPolicy != nil { tapPolicy = new(big.Int).SetUint64(uint64(tapConfig.ProposerPolicy.Id)).String() }
-\tp2p.WBFTTapRuntimeStart(p2p.WBFTTapRuntimeConfig{
+\tsb.core.SnapshotWBFTTapConfig(p2p.WBFTTapRuntimeConfig{
  Address:sb.Address().Hex(), Height:tapHeight.String(),
  RequestTimeoutMS:new(big.Int).SetUint64(tapConfig.RequestTimeout).String(),
  BlockPeriodSeconds:new(big.Int).SetUint64(tapConfig.BlockPeriod).String(),
@@ -165,7 +165,7 @@ def render(source, output):
                 "source_sha256": hashes,
                 "overlay_sha256": {str(Path(k).relative_to(source)): hashlib.sha256(Path(v).read_bytes()).hexdigest()
                                    for k, v in replacements.items()},
-                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals", "runtime_start_config", "runtime_stop", "application_call_boundaries", "exact_task_sealing_stages", "exact_engine_lifecycle"],
+                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals", "runtime_start_config", "runtime_stop", "application_call_boundaries", "exact_task_sealing_stages", "exact_engine_lifecycle", "per_instance_startup_config"],
                 "unavailable": ["engine_outcomes", "send_cause", "delivery_coverage", "paired_stream_order"]}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (output / "manifest.json").chmod(0o600)
