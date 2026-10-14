@@ -1,0 +1,351 @@
+// This file is installed only through a Go build overlay.
+package p2p
+
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rlp"
+)
+
+const wbftTapPayloadLimit = 10 << 20
+const wbftTapQueueBytes = 32 << 20
+
+type wbftTapItem struct {
+	record   map[string]any
+	payload  []byte
+	complete bool
+}
+type wbftTapWriter struct {
+	mu                       sync.Mutex
+	root, node, run          string
+	start                    time.Time
+	file                     *os.File
+	queue                    chan wbftTapItem
+	done                     chan struct{}
+	closeDone                chan struct{}
+	closeOnce                sync.Once
+	closed                   bool
+	seq, dropped, incomplete uint64
+	queuedBytes              int
+	err                      error
+}
+
+var wbftTapGlobal struct {
+	sync.Mutex
+	writer *wbftTapWriter
+}
+
+func wbftTapOpen(root, node string) (*wbftTapWriter, error) {
+	node = strings.ToLower(node)
+	if len(node) != 42 || !strings.HasPrefix(node, "0x") {
+		return nil, errors.New("tap: invalid recording node")
+	}
+	if _, err := hex.DecodeString(node[2:]); err != nil {
+		return nil, errors.New("tap: invalid recording node")
+	}
+	if !filepath.IsAbs(root) {
+		return nil, errors.New("tap: absolute private directory required")
+	}
+	if err := os.Mkdir(root, 0700); err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+	info, err := os.Lstat(root)
+	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 || info.Mode().Perm()&0077 != 0 {
+		return nil, errors.New("tap: private directory required")
+	}
+	start := time.Now()
+	run := fmt.Sprintf("tap-%d-%d", os.Getpid(), start.UnixNano())
+	f, err := os.OpenFile(filepath.Join(root, "frames-"+run+".jsonl"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return nil, err
+	}
+	w := &wbftTapWriter{root: root, node: node, run: run, start: start, file: f, queue: make(chan wbftTapItem, 1024), done: make(chan struct{}), closeDone: make(chan struct{})}
+	go w.work()
+	return w, nil
+}
+
+func wbftTapGet() (*wbftTapWriter, error) {
+	root := os.Getenv("WBFT_TAP_DIR")
+	if root == "" {
+		return nil, nil
+	}
+	wbftTapGlobal.Lock()
+	defer wbftTapGlobal.Unlock()
+	if wbftTapGlobal.writer == nil {
+		w, err := wbftTapOpen(root, os.Getenv("WBFT_TAP_NODE"))
+		if err != nil {
+			return nil, err
+		}
+		wbftTapGlobal.writer = w
+	}
+	return wbftTapGlobal.writer, nil
+}
+
+func (w *wbftTapWriter) emit(record map[string]any, payload []byte, complete bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.closed {
+		return
+	}
+	now := time.Now()
+	record["v"], record["node"], record["run"] = 1, w.node, w.run
+	record["seq"], record["t_wall"], record["t_mono_ns"] = w.seq, now.UTC().Format(time.RFC3339Nano), now.Sub(w.start).Nanoseconds()
+	w.seq++
+	if len(payload) > wbftTapPayloadLimit || w.queuedBytes+len(payload) > wbftTapQueueBytes || len(w.queue) == cap(w.queue) {
+		w.dropped++
+		return
+	}
+	if record["type"] == "frame" && !complete {
+		w.incomplete++
+	}
+	w.queuedBytes += len(payload)
+	w.queue <- wbftTapItem{record: record, payload: append([]byte(nil), payload...), complete: complete}
+}
+
+func (w *wbftTapWriter) write(item wbftTapItem) error {
+	if item.complete && item.record["type"] == "frame" {
+		sum := sha256.Sum256(item.payload)
+		name := hex.EncodeToString(sum[:])
+		for _, dir := range []string{filepath.Join(w.root, "payloads"), filepath.Join(w.root, "payloads", name[:2])} {
+			if err := os.Mkdir(dir, 0700); err != nil && !os.IsExist(err) {
+				return err
+			}
+			info, err := os.Lstat(dir)
+			if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 || info.Mode().Perm()&0077 != 0 {
+				return errors.New("tap: unsafe payload directory")
+			}
+		}
+		dir := filepath.Join(w.root, "payloads", name[:2])
+		path := filepath.Join(dir, name)
+		f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		if os.IsExist(err) {
+			info, statErr := os.Lstat(path)
+			if statErr != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
+				return errors.New("tap: unsafe existing payload")
+			}
+			old, readErr := os.ReadFile(path)
+			if readErr != nil || !bytes.Equal(old, item.payload) {
+				return errors.New("tap: existing payload differs")
+			}
+		} else if err != nil {
+			return err
+		} else {
+			_, writeErr := f.Write(item.payload)
+			syncErr := f.Sync()
+			closeErr := f.Close()
+			if err = errors.Join(writeErr, syncErr, closeErr); err != nil {
+				return err
+			}
+		}
+		item.record["payload_sha256"] = name
+		encoded, err := rlp.EncodeToBytes(item.payload)
+		if err != nil {
+			return err
+		}
+		item.record["dedup_key"] = "0x" + hex.EncodeToString(crypto.Keccak256(encoded))
+	}
+	raw, err := json.Marshal(item.record)
+	if err != nil {
+		return err
+	}
+	_, err = w.file.Write(append(raw, '\n'))
+	return err
+}
+
+func (w *wbftTapWriter) work() {
+	defer close(w.done)
+	for item := range w.queue {
+		if w.err == nil {
+			w.err = w.write(item)
+		}
+		w.mu.Lock()
+		w.queuedBytes -= len(item.payload)
+		w.mu.Unlock()
+	}
+}
+
+func (w *wbftTapWriter) close() error {
+	w.closeOnce.Do(func() {
+		defer close(w.closeDone)
+		w.mu.Lock()
+		w.closed = true
+		close(w.queue)
+		w.mu.Unlock()
+		<-w.done
+		if w.dropped > 0 && w.err == nil {
+			now := time.Now()
+			record := map[string]any{"v": 1, "type": "dropped", "node": w.node, "run": w.run, "seq": w.seq, "t_wall": now.UTC().Format(time.RFC3339Nano), "t_mono_ns": now.Sub(w.start).Nanoseconds(), "count": w.dropped}
+			w.err = w.write(wbftTapItem{record: record})
+		}
+		w.err = errors.Join(w.err, w.file.Sync(), w.file.Close())
+	})
+	<-w.closeDone
+	return w.err
+}
+
+// WBFTTapClose flushes captured bytes when the CLI exits normally. A crash
+// has no completeness claim; even a clean close does not prove delivery loss.
+func WBFTTapClose() error {
+	wbftTapGlobal.Lock()
+	w := wbftTapGlobal.writer
+	wbftTapGlobal.Unlock()
+	if w == nil {
+		return nil
+	}
+	return w.close()
+}
+
+type wbftTapStream struct {
+	base         MsgReadWriter
+	writer       *wbftTapWriter
+	peer, peerID string
+	offset       *uint64
+	mu           sync.Mutex
+	pending      map[*wbftTapReader]bool
+}
+
+// WBFTTapStream observes only the consensus protocol. Disabled capture returns
+// the original reader/writer, preserving its identity and all operations.
+func WBFTTapStream(rw MsgReadWriter, peer *Peer) (MsgReadWriter, func(), error) {
+	w, err := wbftTapGet()
+	if err != nil {
+		return nil, nil, err
+	}
+	if w == nil {
+		return rw, func() {}, nil
+	}
+	pub := peer.Node().Pubkey()
+	if pub == nil {
+		return nil, nil, errors.New("tap: peer public key unavailable")
+	}
+	s := &wbftTapStream{base: rw, writer: w, peer: strings.ToLower(crypto.PubkeyToAddress(*pub).Hex()), peerID: peer.ID().String(), pending: map[*wbftTapReader]bool{}}
+	if protocol, ok := rw.(*protoRW); ok {
+		n := protocol.offset
+		s.offset = &n
+	}
+	w.emit(map[string]any{"type": "conn", "peer": s.peer, "peer_id": s.peerID, "event": "istanbul_attached"}, nil, false)
+	return s, s.close, nil
+}
+
+func (s *wbftTapStream) frame(msg Msg, dir string, raw []byte, complete bool, write string) {
+	var wire any
+	if s.offset != nil {
+		wire = msg.Code + *s.offset
+	}
+	r := map[string]any{"type": "frame", "dir": dir, "peer": s.peer, "peer_id": s.peerID, "code": fmt.Sprintf("0x%x", msg.Code), "wire_code": wire, "size": int64(msg.Size), "dedup_key": ""}
+	if dir == "in" {
+		r["outcome"] = "PENDING"
+	} else {
+		r["write_result"] = write
+		if write != "ok" {
+			r["write_error"] = "error"
+		}
+	}
+	s.writer.emit(r, raw, complete)
+}
+
+func (s *wbftTapStream) ReadMsg() (Msg, error) {
+	msg, err := s.base.ReadMsg()
+	if err != nil {
+		return msg, err
+	}
+	r := &wbftTapReader{source: msg.Payload, msg: msg, stream: s}
+	msg.Payload = r
+	s.mu.Lock()
+	s.pending[r] = true
+	s.mu.Unlock()
+	if msg.Size == 0 {
+		r.finish()
+	}
+	return msg, nil
+}
+
+func (s *wbftTapStream) WriteMsg(msg Msg) error {
+	r := &wbftTapReader{source: msg.Payload, msg: msg}
+	forward := msg
+	forward.Payload = r
+	err := s.base.WriteMsg(forward)
+	write := "ok"
+	if err != nil {
+		write = "error"
+	}
+	raw, complete := r.snapshot()
+	s.frame(msg, "out", raw, complete, write)
+	return err
+}
+
+func (s *wbftTapStream) close() {
+	s.mu.Lock()
+	pending := make([]*wbftTapReader, 0, len(s.pending))
+	for r := range s.pending {
+		pending = append(pending, r)
+	}
+	s.mu.Unlock()
+	for _, r := range pending {
+		r.finish()
+	}
+	s.writer.emit(map[string]any{"type": "conn", "peer": s.peer, "peer_id": s.peerID, "event": "closed", "by": "unknown", "reason": "stream_ended"}, nil, false)
+}
+
+// Capture follows the existing reads. It never drains, replaces errors or
+// interprets an engine outcome. Oversized or partial bytes stay unavailable.
+type wbftTapReader struct {
+	mu       sync.Mutex
+	source   io.Reader
+	msg      Msg
+	stream   *wbftTapStream
+	data     bytes.Buffer
+	read     uint64
+	finished bool
+}
+
+func (r *wbftTapReader) complete() bool {
+	return r.msg.Size <= wbftTapPayloadLimit && r.read == uint64(r.msg.Size)
+}
+func (r *wbftTapReader) Read(p []byte) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	n, err := r.source.Read(p)
+	r.read += uint64(n)
+	if r.msg.Size <= wbftTapPayloadLimit && r.data.Len()+n <= wbftTapPayloadLimit {
+		_, _ = r.data.Write(p[:n])
+	}
+	if r.stream != nil && (r.read >= uint64(r.msg.Size) || err != nil) {
+		r.finishLocked()
+	}
+	return n, err
+}
+func (r *wbftTapReader) finish() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.finishLocked()
+}
+func (r *wbftTapReader) snapshot() ([]byte, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]byte(nil), r.data.Bytes()...), r.complete()
+}
+func (r *wbftTapReader) finishLocked() {
+	if r.finished {
+		return
+	}
+	r.finished = true
+	if r.stream != nil {
+		r.stream.frame(r.msg, "in", r.data.Bytes(), r.complete(), "")
+		r.stream.mu.Lock()
+		delete(r.stream.pending, r)
+		r.stream.mu.Unlock()
+	}
+}

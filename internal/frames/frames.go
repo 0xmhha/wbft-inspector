@@ -52,20 +52,21 @@ type Record struct {
 	TMono int64  `json:"t_mono_ns"`
 
 	// frame
-	Dir        string  `json:"dir"`
-	Peer       *string `json:"peer"`
-	PeerID     string  `json:"peer_id"`
-	Code       string  `json:"code"`
-	WireCode   *uint64 `json:"wire_code"`
-	Size       *int64  `json:"size"`
-	Payload    string  `json:"payload_sha256"`
-	DedupKey   string  `json:"dedup_key"`
-	Outcome    string  `json:"outcome"`
-	WriteError string  `json:"write_error"`
-	Cause      string  `json:"cause"`
-	RelayOf    *uint64 `json:"relay_of"`
-	Engine     string  `json:"engine"`
-	Dedup      *Dedup  `json:"dedup"`
+	Dir         string  `json:"dir"`
+	Peer        *string `json:"peer"`
+	PeerID      string  `json:"peer_id"`
+	Code        string  `json:"code"`
+	WireCode    *uint64 `json:"wire_code"`
+	Size        *int64  `json:"size"`
+	Payload     string  `json:"payload_sha256"`
+	DedupKey    string  `json:"dedup_key"`
+	Outcome     string  `json:"outcome"`
+	WriteError  string  `json:"write_error"`
+	WriteResult string  `json:"write_result"`
+	Cause       string  `json:"cause"`
+	RelayOf     *uint64 `json:"relay_of"`
+	Engine      string  `json:"engine"`
+	Dedup       *Dedup  `json:"dedup"`
 
 	// outcome
 	Of         *uint64 `json:"of"`
@@ -367,6 +368,14 @@ func validateFrame(d *Dump, r *Record, add func(*Record, string, ...any), checke
 			add(r, "dedup without known_hit or peer_recent_hit")
 		}
 	case "out":
+		if r.Has("write_result") {
+			if !slices.Contains([]string{"ok", "error", "not_attached"}, r.WriteResult) {
+				add(r, "invalid explicit write result")
+			}
+			if r.WriteResult == "ok" && r.WriteError != "" {
+				add(r, "successful write with an error")
+			}
+		}
 		if r.Has("outcome") {
 			add(r, "sent frame with an outcome")
 		}
@@ -381,6 +390,9 @@ func validateFrame(d *Dump, r *Record, add func(*Record, string, ...any), checke
 		}
 	default:
 		add(r, "dir %q", r.Dir)
+	}
+	if r.Dir != "out" && r.Has("write_result") {
+		add(r, "write result on a received frame")
 	}
 	if !codePattern.MatchString(r.Code) {
 		add(r, "code %q is not a hex string", r.Code)
