@@ -228,7 +228,7 @@ type dropRec struct {
 var Known = map[string]bool{
 	"NODE_START": true, "NODE_STOP": true, "ENGINE_START": true, "ENGINE_STOP": true, "ROUND_ENTER": true,
 	"STATE": true, "TIMER_ARM": true, "TIMER_CANCEL": true, "TIMER_FIRE": true, "PREPREPARE_ACCEPT": true,
-	"PROPOSAL_DEFERRED": true, "QUORUM": true, "SEND": true, "BACKLOG": true, "EXTRA_SEAL": true,
+	"PROPOSAL_DEFERRED": true, "QUORUM": true, "SEND": true, "RELAY_TARGETS": true, "BACKLOG": true, "EXTRA_SEAL": true,
 	"BUILD_REQUEST": true, "BUILD_HANDOVER": true, "BUILD_STARTED": true, "BUILD_FINISHED": true, "PROPOSAL_SUBMITTED": true, "FINALIZE_HANDOVER": true, "NEW_HEAD": true,
 	"IMPORT_FAIL": true, "MSG_OUTCOME": true, "EVIDENCE": true, "COMMIT_RESULT": true, "LOG_CONFIG": true,
 	"HEALTH": true,
