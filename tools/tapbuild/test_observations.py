@@ -52,6 +52,21 @@ class ObservationTest(unittest.TestCase):
         rows[3]['id'] = 2
         self.assertTrue(self.inspect(rows)['problems'])
 
+    def test_engine_stages_require_concrete_instance_and_parent(self):
+        rows=self.rows()
+        rows[1]['operation']='backend_start'
+        rows[2]['result']='ok'
+        rows[2:2]=[dict(v=1,type='engine_created',node=rows[1]['node'],run='test-run',seq=0,t_wall=rows[1]['t_wall'],t_mono_ns=0,id=7,parent_id=1),dict(v=1,type='engine_stage',node=rows[1]['node'],run='test-run',seq=0,t_wall=rows[1]['t_wall'],t_mono_ns=0,id=7,parent_id=1,stage='start_enter')]
+        for i,r in enumerate(rows):
+            r['seq']=i
+            r['t_mono_ns']=i
+        result=self.inspect(rows)
+        self.assertEqual(result['problems'],[])
+        self.assertEqual(result['engine_instances'],1)
+        self.assertEqual(result['format'],'wbft-tap-observations/3')
+        rows[3]['parent_id']=2
+        self.assertTrue(self.inspect(rows)['problems'])
+
     def test_noop_close_does_not_establish_engine_stop(self):
         rows = self.rows()
         rows[3].pop('result')

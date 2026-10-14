@@ -11,6 +11,9 @@ import (
 
  "github.com/ethereum/go-ethereum/consensus/wbft"
  "github.com/ethereum/go-ethereum/core/types"
+ "github.com/ethereum/go-ethereum/core/rawdb"
+ "strings"
+ "os/exec"
  "github.com/ethereum/go-ethereum/event"
  "github.com/ethereum/go-ethereum/p2p"
 )
@@ -44,4 +47,33 @@ func TestWBFTTapSealImmediateReturnAndIndependentSameHashTokens(t *testing.T){
  for _,line:=range bytes.Split(data,[]byte("\n")){var r struct{Type string `json:"type"`;ID uint64 `json:"id"`;Stage string `json:"stage"`};if json.Unmarshal(line,&r)==nil&&r.Stage=="seal_cancel"{ids[r.ID]++}}
  if len(ids)!=2{t.Fatal("same hash combined unrelated call IDs",ids)}
  a.End("returned","1",before.Hex(),0);b.End("returned","1",before.Hex(),0)
+}
+
+func TestWBFTTapActualCoreLifecycleAndDisabledReturns(t *testing.T) {
+ // Each process owns one immutable capture writer, as the real node does.
+ if os.Getenv("WBFT_TAP_LIFECYCLE_TEST")!="1" {
+  cmd:=exec.Command(os.Args[0],"-test.run=^TestWBFTTapActualCoreLifecycleAndDisabledReturns$","-test.v")
+  cmd.Env=append(os.Environ(),"WBFT_TAP_LIFECYCLE_TEST=1")
+  if out,err:=cmd.CombinedOutput();err!=nil{t.Fatalf("isolated lifecycle: %v\n%s",err,out)}
+  return
+ }
+
+ t.Setenv("WBFT_TAP_DIR","")
+ chain,b,_:=newBlockChain(1)
+ defer chain.Stop()
+ defer b.broadcaster.(*fakeBroadcaster).blockFetcher.Stop()
+ if err:=b.Stop();err!=nil{t.Fatal(err)}
+ root:=t.TempDir();if err:=os.Chmod(root,0700);err!=nil{t.Fatal(err)}
+ t.Setenv("WBFT_TAP_DIR",root);t.Setenv("WBFT_TAP_NODE",strings.ToLower(b.Address().Hex()))
+ if err:=b.Start(chain,chain.CurrentFullBlock,rawdb.HasBadBlock,nil);err!=nil{t.Fatal(err)}
+ if err:=b.Start(chain,chain.CurrentFullBlock,rawdb.HasBadBlock,nil);err!=wbft.ErrStartedEngine{t.Fatal("duplicate start changed",err)}
+ if err:=b.Stop();err!=nil{t.Fatal(err)}
+ if err:=b.Stop();err!=wbft.ErrStoppedEngine{t.Fatal("duplicate stop changed",err)}
+ if err:=p2p.WBFTTapClose();err!=nil{t.Fatal(err)}
+ files,_:=filepath.Glob(filepath.Join(root,"observations-*.jsonl"));if len(files)!=1{t.Fatal(files)}
+ data,err:=os.ReadFile(files[0]);if err!=nil{t.Fatal(err)}
+ stages:=map[string]int{};engines:=map[uint64]int{};parents:=map[uint64]string{}
+ for _,line:=range bytes.Split(data,[]byte("\n")) {var r struct{Type string `json:"type"`;ID uint64 `json:"id"`;Parent uint64 `json:"parent_id"`;Stage string `json:"stage"`;Operation string `json:"operation"`};if json.Unmarshal(line,&r)!=nil{continue};switch r.Type{case "engine_created":engines[r.ID]++;case "operation_start":parents[r.ID]=r.Operation;case "engine_stage":if engines[r.ID]!=1{t.Fatal("wrong concrete instance")};want:="backend_start";switch r.Stage{case "stop_enter","timers_stopped","unsubscribed","handler_joined","stop_return":want="backend_stop"};if parents[r.Parent]!=want{t.Fatal("wrong exact parent",r)};stages[r.Stage]++}}
+ if len(engines)!=1{t.Fatal("duplicate start created core",engines)}
+ for _,s:=range []string{"start_enter","subscribed","handler_enter","initial_round_return","start_return","stop_enter","timers_stopped","unsubscribed","handler_exit","handler_joined","stop_return"}{if stages[s]!=1{t.Fatal(s,stages)}}
 }

@@ -8,6 +8,8 @@ import subprocess
 
 REVISION = "740526d0375a8aca817b580e7a4bfc4c1028ae29"
 INPUTS = {
+    "consensus/wbft/core/core.go": "ffeb201f03f0f67c81011cd2d1cdc1f5e0a980d31d31210d6bebfdd78119c107",
+    "consensus/wbft/core/handler.go": "2f6cfaaf5b5d6677fa3323cdf16608344653ff9786c310fb2625ab59ce3f5ec1",
     "eth/handler_istanbul.go": "0f774908993269557aa9cb327bc57c2c02dbe2820dbd8506448e3dadad5b4507",
     "consensus/wbft/backend/engine.go": "6d95bfc7fa8d36f546ce3879ba28c0c9efede2a4165276646221aa7c4b0cd1eb",
     "consensus/wbft/backend/backend.go": "1bb189b8d2ecd592b3f0f0c5942c4ce507fdf7b0d0cd7c568a42b00a1d50a213",
@@ -51,11 +53,24 @@ def render(source, output):
         "\t\tprompt.Stdin.Close() // Resets terminal mode.\n\t\treturn tapErr")
     files = {"eth/handler_istanbul.go": handler, "cmd/gstable/main.go": main,
              "p2p/wbft_tap_overlay.go": Path(__file__).with_name("runtime.go.tmpl").read_text()}
-    for name in ["consensus/wbft/backend/engine.go", "consensus/wbft/backend/backend.go", "miner/worker.go", "core/blockchain.go"]:
+    for name in ["consensus/wbft/backend/engine.go", "consensus/wbft/backend/backend.go", "miner/worker.go", "core/blockchain.go", "consensus/wbft/core/core.go", "consensus/wbft/core/handler.go"]:
         text = (source / name).read_text()
         text = replace_once(text, '"github.com/ethereum/go-ethereum/log"',
             '\"github.com/ethereum/go-ethereum/log\"\n\t\"github.com/ethereum/go-ethereum/p2p\"')
-        if name.endswith("engine.go"):
+        if name == "consensus/wbft/core/core.go":
+            text = replace_once(text, "type Core struct {", "type Core struct {\n\twbftTapEngine *p2p.WBFTTapEngine")
+        elif name == "consensus/wbft/core/handler.go":
+            text = replace_once(text, "func (c *Core) Start() error {", 'func (c *Core) Start() error {\n\tc.wbftTapEngine.Stage(nil, "start_enter")')
+            text = replace_once(text, "\tc.subscribeEvents()", '\tc.subscribeEvents()\n\tc.wbftTapEngine.Stage(nil, "subscribed")')
+            text = replace_once(text, "\tgo c.handleEvents()", '\tgo func() {\n\t\tc.wbftTapEngine.Stage(nil, "handler_enter")\n\t\tc.handleEvents()\n\t}()')
+            text = replace_once(text, "\tc.startNewRound(common.Big0)", '\tc.startNewRound(common.Big0)\n\tc.wbftTapEngine.Stage(nil, "initial_round_return")\n\tc.wbftTapEngine.Stage(nil, "start_return")')
+            text = replace_once(text, "func (c *Core) Stop() error {", 'func (c *Core) Stop() error { return c.StopObserved(nil) }\n\nfunc (c *Core) StopObserved(parent *p2p.WBFTTapOperation) error {\n\tc.wbftTapEngine.Stage(parent, "stop_enter")')
+            text = replace_once(text, "\tc.stopTimer()", '\tc.stopTimer()\n\tc.wbftTapEngine.Stage(parent, "timers_stopped")')
+            text = replace_once(text, "\tc.unsubscribeEvents()", '\tc.unsubscribeEvents()\n\tc.wbftTapEngine.Stage(parent, "unsubscribed")')
+            text = replace_once(text, "\tc.handlerWg.Wait()", '\tc.handlerWg.Wait()\n\tc.wbftTapEngine.Stage(parent, "handler_joined")\n\tc.wbftTapEngine.Stage(parent, "stop_return")')
+            text = replace_once(text, "\t\tc.handlerWg.Done()", '\t\tc.wbftTapEngine.Stage(nil, "handler_exit")\n\t\tc.handlerWg.Done()')
+            text += '\n// Bind before starting the handler; the instance token remains immutable.\nfunc (c *Core) SetWBFTTapEngine(e *p2p.WBFTTapEngine) { c.wbftTapEngine=e }\n'
+        elif name.endswith("engine.go"):
             text = replace_once(text, "notifyNewRound func(waitTime time.Duration, round *big.Int)) error {",
                 "notifyNewRound func(waitTime time.Duration, round *big.Int)) (tapErr error) {\n"
                 '\ttap := p2p.WBFTTapBegin("backend_start", "", "", 0)\n'
@@ -77,6 +92,9 @@ def render(source, output):
 \treturn nil""")
             text = replace_once(text, "func (sb *Backend) Stop() error {", """func (sb *Backend) Stop() (tapErr error) {
 \tdefer func() { p2p.WBFTTapRuntimeStop(tapErr) }()\n""")
+            text = replace_once(text, "sb.startWBFT()", "sb.startWBFT(tap)")
+            text = replace_once(text, "func (sb *Backend) Stop() (tapErr error) {", 'func (sb *Backend) Stop() (tapErr error) {\n\ttap := p2p.WBFTTapBegin("backend_stop", "", "", 0)\n\tdefer func() { tap.EndError(tapErr, "", "", 0) }()')
+            text = replace_once(text, "sb.stop()", "sb.stop(tap)")
             signature = "func (sb *Backend) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {"
             text = replace_once(text, signature, signature + "\n\treturn sb.sealObserved(chain, block, results, stop, nil)\n}\n\n" +
                 "func (sb *Backend) SealObserved(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}, tap *p2p.WBFTTapOperation) error {\n\treturn sb.sealObserved(chain, block, results, stop, tap)\n}\n\n" +
@@ -87,6 +105,10 @@ def render(source, output):
             text = replace_once(text, "\t\t\t\t\t\tresults <- sealed\n\t\t\t\t\t\treturn", '\t\t\t\t\t\tresults <- sealed\n\t\t\t\t\t\ttap.Stage("seal_result", tapHeight, tapHash)\n\t\t\t\t\t\treturn')
             text = replace_once(text, "\t\t\t\tresults <- nil\n\t\t\t\treturn", '\t\t\t\tresults <- nil\n\t\t\t\ttap.Stage("seal_cancel", tapHeight, tapHash)\n\t\t\t\treturn')
         elif name.endswith("backend.go"):
+            text = replace_once(text, "func (sb *Backend) startWBFT() error {", "func (sb *Backend) startWBFT(parent *p2p.WBFTTapOperation) error {")
+            text = replace_once(text, "\tsb.core = wbftcore.New(sb, sb.config)", "\tsb.core = wbftcore.New(sb, sb.config)\n\tsb.core.SetWBFTTapEngine(p2p.WBFTTapNewEngine(parent))")
+            text = replace_once(text, "func (sb *Backend) stop() error {", "func (sb *Backend) stop(parent *p2p.WBFTTapOperation) error {")
+            text = replace_once(text, "core.Stop()", "core.StopObserved(parent)")
             text = replace_once(text, "func (sb *Backend) Close() error {", "func (sb *Backend) Close() error {\n\tp2p.WBFTTapRuntimeClose()\n")
         elif name.endswith("worker.go"):
             text = replace_once(text, "func (w *worker) commitWork(interrupt *atomic.Int32, timestamp int64) {", """func (w *worker) commitWork(interrupt *atomic.Int32, timestamp int64) {
@@ -143,7 +165,7 @@ def render(source, output):
                 "source_sha256": hashes,
                 "overlay_sha256": {str(Path(k).relative_to(source)): hashlib.sha256(Path(v).read_bytes()).hexdigest()
                                    for k, v in replacements.items()},
-                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals", "runtime_start_config", "runtime_stop", "application_call_boundaries", "exact_task_sealing_stages"],
+                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals", "runtime_start_config", "runtime_stop", "application_call_boundaries", "exact_task_sealing_stages", "exact_engine_lifecycle"],
                 "unavailable": ["engine_outcomes", "send_cause", "delivery_coverage", "paired_stream_order"]}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (output / "manifest.json").chmod(0o600)
