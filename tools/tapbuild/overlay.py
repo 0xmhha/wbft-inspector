@@ -9,6 +9,11 @@ import subprocess
 REVISION = "740526d0375a8aca817b580e7a4bfc4c1028ae29"
 INPUTS = {
     "eth/handler_istanbul.go": "0f774908993269557aa9cb327bc57c2c02dbe2820dbd8506448e3dadad5b4507",
+    "consensus/wbft/backend/engine.go": "6d95bfc7fa8d36f546ce3879ba28c0c9efede2a4165276646221aa7c4b0cd1eb",
+    "consensus/wbft/backend/backend.go": "1bb189b8d2ecd592b3f0f0c5942c4ce507fdf7b0d0cd7c568a42b00a1d50a213",
+    "consensus/wbft/config.go": "98ff7cf5fbf54b3eeb40e5b37d08904f4e5353fdc2b5830c54ffd929de68def5",
+    "miner/worker.go": "f11d1f008b8a4bafd00c8248face4564cea09dfd4b7bc813bff7b48e45d34ab4",
+    "core/blockchain.go": "fedf77f7db36ab3bad460b0894b07065b519cdf7923d282c31a406817bd92976",
     "cmd/gstable/main.go": "df5ec38d660ea7743987ccc932bc645f7e2c679c4e296de921f1dd1746409297",
 }
 
@@ -46,6 +51,58 @@ def render(source, output):
         "\t\tprompt.Stdin.Close() // Resets terminal mode.\n\t\treturn tapErr")
     files = {"eth/handler_istanbul.go": handler, "cmd/gstable/main.go": main,
              "p2p/wbft_tap_overlay.go": Path(__file__).with_name("runtime.go.tmpl").read_text()}
+    for name in ["consensus/wbft/backend/engine.go", "consensus/wbft/backend/backend.go", "miner/worker.go", "core/blockchain.go"]:
+        text = (source / name).read_text()
+        text = replace_once(text, '"github.com/ethereum/go-ethereum/log"',
+            '\"github.com/ethereum/go-ethereum/log\"\n\t\"github.com/ethereum/go-ethereum/p2p\"')
+        if name.endswith("engine.go"):
+            text = replace_once(text, "notifyNewRound func(waitTime time.Duration, round *big.Int)) error {",
+                "notifyNewRound func(waitTime time.Duration, round *big.Int)) (tapErr error) {\n"
+                '\ttap := p2p.WBFTTapBegin("backend_start", "", "", 0)\n'
+                '\tdefer func() { tap.EndError(tapErr, "", "", 0) }()')
+            text = replace_once(text, "\tsb.coreStarted = true\n\n\treturn nil", """\tsb.coreStarted = true
+\tif p2p.WBFTTapEnabled() {\n\ttapHeight := new(big.Int).Add(chain.CurrentHeader().Number, big.NewInt(1))
+\ttapConfig := sb.config.GetConfig(tapHeight)
+\ttapPolicy := ""
+\tif tapConfig.ProposerPolicy != nil { tapPolicy = new(big.Int).SetUint64(uint64(tapConfig.ProposerPolicy.Id)).String() }
+\tp2p.WBFTTapRuntimeStart(p2p.WBFTTapRuntimeConfig{
+ Address:sb.Address().Hex(), Height:tapHeight.String(),
+ RequestTimeoutMS:new(big.Int).SetUint64(tapConfig.RequestTimeout).String(),
+ BlockPeriodSeconds:new(big.Int).SetUint64(tapConfig.BlockPeriod).String(),
+ Epoch:new(big.Int).SetUint64(tapConfig.Epoch).String(),
+ AllowedFutureBlockSeconds:new(big.Int).SetUint64(tapConfig.AllowedFutureBlockTime).String(),
+ MaxRequestTimeoutSeconds:new(big.Int).SetUint64(tapConfig.MaxRequestTimeoutSeconds).String(),
+ ProposerPolicy:tapPolicy, Transitions:len(sb.config.Transitions), SystemContractUpgrades:len(sb.config.SystemContractUpgrades),
+ })\n }
+\treturn nil""")
+            text = replace_once(text, "func (sb *Backend) Stop() error {", """func (sb *Backend) Stop() (tapErr error) {
+\tdefer func() { p2p.WBFTTapRuntimeStop(tapErr) }()\n""")
+        elif name.endswith("backend.go"):
+            text = replace_once(text, "func (sb *Backend) Close() error {", "func (sb *Backend) Close() error {\n\tp2p.WBFTTapRuntimeClose()\n")
+        elif name.endswith("worker.go"):
+            text = replace_once(text, "func (w *worker) commitWork(interrupt *atomic.Int32, timestamp int64) {", """func (w *worker) commitWork(interrupt *atomic.Int32, timestamp int64) {
+\ttap := p2p.WBFTTapBegin("worker_commit_work", "", "", 1)
+\ttapResult, tapHeight := "returned", ""
+\tdefer func() { tap.End(tapResult, tapHeight, "", 0) }()""")
+            text = replace_once(text, "\tif w.syncing.Load() {\n\t\treturn", '\tif w.syncing.Load() {\n\t\ttapResult = "syncing"\n\t\treturn')
+            text = replace_once(text, '\t\t\tlog.Error("Refusing to mine without etherbase")', '\t\t\ttapResult = "missing_etherbase"\n\t\t\tlog.Error("Refusing to mine without etherbase")')
+            text = replace_once(text, '\t\tlog.Error("Fail to prepare work", "err", err)', '\t\ttapResult = "prepare_error"\n\t\tlog.Error("Fail to prepare work", "err", err)')
+            text = replace_once(text, "\t// Fill pending transactions from the txpool into the block.", "\tif p2p.WBFTTapEnabled() { tapHeight = work.header.Number.String() }\n\t// Fill pending transactions from the txpool into the block.")
+            text = replace_once(text, "\t\twork.discard()\n\t\treturn", '\t\ttapResult = "new_head_discard"\n\t\twork.discard()\n\t\treturn')
+            text = replace_once(text, '\t\tlog.Error("Fail to commit work", "err", err)', '\t\ttapResult = "commit_error"\n\t\tlog.Error("Fail to commit work", "err", err)')
+        else:
+            text = replace_once(text, "func (bc *BlockChain) InsertChain(chain types.Blocks) (int, error) {", """func (bc *BlockChain) InsertChain(chain types.Blocks) (tapIndex int, tapErr error) {
+\ttapHeight, tapHash := "", ""
+\tif p2p.WBFTTapEnabled() && len(chain)>0 && chain[0]!=nil { tapHeight, tapHash = chain[0].Number().String(), chain[0].Hash().Hex() }
+\ttap := p2p.WBFTTapBegin("insert_chain", tapHeight, tapHash, len(chain))
+\tdefer func() { tap.EndError(tapErr, tapHeight, tapHash, tapIndex) }()\n""")
+            text = replace_once(text, "emitHeadEvent bool) (status WriteStatus, err error) {\n\tif !bc.chainmu.TryLock()", """emitHeadEvent bool) (status WriteStatus, err error) {
+\ttapHeight, tapHash := "", ""
+\tif p2p.WBFTTapEnabled() && block!=nil { tapHeight, tapHash = block.Number().String(), block.Hash().Hex() }
+\ttap := p2p.WBFTTapBegin("write_block_and_set_head", tapHeight, tapHash, 1)
+\tdefer func() { tap.EndError(err, tapHeight, tapHash, int(status)) }()
+\tif !bc.chainmu.TryLock()""")
+        files[name] = text
     test_template = Path(__file__).with_name("runtime_test.go.tmpl")
     if test_template.exists():
         files["p2p/wbft_tap_overlay_test.go"] = test_template.read_text()
@@ -62,7 +119,7 @@ def render(source, output):
                 "source_sha256": hashes,
                 "overlay_sha256": {str(Path(k).relative_to(source)): hashlib.sha256(Path(v).read_bytes()).hexdigest()
                                    for k, v in replacements.items()},
-                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals"],
+                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals", "runtime_start_config", "runtime_stop", "application_call_boundaries"],
                 "unavailable": ["engine_outcomes", "send_cause", "delivery_coverage", "paired_stream_order"]}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (output / "manifest.json").chmod(0o600)

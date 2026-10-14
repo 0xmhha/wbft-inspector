@@ -212,3 +212,95 @@ func TestWBFTTapWriteIntervalBracketsOriginalCall(t *testing.T) {
 		t.Fatal("interval replaced by observer/file-write time", x)
 	}
 }
+
+func wbftTapObservationRecords(t *testing.T, w *wbftTapWriter) []map[string]any {
+	t.Helper()
+	if err := w.close(); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(w.observations.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rows []map[string]any
+	for _, line := range bytes.Split(bytes.TrimSpace(raw), []byte("\n")) {
+		if len(line) == 0 {
+			continue
+		}
+		var r map[string]any
+		if err := json.Unmarshal(line, &r); err != nil {
+			t.Fatal(err)
+		}
+		rows = append(rows, r)
+	}
+	return rows
+}
+
+func TestWBFTTapObservationsKeepIndependentSequenceAndCallBoundary(t *testing.T) {
+	w := wbftTapTestWriter(t)
+	start := time.Now()
+	w.observe("operation_start", start, map[string]any{"id": uint64(1), "operation": "insert_chain"})
+	w.emit(map[string]any{"type": "conn"}, nil, false)
+	o := &WBFTTapOperation{writer: w, id: 1}
+	returnBefore := time.Now()
+	o.EndError(errors.New("original import error"), "17", "0x123", 2)
+	returnAfter := time.Now()
+	o.End("ok", "18", "", 0)
+	rows := wbftTapObservationRecords(t, w)
+	if len(rows) != 3 || rows[0]["seq"] != float64(0) || rows[1]["seq"] != float64(1) || rows[2]["seq"] != float64(2) || rows[1]["result"] != "error" || rows[2]["type"] != "capture_end" {
+		t.Fatal(rows)
+	}
+	end, err := time.Parse(time.RFC3339Nano, rows[1]["t_wall"].(string))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if end.Before(returnBefore) || end.After(returnAfter) || rows[1]["t_mono_ns"].(float64) < rows[0]["t_mono_ns"].(float64) {
+		t.Fatal("call boundary changed", rows)
+	}
+	frames := wbftTapTestRecords(t, w)
+	if len(frames) != 1 || frames[0]["seq"] != float64(0) {
+		t.Fatal("observation consumed a frame sequence", frames)
+	}
+	info, err := os.Stat(w.observations.Name())
+	if err != nil || info.Mode().Perm() != 0600 {
+		t.Fatal(info, err)
+	}
+}
+
+func TestWBFTTapObservationOverflowRemainsVisible(t *testing.T) {
+	w := wbftTapTestWriter(t)
+	w.observe("operation_start", time.Now(), map[string]any{"oversize": string(make([]byte, 64<<10))})
+	rows := wbftTapObservationRecords(t, w)
+	if len(rows) != 1 || rows[0]["type"] != "capture_end" || rows[0]["dropped"] != float64(1) || rows[0]["seq"] != float64(1) {
+		t.Fatal("observation gap hidden", rows)
+	}
+}
+
+func TestWBFTTapObservationDisabledAndFailedOpen(t *testing.T) {
+	t.Setenv("WBFT_TAP_DIR", "")
+	if o := WBFTTapBegin("insert_chain", "17", "", 1); o != nil {
+		t.Fatal("disabled observation created an operation")
+	}
+	var o *WBFTTapOperation
+	o.End("ok", "", "", 0)
+	o.EndError(nil, "", "", 0)
+	wbftTapGlobal.Lock()
+	oldW, oldErr := wbftTapGlobal.writer, wbftTapGlobal.err
+	wbftTapGlobal.writer = nil
+	wbftTapGlobal.err = nil
+	wbftTapGlobal.Unlock()
+	defer func() {
+		wbftTapGlobal.Lock()
+		wbftTapGlobal.writer = oldW
+		wbftTapGlobal.err = oldErr
+		wbftTapGlobal.Unlock()
+	}()
+	t.Setenv("WBFT_TAP_DIR", "relative/unsafe")
+	t.Setenv("WBFT_TAP_NODE", "0x0000000000000000000000000000000000000001")
+	if WBFTTapBegin("insert_chain", "17", "", 1) != nil {
+		t.Fatal("invalid path opened")
+	}
+	if WBFTTapClose() == nil {
+		t.Fatal("failed observation setup hidden at flush")
+	}
+}
