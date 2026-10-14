@@ -229,13 +229,13 @@ var Known = map[string]bool{
 	"NODE_START": true, "NODE_STOP": true, "ENGINE_START": true, "ENGINE_STOP": true, "ROUND_ENTER": true,
 	"STATE": true, "TIMER_ARM": true, "TIMER_CANCEL": true, "TIMER_FIRE": true, "PREPREPARE_ACCEPT": true,
 	"PROPOSAL_DEFERRED": true, "QUORUM": true, "SEND": true, "BACKLOG": true, "EXTRA_SEAL": true,
-	"BUILD_REQUEST": true, "PROPOSAL_SUBMITTED": true, "FINALIZE_HANDOVER": true, "NEW_HEAD": true,
+	"BUILD_REQUEST": true, "BUILD_HANDOVER": true, "BUILD_STARTED": true, "BUILD_FINISHED": true, "PROPOSAL_SUBMITTED": true, "FINALIZE_HANDOVER": true, "NEW_HEAD": true,
 	"IMPORT_FAIL": true, "MSG_OUTCOME": true, "EVIDENCE": true, "COMMIT_RESULT": true, "LOG_CONFIG": true,
 	"HEALTH": true,
 }
 
 var common = map[string]bool{"v": true, "node": true, "run": true, "seq": true, "t_wall": true,
-	"t_mono_ns": true, "kind": true, "view": true, "step": true, "imp": true, "src": true}
+	"t_mono_ns": true, "kind": true, "view": true, "step": true, "engine_run": true, "imp": true, "src": true}
 
 // Expand turns the arguments of --events into files: a directory stands for
 // its *.jsonl files in name order.
@@ -461,8 +461,16 @@ func (s *Set) parse(line []byte, id string, no int) *Event {
 	if raw, ok := m["src"]; ok {
 		_ = json.Unmarshal(raw, &e.Src)
 	}
+	if raw, ok := m["engine_run"]; ok {
+		var generation *uint64
+		if json.Unmarshal(raw, &generation) != nil || generation == nil {
+			return bad("engine_run")
+		}
+	}
 	for k, raw := range m {
-		if !common[k] {
+		// Keep the legacy field accessor for engine generation even though
+		// newer event schemas classify it as a common field.
+		if !common[k] || k == "engine_run" {
 			e.F[k] = raw
 		}
 	}

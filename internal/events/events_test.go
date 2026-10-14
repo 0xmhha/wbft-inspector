@@ -134,3 +134,35 @@ func TestBehaviours(t *testing.T) {
 		t.Errorf("empty list: %+v", n)
 	}
 }
+
+func TestBuildLifecycleVocabularyPreservesSourceAndEngineGeneration(t *testing.T) {
+	lines := `{"v":1,"node":"0xaa","run":"r","seq":0,"t_wall":"2026-01-01T00:00:00Z","t_mono_ns":0,"kind":"BUILD_HANDOVER","view":{"seq":"18446744073709551616","round":"0"},"number":"18446744073709551616","build_id":"build-1","wait_ns":"1000000000","parent":"0x01","engine_run":2,"step":7}
+{"v":1,"node":"0xaa","run":"r","seq":1,"t_wall":"2026-01-01T00:00:01Z","t_mono_ns":1000000000,"kind":"BUILD_STARTED","view":{"seq":"18446744073709551616","round":"0"},"number":"18446744073709551616","build_id":"build-1"}
+{"v":1,"node":"0xaa","run":"r","seq":2,"t_wall":"2026-01-01T00:00:01Z","t_mono_ns":1000000001,"kind":"BUILD_FINISHED","view":{"seq":"18446744073709551616","round":"0"},"number":"18446744073709551616","build_id":"build-1","status":"submitted","hash":"0x02"}
+`
+	path := filepath.Join(t.TempDir(), "build.jsonl")
+	if err := os.WriteFile(path, []byte(lines), 0600); err != nil {
+		t.Fatal(err)
+	}
+	set, err := Load([]string{path})
+	if err != nil || len(set.Errors) != 0 || len(set.UnknownKinds) != 0 || len(set.Runs) != 1 {
+		t.Fatal(set, err)
+	}
+	records := set.Runs[0].Events
+	if len(records) != 3 || records[0].Str("number") != "18446744073709551616" || records[2].Str("build_id") != "build-1" || records[2].Line != 3 {
+		t.Fatal("build evidence/source changed", records)
+	}
+	if generation, ok := records[0].Int("engine_run"); !ok || generation != 2 {
+		t.Fatal("legacy engine-generation accessor lost", generation, ok)
+	}
+	for _, bad := range []string{"null", "true", "-1", "1.5"} {
+		raw := strings.ReplaceAll(lines, `"engine_run":2`, `"engine_run":`+bad)
+		if err := os.WriteFile(path, []byte(raw), 0600); err != nil {
+			t.Fatal(err)
+		}
+		set, err = Load([]string{path})
+		if err != nil || len(set.Errors) == 0 {
+			t.Fatal("malformed generation accepted", bad, set, err)
+		}
+	}
+}

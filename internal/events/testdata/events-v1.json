@@ -20,6 +20,9 @@
     { "$ref": "#/$defs/BACKLOG" },
     { "$ref": "#/$defs/EXTRA_SEAL" },
     { "$ref": "#/$defs/BUILD_REQUEST" },
+    { "$ref": "#/$defs/BUILD_HANDOVER" },
+    { "$ref": "#/$defs/BUILD_STARTED" },
+    { "$ref": "#/$defs/BUILD_FINISHED" },
     { "$ref": "#/$defs/PROPOSAL_SUBMITTED" },
     { "$ref": "#/$defs/FINALIZE_HANDOVER" },
     { "$ref": "#/$defs/NEW_HEAD" },
@@ -87,6 +90,7 @@
         "t_mono_ns": { "type": "integer" },
         "kind": { "type": "string" },
         "view": { "$ref": "#/$defs/view" },
+        "engine_run": { "description": "Engine generation of a core step; absent in older records.", "type": "integer", "minimum": 0 },
         "step": { "description": "Input number of the core within the engine run, shared with the message journal.", "type": "integer", "minimum": 0 },
         "imp": { "description": "Optional behaviours that decided this event.", "type": "array", "items": { "type": "string" } }
       },
@@ -115,6 +119,12 @@
           }
         },
         "log_profile": { "type": "string", "pattern": "^wbft@" },
+        "rules_digest": { "$ref": "#/$defs/hash" },
+        "rule_activations": {
+          "type": "object",
+          "properties": { "rejectNumberJump": { "$ref": "#/$defs/decimal" } },
+          "additionalProperties": false
+        },
         "wal_recovery": {
           "type": "object",
           "properties": {
@@ -171,7 +181,9 @@
           "properties": {
             "records": { "type": "integer", "minimum": 0 },
             "stopped": { "description": "Why the replay stopped early; null when it read every record.", "type": ["string", "null"] },
-            "replayed": { "type": "boolean" }
+            "replayed": { "type": "boolean" },
+            "enabled": { "description": "Whether WAL replay was configured for this engine start; absent in older records.", "type": "boolean" },
+            "available": { "description": "Whether this engine start had a WAL dependency; independent of replay success.", "type": "boolean" }
           },
           "required": ["records", "stopped", "replayed"],
           "additionalProperties": false
@@ -346,6 +358,44 @@
         "wait_ms": { "type": "integer" }
       },
       "required": ["view", "round", "wait_ms"],
+      "unevaluatedProperties": false
+    },
+    "BUILD_HANDOVER": {
+      "type": "object", "allOf": [{ "$ref": "#/$defs/common" }],
+      "properties": {
+        "kind": { "const": "BUILD_HANDOVER" },
+        "build_id": { "type": "string", "pattern": "^build-[1-9][0-9]*$" },
+        "number": { "$ref": "#/$defs/decimal" },
+        "wait_ns": { "$ref": "#/$defs/decimal" },
+        "parent": { "$ref": "#/$defs/hash" }
+      },
+      "required": ["view", "build_id", "number", "wait_ns", "parent"],
+      "unevaluatedProperties": false
+    },
+    "BUILD_STARTED": {
+      "type": "object", "allOf": [{ "$ref": "#/$defs/common" }],
+      "properties": {
+        "kind": { "const": "BUILD_STARTED" },
+        "build_id": { "type": "string", "pattern": "^build-[1-9][0-9]*$" },
+        "number": { "$ref": "#/$defs/decimal" }
+      },
+      "required": ["view", "build_id", "number"],
+      "unevaluatedProperties": false
+    },
+    "BUILD_FINISHED": {
+      "type": "object", "allOf": [{ "$ref": "#/$defs/common" }],
+      "properties": {
+        "kind": { "const": "BUILD_FINISHED" },
+        "build_id": { "type": "string", "pattern": "^build-[1-9][0-9]*$" },
+        "number": { "$ref": "#/$defs/decimal" },
+        "status": { "enum": ["submitted", "replaced", "height_left", "stopped", "unavailable", "head_changed", "failed"] },
+        "hash": { "$ref": "#/$defs/hash" }
+      },
+      "required": ["view", "build_id", "number", "status"],
+      "oneOf": [
+        { "properties": { "status": { "const": "submitted" } }, "required": ["hash"] },
+        { "properties": { "status": { "enum": ["replaced", "height_left", "stopped", "unavailable", "head_changed", "failed"] } } }
+      ],
       "unevaluatedProperties": false
     },
     "PROPOSAL_SUBMITTED": {
