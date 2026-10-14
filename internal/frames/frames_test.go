@@ -10,6 +10,50 @@ import (
 
 const fixture = "../../testdata/frames/wbft-kvstore"
 
+func TestExplicitWriteResultDoesNotInventLegacySuccess(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		value           any
+		dir, writeError string
+		valid           bool
+	}{
+		{"success", "ok", "out", "", true},
+		{"failed", "error", "out", "error", true},
+		{"unattached", "not_attached", "out", "not_attached", true},
+		{"unknown", "queued", "out", "", false},
+		{"null", nil, "out", "", false},
+		{"contradiction", "ok", "out", "error", false},
+		{"received", "ok", "in", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := copyFixture(t)
+			editLines(t, dir, first(func(r map[string]any) bool { return r["type"] == "frame" && r["dir"] == tc.dir }, func(r map[string]any) {
+				r["write_result"] = tc.value
+				delete(r, "write_error")
+				if tc.writeError != "" {
+					r["write_error"] = tc.writeError
+				}
+			}))
+			d, err := Load(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if (len(Validate(d).Problems) == 0) != tc.valid {
+				t.Fatal("incorrect explicit write validation", Validate(d).Problems)
+			}
+		})
+	}
+	d, err := Load(fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range d.Records {
+		if r.Type == "frame" && r.Dir == "out" && r.WriteResult != "" {
+			t.Fatal("legacy absence inferred as success")
+		}
+	}
+}
+
 // TestFixture validates a dump the wbft node wrote: every rule holds,
 // including the payload hashes and the dedup keys of every frame.
 func TestFixture(t *testing.T) {

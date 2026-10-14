@@ -389,3 +389,16 @@ A real original seven-file G7 report retained 38,302 scenario records,
 pointers and no parse errors. Existing requirements remained 33 undecided
 and 32 not run because legacy logs do not prove complete event coverage.
 The report passes the report schema. Full I2 checker coverage is pending.
+
+### Source-pinned transport capture
+
+`tools/tapbuild/overlay.py` adds opt-in wire-frame capture to an isolated,
+source-pinned node checkout through a Go build overlay. It records original
+protocol bytes, explicit write results, and stream lifecycle in the R-01
+format without editing the source checkout. The inspector accepts optional
+`write_result` on outgoing frames and refuses contradictory success/error
+evidence. Old captures with no explicit result retain their original meaning.
+
+See [the capture tool instructions](tools/tapbuild/README.md). Wire capture
+does not establish engine outcomes, delivery coverage, paired stream order,
+or tapped-versus-original block-hash/round-distribution equivalence.

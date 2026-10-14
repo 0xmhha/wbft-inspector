@@ -1,0 +1,182 @@
+package p2p
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"io"
+	"os"
+	"path/filepath"
+	"sync"
+	"testing"
+)
+
+type wbftTapTestRW struct {
+	msg         Msg
+	err         error
+	readPayload []byte
+	reads       int
+}
+
+func (w *wbftTapTestRW) ReadMsg() (Msg, error) { w.reads++; return w.msg, w.err }
+func (w *wbftTapTestRW) WriteMsg(msg Msg) error {
+	b, e := io.ReadAll(msg.Payload)
+	w.readPayload = b
+	if w.err != nil {
+		return w.err
+	}
+	return e
+}
+
+func wbftTapTestWriter(t *testing.T) *wbftTapWriter {
+	t.Helper()
+	dir := t.TempDir()
+	if e := os.Chmod(dir, 0700); e != nil {
+		t.Fatal(e)
+	}
+	w, e := wbftTapOpen(dir, "0x0000000000000000000000000000000000000001")
+	if e != nil {
+		t.Fatal(e)
+	}
+	return w
+}
+func wbftTapTestRecords(t *testing.T, w *wbftTapWriter) []map[string]any {
+	t.Helper()
+	if err := w.close(); err != nil {
+		t.Fatal(err)
+	}
+	raw, e := os.ReadFile(w.file.Name())
+	if e != nil {
+		t.Fatal(e)
+	}
+	out := []map[string]any{}
+	for _, line := range bytes.Split(bytes.TrimSpace(raw), []byte("\n")) {
+		if len(line) == 0 {
+			continue
+		}
+		var x map[string]any
+		if e = json.Unmarshal(line, &x); e != nil {
+			t.Fatal(e)
+		}
+		out = append(out, x)
+	}
+	return out
+}
+
+func TestWBFTTapDisabledPreservesRWIdentity(t *testing.T) {
+	t.Setenv("WBFT_TAP_DIR", "")
+	rw := &wbftTapTestRW{}
+	got, close, e := WBFTTapStream(rw, nil)
+	if e != nil || got != rw || rw.reads != 0 {
+		t.Fatal("disabled tap changed reader/writer", e)
+	}
+	close()
+}
+
+func TestWBFTTapReadDoesNotConsumeBeforeCaller(t *testing.T) {
+	w := wbftTapTestWriter(t)
+	body := bytes.NewBufferString("wire")
+	rw := &wbftTapTestRW{msg: Msg{Code: 0x13, Size: 4, Payload: body}}
+	s := &wbftTapStream{base: rw, writer: w, peer: "0x0000000000000000000000000000000000000002", pending: map[*wbftTapReader]bool{}}
+	msg, e := s.ReadMsg()
+	if e != nil || body.Len() != 4 {
+		t.Fatal("tap eagerly consumed payload", e)
+	}
+	raw, e := io.ReadAll(msg.Payload)
+	if e != nil || string(raw) != "wire" {
+		t.Fatal(raw, e)
+	}
+	s.close()
+	records := wbftTapTestRecords(t, w)
+	if len(records) != 2 || records[0]["type"] != "frame" || records[0]["outcome"] != "PENDING" || records[1]["event"] != "closed" {
+		t.Fatal(records)
+	}
+	hash := records[0]["payload_sha256"].(string)
+	stored, e := os.ReadFile(filepath.Join(w.root, "payloads", hash[:2], hash))
+	if e != nil || !bytes.Equal(stored, raw) {
+		t.Fatal("captured payload differs", e)
+	}
+}
+
+func TestWBFTTapWritePreservesBytesAndError(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		w := wbftTapTestWriter(t)
+		sentinel := errors.New("original write failure")
+		rw := &wbftTapTestRW{}
+		if fail {
+			rw.err = sentinel
+		}
+		s := &wbftTapStream{base: rw, writer: w, peer: "0x0000000000000000000000000000000000000002"}
+		e := s.WriteMsg(Msg{Code: 0x13, Size: 4, Payload: bytes.NewBufferString("wire")})
+		if !bytes.Equal(rw.readPayload, []byte("wire")) || fail && e != sentinel || !fail && e != nil {
+			t.Fatal("tap changed write", e)
+		}
+		records := wbftTapTestRecords(t, w)
+		want := "ok"
+		if fail {
+			want = "error"
+		}
+		if len(records) != 1 || records[0]["write_result"] != want {
+			t.Fatal(records)
+		}
+	}
+}
+
+func TestWBFTTapPartialAndOversizedPayloadStayUnavailable(t *testing.T) {
+	for _, size := range []uint32{4, wbftTapPayloadLimit + 1} {
+		w := wbftTapTestWriter(t)
+		rw := &wbftTapTestRW{msg: Msg{Code: 0x13, Size: size, Payload: bytes.NewBufferString("x")}}
+		s := &wbftTapStream{base: rw, writer: w, peer: "0x0000000000000000000000000000000000000002", pending: map[*wbftTapReader]bool{}}
+		msg, e := s.ReadMsg()
+		if e != nil {
+			t.Fatal(e)
+		}
+		_, e = io.ReadAll(msg.Payload)
+		if e != nil {
+			t.Fatal(e)
+		}
+		s.close()
+		records := wbftTapTestRecords(t, w)
+		if _, ok := records[0]["payload_sha256"]; ok {
+			t.Fatal("invented complete payload", records)
+		}
+		if records[0]["size"] != float64(size) || w.incomplete != 1 {
+			t.Fatal(records)
+		}
+	}
+}
+
+func TestWBFTTapOverflowReportsDroppedRecords(t *testing.T) {
+	w := wbftTapTestWriter(t)
+	w.emit(map[string]any{"type": "frame"}, make([]byte, wbftTapPayloadLimit+1), true)
+	records := wbftTapTestRecords(t, w)
+	if len(records) != 1 || records[0]["type"] != "dropped" || records[0]["count"] != float64(1) {
+		t.Fatal("overflow hidden", records)
+	}
+}
+
+func TestWBFTTapConcurrentCloseAndPrivatePaths(t *testing.T) {
+	w := wbftTapTestWriter(t)
+	var group sync.WaitGroup
+	for range 8 {
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			if e := w.close(); e != nil {
+				t.Error(e)
+			}
+		}()
+	}
+	group.Wait()
+	root := t.TempDir()
+	if e := os.Chmod(root, 0700); e != nil {
+		t.Fatal(e)
+	}
+	link := filepath.Join(root, "link")
+	if e := os.Symlink(w.root, link); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := wbftTapOpen(link, w.node); e == nil {
+		t.Fatal("symlink recording root accepted")
+	}
+}
