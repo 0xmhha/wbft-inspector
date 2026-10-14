@@ -77,6 +77,15 @@ def render(source, output):
 \treturn nil""")
             text = replace_once(text, "func (sb *Backend) Stop() error {", """func (sb *Backend) Stop() (tapErr error) {
 \tdefer func() { p2p.WBFTTapRuntimeStop(tapErr) }()\n""")
+            signature = "func (sb *Backend) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {"
+            text = replace_once(text, signature, signature + "\n\treturn sb.sealObserved(chain, block, results, stop, nil)\n}\n\n" +
+                "func (sb *Backend) SealObserved(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}, tap *p2p.WBFTTapOperation) error {\n\treturn sb.sealObserved(chain, block, results, stop, tap)\n}\n\n" +
+                "func (sb *Backend) sealObserved(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}, tap *p2p.WBFTTapOperation) error {\n" +
+                '\ttapHeight, tapHash := "", ""\n\tif tap != nil { tapHeight, tapHash = block.Number().String(), block.Hash().Hex() }\n' +
+                '\ttap.Stage("seal_enter", tapHeight, tapHash)\n\tdefer tap.Stage("seal_return", tapHeight, tapHash)')
+            text = replace_once(text, "\t\tgo sb.EventMux().Post(wbft.RequestEvent{\n\t\t\tProposal: block,\n\t\t})", '\t\ttapMux := sb.EventMux()\n\t\ttapRequest := wbft.RequestEvent{Proposal: block}\n\t\tgo func() {\n\t\t\ttap.Stage("request_post_enter", tapHeight, tapHash)\n\t\t\ttapMux.Post(tapRequest)\n\t\t\ttap.Stage("request_post_return", tapHeight, tapHash)\n\t\t}()')
+            text = replace_once(text, "\t\t\t\t\t\tresults <- sealed\n\t\t\t\t\t\treturn", '\t\t\t\t\t\tresults <- sealed\n\t\t\t\t\t\ttap.Stage("seal_result", tapHeight, tapHash)\n\t\t\t\t\t\treturn')
+            text = replace_once(text, "\t\t\t\tresults <- nil\n\t\t\t\treturn", '\t\t\t\tresults <- nil\n\t\t\t\ttap.Stage("seal_cancel", tapHeight, tapHash)\n\t\t\t\treturn')
         elif name.endswith("backend.go"):
             text = replace_once(text, "func (sb *Backend) Close() error {", "func (sb *Backend) Close() error {\n\tp2p.WBFTTapRuntimeClose()\n")
         elif name.endswith("worker.go"):
@@ -90,6 +99,17 @@ def render(source, output):
             text = replace_once(text, "\t// Fill pending transactions from the txpool into the block.", "\tif p2p.WBFTTapEnabled() { tapHeight = work.header.Number.String() }\n\t// Fill pending transactions from the txpool into the block.")
             text = replace_once(text, "\t\twork.discard()\n\t\treturn", '\t\ttapResult = "new_head_discard"\n\t\twork.discard()\n\t\treturn')
             text = replace_once(text, '\t\tlog.Error("Fail to commit work", "err", err)', '\t\ttapResult = "commit_error"\n\t\tlog.Error("Fail to commit work", "err", err)')
+            text = replace_once(text, "type environment struct {", "type environment struct {\n\ttap *p2p.WBFTTapOperation")
+            text = replace_once(text, "\tcpy := &environment{", "\tcpy := &environment{\n\t\ttap: env.tap,")
+            text = replace_once(text, "type task struct {", "type task struct {\n\ttap *p2p.WBFTTapOperation")
+            text = replace_once(text, "\t// Fill pending transactions from the txpool into the block.", "\twork.tap = tap\n\t// Fill pending transactions from the txpool into the block.")
+            text = replace_once(text, "\t\t\tselect {\n\t\t\tcase w.taskCh <- &task{", '\t\t\ttapHeight, tapHash := "", ""\n\t\t\tif env.tap != nil { tapHeight, tapHash = block.Number().String(), block.Hash().Hex() }\n\t\t\tenv.tap.Stage("task_offer", tapHeight, tapHash)\n\t\t\tselect {\n\t\t\tcase w.taskCh <- &task{tap: env.tap,')
+            text = replace_once(text, "\t\t\t\tfees := totalFees", '\t\t\t\tenv.tap.Stage("task_sent", tapHeight, tapHash)\n\t\t\t\tfees := totalFees')
+            text = replace_once(text, 'log.Info("Worker has exited")', 'env.tap.Stage("task_abandoned", tapHeight, tapHash)\n\t\t\t\tlog.Info("Worker has exited")')
+            text = replace_once(text, "\t\tcase task := <-w.taskCh:", '\t\tcase task := <-w.taskCh:\n\t\t\ttapHeight, tapHash := "", ""\n\t\t\tif task.tap != nil { tapHeight, tapHash = task.block.Number().String(), task.block.Hash().Hex() }\n\t\t\ttask.tap.Stage("task_received", tapHeight, tapHash)')
+            text = replace_once(text, "\t\t\tif sealHash == prev {\n\t\t\t\tcontinue", '\t\t\tif sealHash == prev {\n\t\t\t\ttask.tap.Stage("task_duplicate", tapHeight, tapHash)\n\t\t\t\tcontinue')
+            text = replace_once(text, "\t\t\tif w.skipSealHook != nil && w.skipSealHook(task) {\n\t\t\t\tcontinue", '\t\t\tif w.skipSealHook != nil && w.skipSealHook(task) {\n\t\t\t\ttask.tap.Stage("task_skipped", tapHeight, tapHash)\n\t\t\t\tcontinue')
+            text = replace_once(text, "w.engine.Seal(w.chain, task.block, w.resultCh, stopCh)", "func() error {\n\t\t\t\tif task.tap != nil {\n\t\t\t\t\tif observed, ok := w.engine.(interface{ SealObserved(consensus.ChainHeaderReader, *types.Block, chan<- *types.Block, <-chan struct{}, *p2p.WBFTTapOperation) error }); ok { return observed.SealObserved(w.chain, task.block, w.resultCh, stopCh, task.tap) }\n\t\t\t\t\ttask.tap.Stage(\"seal_unsupported\", tapHeight, tapHash)\n\t\t\t\t}\n\t\t\t\treturn w.engine.Seal(w.chain, task.block, w.resultCh, stopCh)\n\t\t\t}()")
         else:
             text = replace_once(text, "func (bc *BlockChain) InsertChain(chain types.Blocks) (int, error) {", """func (bc *BlockChain) InsertChain(chain types.Blocks) (tapIndex int, tapErr error) {
 \ttapHeight, tapHash := "", ""
@@ -106,6 +126,10 @@ def render(source, output):
     test_template = Path(__file__).with_name("runtime_test.go.tmpl")
     if test_template.exists():
         files["p2p/wbft_tap_overlay_test.go"] = test_template.read_text()
+    for package, template in [("miner", "worker_observation_test.go.tmpl"), ("consensus/wbft/backend", "seal_observation_test.go.tmpl")]:
+        test = Path(__file__).with_name(template)
+        if test.exists():
+            files[package + "/wbft_tap_observation_test.go"] = test.read_text()
     for index, (name, text) in enumerate(files.items()):
         replacement = output / f"{index}.go"
         replacement.write_text(text)
@@ -119,7 +143,7 @@ def render(source, output):
                 "source_sha256": hashes,
                 "overlay_sha256": {str(Path(k).relative_to(source)): hashlib.sha256(Path(v).read_bytes()).hexdigest()
                                    for k, v in replacements.items()},
-                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals", "runtime_start_config", "runtime_stop", "application_call_boundaries"],
+                "captures": ["wire_frames", "write_result", "stream_lifecycle", "io_intervals", "runtime_start_config", "runtime_stop", "application_call_boundaries", "exact_task_sealing_stages"],
                 "unavailable": ["engine_outcomes", "send_cause", "delivery_coverage", "paired_stream_order"]}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (output / "manifest.json").chmod(0o600)

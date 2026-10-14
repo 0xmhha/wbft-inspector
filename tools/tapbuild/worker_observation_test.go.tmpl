@@ -1,0 +1,23 @@
+package miner
+
+import (
+ "bytes"
+ "math/big"
+ "testing"
+
+ "github.com/ethereum/go-ethereum/core/rawdb"
+ "github.com/ethereum/go-ethereum/core/state"
+ "github.com/ethereum/go-ethereum/core/types"
+ "github.com/ethereum/go-ethereum/p2p"
+ "github.com/ethereum/go-ethereum/rlp"
+)
+func TestWBFTTapEnvironmentCopyKeepsExactTokenAndBlockBytes(t *testing.T){
+ st,err:=state.New(types.EmptyRootHash,state.NewDatabase(rawdb.NewMemoryDatabase()),nil);if err!=nil{t.Fatal(err)}
+ token:=&p2p.WBFTTapOperation{}
+ env:=&environment{state:st,header:&types.Header{Number:big.NewInt(1)},tap:token}
+ copy:=env.copy();if copy==env||copy.tap!=token||copy.header==env.header{t.Fatal("observation or original copy behavior changed")}
+ observed:=types.NewBlockWithHeader(copy.header);plain:=types.NewBlockWithHeader(env.header)
+ a,err:=rlp.EncodeToBytes(observed);if err!=nil{t.Fatal(err)};b,err:=rlp.EncodeToBytes(plain);if err!=nil||!bytes.Equal(a,b)||observed.Hash()!=plain.Hash(){t.Fatal("token changed encoded block",err)}
+ env.tap=nil;if env.copy().tap!=nil{t.Fatal("disabled copy created token")}
+ task:=&task{tap:copy.tap,block:observed};if task.tap!=token{t.Fatal("task replaced exact request")}
+}

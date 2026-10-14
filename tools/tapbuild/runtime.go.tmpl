@@ -506,3 +506,10 @@ func WBFTTapRuntimeClose() {
 		w.observe("runtime_close", time.Now(), map[string]any{"engine_stopped": false})
 	}
 }
+
+// Stage keeps the exact request token across task transfer and asynchronous
+// sealing. A function return is distinct from result-channel completion.
+func (o *WBFTTapOperation) Stage(stage, height, hash string) {
+ if o == nil { return }
+ o.writer.observe("operation_stage", time.Now(), map[string]any{"id":o.id,"stage":stage,"height":height,"hash":hash})
+}

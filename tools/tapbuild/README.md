@@ -79,3 +79,20 @@ python3 -B tools/tapbuild/verify_observations.py /private/capture/observations-r
 Exit 0 validates complete sidecar call boundaries, 65 indicates missing evidence and
 64 indicates malformed structure. None of these establishes a complete runtime
 model, application request completion, receiver coverage, or physical equivalence.
+
+Task sealing stages retain the original worker operation token through the
+copied environment, actual task, and an optional observed backend Seal method.
+Disabled calls use the original Seal method and create no observation file.
+The task records offer, transfer, receipt, duplicate/skip, abandonment and Seal
+entry/return. Request post entry/return runs around the actual event-mux call in
+its asynchronous goroutine; result-channel handover and cancellation are separate
+stages. Identical block hashes never merge independent call tokens.
+
+`wbft-inspector observations verify FILE` preserves exact root and stage lines,
+and reports incomplete or ambiguous candidates without selecting nearby times.
+Stage-aware output uses `wbft-tap-observations/2`; older sidecars keep version 1.
+An observed result is a result-channel handover, not canonical import or consensus
+acceptance. A function return is not asynchronous completion. Cross-goroutine
+stage write order is not a total execution order. This capture still does not
+establish the entire runtime/application model, receiver coverage, or physical
+untapped equivalence.

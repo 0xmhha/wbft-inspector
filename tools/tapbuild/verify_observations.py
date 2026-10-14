@@ -13,6 +13,7 @@ FIELDS = {
     'operation_start': {'id', 'operation', 'height', 'hash', 'count'},
     'operation_end': {'id', 'result', 'height', 'hash', 'index'},
     'capture_end': {'dropped'},
+    'operation_stage': {'id','stage','height','hash'},
 }
 CONFIG = {'Address', 'Height', 'RequestTimeoutMS', 'BlockPeriodSeconds', 'Epoch',
           'AllowedFutureBlockSeconds', 'MaxRequestTimeoutSeconds', 'ProposerPolicy',
@@ -20,6 +21,7 @@ CONFIG = {'Address', 'Height', 'RequestTimeoutMS', 'BlockPeriodSeconds', 'Epoch'
 OPERATIONS = {'backend_start', 'worker_commit_work', 'insert_chain', 'write_block_and_set_head'}
 RESULTS = {'ok', 'error', 'returned', 'syncing', 'missing_etherbase', 'prepare_error',
            'new_head_discard', 'commit_error'}
+STAGES={'task_offer','task_sent','task_received','task_duplicate','task_skipped','task_abandoned','seal_enter','seal_return','seal_unsupported','request_post_enter','request_post_return','seal_result','seal_cancel'}
 
 
 def unique_object(items):
@@ -44,6 +46,7 @@ def inspect(path):
     path = Path(path)
     problems, unavailable = [], []
     starts, ends, durations = {}, {}, {}
+    stages=[]
     kinds = Counter()
     previous = -1
     identity = None
@@ -95,6 +98,10 @@ def inspect(path):
                     if r['operation'] not in OPERATIONS or not integer(r['count']) or r['id'] in starts:
                         raise ValueError('invalid or duplicate operation start')
                     starts[r['id']] = r
+                elif kind == 'operation_stage':
+                    if r['stage'] not in STAGES or not r['height'] or not r['hash']:
+                        raise ValueError('invalid task stage')
+                    stages.append(r)
                 else:
                     if r['result'] not in RESULTS or not integer(r['index']) or r['id'] in ends:
                         raise ValueError('invalid or duplicate operation end')
@@ -133,7 +140,10 @@ def inspect(path):
         unavailable.append('runtime_start absent')
     if not kinds['runtime_stop'] and not kinds['runtime_close']:
         unavailable.append('runtime stop/close observation absent')
-    return {'format': 'wbft-tap-observations/1', 'identity': identity,
+    for stage in stages:
+        if stage['id'] not in starts or starts[stage['id']]['operation']!='worker_commit_work':
+            problems.append({'error':'stage has no exact worker operation'})
+    return {'format': 'wbft-tap-observations/2' if stages else 'wbft-tap-observations/1', 'identity': identity,
             'records': sum(kinds.values()), 'kinds': dict(kinds), 'sequence_gaps': missing,
             'problems': problems, 'unavailable': unavailable,
             'capture_complete': not problems and not unavailable,

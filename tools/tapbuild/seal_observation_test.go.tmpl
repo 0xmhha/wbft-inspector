@@ -1,0 +1,47 @@
+package backend
+
+import (
+ "bytes"
+ "encoding/json"
+ "math/big"
+ "os"
+ "path/filepath"
+ "testing"
+ "time"
+
+ "github.com/ethereum/go-ethereum/consensus/wbft"
+ "github.com/ethereum/go-ethereum/core/types"
+ "github.com/ethereum/go-ethereum/event"
+ "github.com/ethereum/go-ethereum/p2p"
+)
+func TestWBFTTapSealImmediateReturnAndIndependentSameHashTokens(t *testing.T){
+ root:=t.TempDir();if err:=os.Chmod(root,0700);err!=nil{t.Fatal(err)}
+ t.Setenv("WBFT_TAP_DIR",root);t.Setenv("WBFT_TAP_NODE","0x1111111111111111111111111111111111111111")
+ defer p2p.WBFTTapClose()
+ backend:=&Backend{istanbulEventMux:new(event.TypeMux),commitCh:make(chan *types.Block)}
+ sub:=backend.EventMux().Subscribe(wbft.RequestEvent{});defer sub.Unsubscribe()
+ block:=types.NewBlockWithHeader(&types.Header{Number:big.NewInt(1)})
+ before:=block.Hash()
+ plainResult:=make(chan *types.Block,1);plainStop:=make(chan struct{});close(plainStop)
+ if err:=backend.Seal(nil,block,plainResult,plainStop);err!=nil{t.Fatal(err)}
+ select{case got:=<-plainResult:if got!=nil{t.Fatal("disabled cancellation changed")};case <-time.After(5*time.Second):t.Fatal("disabled cancellation absent")}
+ select{case <-sub.Chan():case <-time.After(5*time.Second):t.Fatal("disabled post absent")}
+ if files,_:=filepath.Glob(filepath.Join(root,"observations-*.jsonl"));len(files)!=0{t.Fatal("disabled seal created capture")}
+ a:=p2p.WBFTTapBegin("worker_commit_work","1",before.Hex(),1);b:=p2p.WBFTTapBegin("worker_commit_work","1",before.Hex(),1)
+ if a==nil||b==nil||a==b{t.Fatal("independent tokens absent")}
+ result:=make(chan *types.Block,2);stop:=make(chan struct{});close(stop)
+ backend.sealMu.Lock()
+ if err:=backend.SealObserved(nil,block,result,stop,a);err!=nil{t.Fatal(err)}
+ if err:=backend.SealObserved(nil,block,result,stop,b);err!=nil{t.Fatal(err)}
+ select{case <-result:t.Fatal("return claimed asynchronous completion before lock release");default:}
+ backend.sealMu.Unlock()
+ for i:=0;i<2;i++{select{case received:=<-result:if received!=nil{t.Fatal("canceled result changed")};case <-time.After(5*time.Second):t.Fatal("missing original cancellation")}}
+ for i:=0;i<2;i++{select{case e:=<-sub.Chan():if e.Data.(wbft.RequestEvent).Proposal!=block{t.Fatal("proposal pointer changed")};case <-time.After(5*time.Second):t.Fatal("missing original post")}}
+ deadline:=time.Now().Add(5*time.Second);var data []byte
+ for time.Now().Before(deadline){files,_:=filepath.Glob(filepath.Join(root,"observations-*.jsonl"));if len(files)==1{data,_=os.ReadFile(files[0]);if bytes.Count(data,[]byte(`"stage":"seal_cancel"`))==2&&bytes.Count(data,[]byte(`"stage":"request_post_return"`))==2{break}};time.Sleep(time.Millisecond)}
+ if bytes.Count(data,[]byte(`"stage":"seal_cancel"`))!=2||block.Hash()!=before{t.Fatal("missing exact cancel or block changed")}
+ ids:=map[uint64]int{}
+ for _,line:=range bytes.Split(data,[]byte("\n")){var r struct{Type string `json:"type"`;ID uint64 `json:"id"`;Stage string `json:"stage"`};if json.Unmarshal(line,&r)==nil&&r.Stage=="seal_cancel"{ids[r.ID]++}}
+ if len(ids)!=2{t.Fatal("same hash combined unrelated call IDs",ids)}
+ a.End("returned","1",before.Hex(),0);b.End("returned","1",before.Hex(),0)
+}
