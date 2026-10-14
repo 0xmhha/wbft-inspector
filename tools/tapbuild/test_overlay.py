@@ -27,7 +27,57 @@ func init() {
 }
 ''',
         }
+        files.update({
+            "consensus/wbft/backend/backend.go": 'package backend\nimport (\n"github.com/ethereum/go-ethereum/log"\n)\nfunc (sb *Backend) Close() error {return nil}\n',
+            "consensus/wbft/config.go": "package wbft\n",
+            "consensus/wbft/backend/engine.go": '''package backend
+import (
+"github.com/ethereum/go-ethereum/log"
+)
+func (sb *Backend) Start(notifyNewRound func(waitTime time.Duration, round *big.Int)) error {
+ sb.coreStarted = true
+
+ return nil
+}
+func (sb *Backend) Stop() error { return nil }
+'''.replace(" sb.coreStarted", "\tsb.coreStarted").replace(" return nil", "\treturn nil"),
+            "miner/worker.go": '''package miner
+import (
+"github.com/ethereum/go-ethereum/log"
+)
+func (w *worker) commitWork(interrupt *atomic.Int32, timestamp int64) {
+\tif w.syncing.Load() {
+\t\treturn
+\t}
+\tif true {
+\t\tif true {
+\t\t\tlog.Error("Refusing to mine without etherbase")
+\t\t}
+\t\tlog.Error("Fail to prepare work", "err", err)
+\t}
+\t// Fill pending transactions from the txpool into the block.
+\tif true {
+\t\twork.discard()
+\t\treturn
+\t}
+\tif true {
+\t\tlog.Error("Fail to commit work", "err", err)
+\t}
+}
+''',
+            "core/blockchain.go": '''package core
+import (
+"github.com/ethereum/go-ethereum/log"
+)
+func (bc *BlockChain) InsertChain(chain types.Blocks) (int, error) { return 0,nil }
+func (bc *BlockChain) WriteBlockAndSetHead(emitHeadEvent bool) (status WriteStatus, err error) {
+\tif !bc.chainmu.TryLock() {return 0,nil}
+ return 0,nil
+}
+''',
+        })
         for name, text in files.items():
+            (source / name).parent.mkdir(parents=True, exist_ok=True)
             (source / name).write_text(text)
         hashes = {name: hashlib.sha256(text.encode()).hexdigest() for name, text in files.items()}
         return source, files, hashes

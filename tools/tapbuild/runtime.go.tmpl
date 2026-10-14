@@ -23,28 +23,33 @@ const wbftTapPayloadLimit = 10 << 20
 const wbftTapQueueBytes = 32 << 20
 
 type wbftTapItem struct {
-	record   map[string]any
-	payload  []byte
-	complete bool
+	record      map[string]any
+	payload     []byte
+	complete    bool
+	observation bool
+	bytes       int
 }
 type wbftTapWriter struct {
-	mu                       sync.Mutex
-	root, node, run          string
-	start                    time.Time
-	file                     *os.File
-	queue                    chan wbftTapItem
-	done                     chan struct{}
-	closeDone                chan struct{}
-	closeOnce                sync.Once
-	closed                   bool
-	seq, dropped, incomplete uint64
-	queuedBytes              int
-	err                      error
+	mu                                              sync.Mutex
+	root, node, run                                 string
+	start                                           time.Time
+	file                                            *os.File
+	observations                                    *os.File
+	observationSeq, observationDropped, operationID uint64
+	queue                                           chan wbftTapItem
+	done                                            chan struct{}
+	closeDone                                       chan struct{}
+	closeOnce                                       sync.Once
+	closed                                          bool
+	seq, dropped, incomplete                        uint64
+	queuedBytes                                     int
+	err                                             error
 }
 
 var wbftTapGlobal struct {
 	sync.Mutex
 	writer *wbftTapWriter
+	err    error
 }
 
 func wbftTapOpen(root, node string) (*wbftTapWriter, error) {
@@ -71,7 +76,12 @@ func wbftTapOpen(root, node string) (*wbftTapWriter, error) {
 	if err != nil {
 		return nil, err
 	}
-	w := &wbftTapWriter{root: root, node: node, run: run, start: start, file: f, queue: make(chan wbftTapItem, 1024), done: make(chan struct{}), closeDone: make(chan struct{})}
+	observations, err := os.OpenFile(filepath.Join(root, "observations-"+run+".jsonl"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	w := &wbftTapWriter{root: root, node: node, run: run, start: start, file: f, observations: observations, queue: make(chan wbftTapItem, 1024), done: make(chan struct{}), closeDone: make(chan struct{})}
 	go w.work()
 	return w, nil
 }
@@ -86,6 +96,7 @@ func wbftTapGet() (*wbftTapWriter, error) {
 	if wbftTapGlobal.writer == nil {
 		w, err := wbftTapOpen(root, os.Getenv("WBFT_TAP_NODE"))
 		if err != nil {
+			wbftTapGlobal.err = errors.Join(wbftTapGlobal.err, err)
 			return nil, err
 		}
 		wbftTapGlobal.writer = w
@@ -111,7 +122,7 @@ func (w *wbftTapWriter) emit(record map[string]any, payload []byte, complete boo
 		w.incomplete++
 	}
 	w.queuedBytes += len(payload)
-	w.queue <- wbftTapItem{record: record, payload: append([]byte(nil), payload...), complete: complete}
+	w.queue <- wbftTapItem{record: record, payload: append([]byte(nil), payload...), complete: complete, bytes: len(payload)}
 }
 
 func (w *wbftTapWriter) write(item wbftTapItem) error {
@@ -160,7 +171,11 @@ func (w *wbftTapWriter) write(item wbftTapItem) error {
 	if err != nil {
 		return err
 	}
-	_, err = w.file.Write(append(raw, '\n'))
+	file := w.file
+	if item.observation {
+		file = w.observations
+	}
+	_, err = file.Write(append(raw, '\n'))
 	return err
 }
 
@@ -171,7 +186,7 @@ func (w *wbftTapWriter) work() {
 			w.err = w.write(item)
 		}
 		w.mu.Lock()
-		w.queuedBytes -= len(item.payload)
+		w.queuedBytes -= item.bytes
 		w.mu.Unlock()
 	}
 }
@@ -189,7 +204,13 @@ func (w *wbftTapWriter) close() error {
 			record := map[string]any{"v": 1, "type": "dropped", "node": w.node, "run": w.run, "seq": w.seq, "t_wall": now.UTC().Format(time.RFC3339Nano), "t_mono_ns": now.Sub(w.start).Nanoseconds(), "count": w.dropped}
 			w.err = w.write(wbftTapItem{record: record})
 		}
-		w.err = errors.Join(w.err, w.file.Sync(), w.file.Close())
+		if w.err == nil {
+			now := time.Now()
+			r := w.observationRecord("capture_end", now)
+			r["dropped"] = w.observationDropped
+			w.err = w.write(wbftTapItem{record: r, observation: true})
+		}
+		w.err = errors.Join(w.err, w.file.Sync(), w.file.Close(), w.observations.Sync(), w.observations.Close())
 	})
 	<-w.closeDone
 	return w.err
@@ -200,11 +221,12 @@ func (w *wbftTapWriter) close() error {
 func WBFTTapClose() error {
 	wbftTapGlobal.Lock()
 	w := wbftTapGlobal.writer
+	err := wbftTapGlobal.err
 	wbftTapGlobal.Unlock()
 	if w == nil {
-		return nil
+		return err
 	}
-	return w.close()
+	return errors.Join(err, w.close())
 }
 
 type wbftTapStream struct {
@@ -362,5 +384,125 @@ func (r *wbftTapReader) finishLocked() {
 		r.stream.mu.Lock()
 		delete(r.stream.pending, r)
 		r.stream.mu.Unlock()
+	}
+}
+
+// WBFTTapRuntimeConfig contains measured startup settings, not native engine
+// options. Only public identities and scalar configuration are recorded.
+type WBFTTapRuntimeConfig struct {
+	Address, Height, RequestTimeoutMS, BlockPeriodSeconds, Epoch        string
+	AllowedFutureBlockSeconds, MaxRequestTimeoutSeconds, ProposerPolicy string
+	Transitions, SystemContractUpgrades                                 int
+}
+
+func wbftTapObservationWriter() *wbftTapWriter {
+	w, _ := wbftTapGet() // Opening errors are retained for the CLI flush result.
+	return w
+}
+
+func (w *wbftTapWriter) observationRecord(kind string, now time.Time) map[string]any {
+	r := map[string]any{"v": 1, "type": kind, "node": w.node, "run": w.run, "seq": w.observationSeq,
+		"t_wall": now.UTC().Format(time.RFC3339Nano), "t_mono_ns": now.Sub(w.start).Nanoseconds()}
+	w.observationSeq++
+	return r
+}
+
+func (w *wbftTapWriter) observe(kind string, now time.Time, fields map[string]any) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.closed {
+		return
+	}
+	r := w.observationRecord(kind, now)
+	for key, value := range fields {
+		r[key] = value
+	}
+	raw, err := json.Marshal(r)
+	if err != nil || len(raw) > 64<<10 || w.queuedBytes+len(raw) > wbftTapQueueBytes || len(w.queue) == cap(w.queue) {
+		w.observationDropped++
+		return
+	}
+	w.queuedBytes += len(raw)
+	w.queue <- wbftTapItem{record: r, observation: true, bytes: len(raw)}
+}
+
+// WBFTTapRuntimeStart samples the effective configuration for the explicitly
+// recorded height. Configuration transitions after that height need new proof.
+func WBFTTapRuntimeStart(c WBFTTapRuntimeConfig) {
+	w := wbftTapObservationWriter()
+	if w == nil {
+		return
+	}
+	now := time.Now()
+	if !strings.EqualFold(w.node, c.Address) {
+		wbftTapGlobal.Lock()
+		wbftTapGlobal.err = errors.Join(wbftTapGlobal.err, errors.New("tap: runtime identity differs from recording node"))
+		wbftTapGlobal.Unlock()
+		return
+	}
+	w.observe("runtime_start", now, map[string]any{"config": c})
+}
+
+func WBFTTapRuntimeStop(err error) {
+	if w := wbftTapObservationWriter(); w != nil {
+		now := time.Now()
+		result := "ok"
+		if err != nil {
+			result = "error"
+		}
+		w.observe("runtime_stop", now, map[string]any{"result": result})
+	}
+}
+
+// WBFTTapOperation records a real call boundary. It does not claim consensus
+// request completion, successful sealing, canonical import or delivery coverage.
+type WBFTTapOperation struct {
+	writer *wbftTapWriter
+	id     uint64
+	once   sync.Once
+}
+
+func WBFTTapBegin(operation, height, hash string, count int) *WBFTTapOperation {
+	w := wbftTapObservationWriter()
+	if w == nil {
+		return nil
+	}
+	now := time.Now()
+	w.mu.Lock()
+	w.operationID++
+	id := w.operationID
+	w.mu.Unlock()
+	o := &WBFTTapOperation{writer: w, id: id}
+	w.observe("operation_start", now, map[string]any{"id": id, "operation": operation, "height": height, "hash": hash, "count": count})
+	return o
+}
+
+// End samples the return boundary before queueing or formatting observation data.
+func (o *WBFTTapOperation) End(result, height, hash string, index int) {
+	now := time.Now()
+	if o == nil {
+		return
+	}
+	o.once.Do(func() {
+		o.writer.observe("operation_end", now, map[string]any{"id": o.id, "result": result, "height": height, "hash": hash, "index": index})
+	})
+}
+
+func (o *WBFTTapOperation) EndError(err error, height, hash string, index int) {
+	result := "ok"
+	if err != nil {
+		result = "error"
+	}
+	o.End(result, height, hash, index)
+}
+
+// WBFTTapEnabled lets source hooks avoid configuration and block reads when disabled.
+func WBFTTapEnabled() bool { return os.Getenv("WBFT_TAP_DIR") != "" }
+
+// WBFTTapRuntimeClose observes this pinned backend's no-op Close method.
+// It deliberately does not emit a successful engine Stop event.
+func WBFTTapRuntimeClose() {
+	if w := wbftTapObservationWriter(); w != nil {
+		w.observe("runtime_close", time.Now(), map[string]any{"engine_stopped": false})
 	}
 }
