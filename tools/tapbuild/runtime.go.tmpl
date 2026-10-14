@@ -239,7 +239,9 @@ func WBFTTapStream(rw MsgReadWriter, peer *Peer) (MsgReadWriter, func(), error) 
 	return s, s.close, nil
 }
 
-func (s *wbftTapStream) frame(msg Msg, dir string, raw []byte, complete bool, write string) {
+type wbftTapIO struct{ start, end time.Time }
+
+func (s *wbftTapStream) frame(msg Msg, dir string, raw []byte, complete bool, write string, span *wbftTapIO) {
 	var wire any
 	if s.offset != nil {
 		wire = msg.Code + *s.offset
@@ -253,15 +255,20 @@ func (s *wbftTapStream) frame(msg Msg, dir string, raw []byte, complete bool, wr
 			r["write_error"] = "error"
 		}
 	}
+	if span != nil {
+		r["io"] = map[string]any{"start_wall": span.start.UTC().Format(time.RFC3339Nano), "end_wall": span.end.UTC().Format(time.RFC3339Nano), "start_mono_ns": span.start.Sub(s.writer.start).Nanoseconds(), "end_mono_ns": span.end.Sub(s.writer.start).Nanoseconds()}
+	}
 	s.writer.emit(r, raw, complete)
 }
 
 func (s *wbftTapStream) ReadMsg() (Msg, error) {
+	start := time.Now()
 	msg, err := s.base.ReadMsg()
+	end := time.Now()
 	if err != nil {
 		return msg, err
 	}
-	r := &wbftTapReader{source: msg.Payload, msg: msg, stream: s}
+	r := &wbftTapReader{source: msg.Payload, msg: msg, stream: s, ioStart: start, ioEnd: end}
 	msg.Payload = r
 	s.mu.Lock()
 	s.pending[r] = true
@@ -276,13 +283,15 @@ func (s *wbftTapStream) WriteMsg(msg Msg) error {
 	r := &wbftTapReader{source: msg.Payload, msg: msg}
 	forward := msg
 	forward.Payload = r
+	start := time.Now()
 	err := s.base.WriteMsg(forward)
+	end := time.Now()
 	write := "ok"
 	if err != nil {
 		write = "error"
 	}
 	raw, complete := r.snapshot()
-	s.frame(msg, "out", raw, complete, write)
+	s.frame(msg, "out", raw, complete, write, &wbftTapIO{start: start, end: end})
 	return err
 }
 
@@ -302,13 +311,14 @@ func (s *wbftTapStream) close() {
 // Capture follows the existing reads. It never drains, replaces errors or
 // interprets an engine outcome. Oversized or partial bytes stay unavailable.
 type wbftTapReader struct {
-	mu       sync.Mutex
-	source   io.Reader
-	msg      Msg
-	stream   *wbftTapStream
-	data     bytes.Buffer
-	read     uint64
-	finished bool
+	mu             sync.Mutex
+	source         io.Reader
+	msg            Msg
+	stream         *wbftTapStream
+	data           bytes.Buffer
+	read           uint64
+	finished       bool
+	ioStart, ioEnd time.Time
 }
 
 func (r *wbftTapReader) complete() bool {
@@ -318,6 +328,7 @@ func (r *wbftTapReader) Read(p []byte) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	n, err := r.source.Read(p)
+	r.ioEnd = time.Now()
 	r.read += uint64(n)
 	if r.msg.Size <= wbftTapPayloadLimit && r.data.Len()+n <= wbftTapPayloadLimit {
 		_, _ = r.data.Write(p[:n])
@@ -343,7 +354,11 @@ func (r *wbftTapReader) finishLocked() {
 	}
 	r.finished = true
 	if r.stream != nil {
-		r.stream.frame(r.msg, "in", r.data.Bytes(), r.complete(), "")
+		var span *wbftTapIO
+		if r.complete() {
+			span = &wbftTapIO{start: r.ioStart, end: r.ioEnd}
+		}
+		r.stream.frame(r.msg, "in", r.data.Bytes(), r.complete(), "", span)
 		r.stream.mu.Lock()
 		delete(r.stream.pending, r)
 		r.stream.mu.Unlock()

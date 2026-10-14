@@ -52,21 +52,22 @@ type Record struct {
 	TMono int64  `json:"t_mono_ns"`
 
 	// frame
-	Dir         string  `json:"dir"`
-	Peer        *string `json:"peer"`
-	PeerID      string  `json:"peer_id"`
-	Code        string  `json:"code"`
-	WireCode    *uint64 `json:"wire_code"`
-	Size        *int64  `json:"size"`
-	Payload     string  `json:"payload_sha256"`
-	DedupKey    string  `json:"dedup_key"`
-	Outcome     string  `json:"outcome"`
-	WriteError  string  `json:"write_error"`
-	WriteResult string  `json:"write_result"`
-	Cause       string  `json:"cause"`
-	RelayOf     *uint64 `json:"relay_of"`
-	Engine      string  `json:"engine"`
-	Dedup       *Dedup  `json:"dedup"`
+	Dir         string      `json:"dir"`
+	Peer        *string     `json:"peer"`
+	PeerID      string      `json:"peer_id"`
+	Code        string      `json:"code"`
+	WireCode    *uint64     `json:"wire_code"`
+	Size        *int64      `json:"size"`
+	Payload     string      `json:"payload_sha256"`
+	DedupKey    string      `json:"dedup_key"`
+	Outcome     string      `json:"outcome"`
+	WriteError  string      `json:"write_error"`
+	WriteResult string      `json:"write_result"`
+	IO          *IOInterval `json:"io"`
+	Cause       string      `json:"cause"`
+	RelayOf     *uint64     `json:"relay_of"`
+	Engine      string      `json:"engine"`
+	Dedup       *Dedup      `json:"dedup"`
 
 	// outcome
 	Of         *uint64 `json:"of"`
@@ -282,6 +283,9 @@ func Validate(d *Dump) *Result {
 		}
 		if r.DedupKey != "" && !hashPattern.MatchString(r.DedupKey) {
 			add(r, "dedup_key %q is not a 32-byte hex value", r.DedupKey)
+		}
+		if r.Has("io") {
+			validateIO(r, add)
 		}
 		switch r.Type {
 		case "frame":

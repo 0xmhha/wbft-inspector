@@ -9,17 +9,21 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 )
 
 type wbftTapTestRW struct {
-	msg         Msg
-	err         error
-	readPayload []byte
-	reads       int
+	msg                  Msg
+	err                  error
+	readPayload          []byte
+	reads                int
+	writeStart, writeEnd time.Time
 }
 
 func (w *wbftTapTestRW) ReadMsg() (Msg, error) { w.reads++; return w.msg, w.err }
 func (w *wbftTapTestRW) WriteMsg(msg Msg) error {
+	w.writeStart = time.Now()
+	defer func() { w.writeEnd = time.Now() }()
 	b, e := io.ReadAll(msg.Payload)
 	w.readPayload = b
 	if w.err != nil {
@@ -140,6 +144,9 @@ func TestWBFTTapPartialAndOversizedPayloadStayUnavailable(t *testing.T) {
 		if _, ok := records[0]["payload_sha256"]; ok {
 			t.Fatal("invented complete payload", records)
 		}
+		if records[0]["io"] != nil {
+			t.Fatal("partial read invented a completed interval", records)
+		}
 		if records[0]["size"] != float64(size) || w.incomplete != 1 {
 			t.Fatal(records)
 		}
@@ -178,5 +185,30 @@ func TestWBFTTapConcurrentCloseAndPrivatePaths(t *testing.T) {
 	}
 	if _, e := wbftTapOpen(link, w.node); e == nil {
 		t.Fatal("symlink recording root accepted")
+	}
+}
+
+func TestWBFTTapWriteIntervalBracketsOriginalCall(t *testing.T) {
+	w := wbftTapTestWriter(t)
+	rw := &wbftTapTestRW{}
+	s := &wbftTapStream{base: rw, writer: w, peer: "0x0000000000000000000000000000000000000002"}
+	if err := s.WriteMsg(Msg{Code: 0x13, Size: 4, Payload: bytes.NewBufferString("wire")}); err != nil {
+		t.Fatal(err)
+	}
+	records := wbftTapTestRecords(t, w)
+	x, ok := records[0]["io"].(map[string]any)
+	if !ok {
+		t.Fatal("I/O evidence missing", records)
+	}
+	start, err := time.Parse(time.RFC3339Nano, x["start_wall"].(string))
+	if err != nil {
+		t.Fatal(err)
+	}
+	end, err := time.Parse(time.RFC3339Nano, x["end_wall"].(string))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if start.After(rw.writeStart) || end.Before(rw.writeEnd) || x["start_mono_ns"].(float64) < 0 || x["end_mono_ns"].(float64) < x["start_mono_ns"].(float64) || x["end_mono_ns"].(float64) > records[0]["t_mono_ns"].(float64) {
+		t.Fatal("interval replaced by observer/file-write time", x)
 	}
 }

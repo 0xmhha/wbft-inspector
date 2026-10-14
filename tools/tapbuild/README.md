@@ -27,6 +27,14 @@ return error and distinguish explicit `ok` from `error`. The optional
 `write_result` field on outgoing frames is `ok`, `error`, or `not_attached`;
 absence in older captures does not prove a successful write.
 
+Optional `io` endpoints bracket the existing write call or the read call plus
+its actual payload consumption. They use the same monotonic origin as the
+frame record. A read may include waiting; partial or interrupted reads have no
+completed interval. Endpoints are sampled before hashing, serialization, and
+queued file writes. The existing frame timestamp remains unchanged. Clock
+regressions are retained; intervals do not justify correcting latency or
+claiming delivery coverage.
+
 The overlay manifest pins original and replacement hashes. A clean source
 revision in Go build info does **not** mean an overlay binary is unmodified;
 retain the overlay manifest and binary hash with every capture.
