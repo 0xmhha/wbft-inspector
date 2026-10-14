@@ -402,3 +402,13 @@ evidence. Old captures with no explicit result retain their original meaning.
 See [the capture tool instructions](tools/tapbuild/README.md). Wire capture
 does not establish engine outcomes, delivery coverage, paired stream order,
 or tapped-versus-original block-hash/round-distribution equivalence.
+
+Runtime sidecars are separate from R-01 wire files. Use
+`wbft-inspector observations verify observations-RUN.jsonl` to read their
+closed scalar configuration and exact operation ID boundaries. The reader
+refuses duplicate keys, unknown or null fields, changed identities, duplicate
+operations, reversed call intervals, and inconsistent dropped counts. Missing
+boundaries remain unavailable; exit 2 means capture evidence is incomplete.
+Output preserves original one-based lines, integer strings for call identities
+and durations, and recorded return paths. A complete capture does not establish
+a complete runtime model, remote delivery, or application request completion.
