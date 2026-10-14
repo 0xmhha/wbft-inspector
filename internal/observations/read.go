@@ -31,6 +31,7 @@ type Config struct {
 	SystemContractUpgrades    uint64
 }
 type Record struct {
+	ParentID      uint64  `json:"parent_id,omitempty"`
 	Line          int     `json:"line"`
 	V             int     `json:"v"`
 	Type          string  `json:"type"`
@@ -62,6 +63,7 @@ type Call struct {
 	Hash        string `json:"hash"`
 }
 type Result struct {
+	Engines                            []Engine `json:"engines"`
 	Tasks                              []Task   `json:"tasks"`
 	Format                             string   `json:"format"`
 	Node                               string   `json:"node"`
@@ -161,6 +163,10 @@ func decode(raw []byte, line int) (Record, error) {
 		keys = append(keys, "id", "result", "height", "hash", "index")
 	case "operation_stage":
 		keys = append(keys, "id", "stage", "height", "hash")
+	case "engine_created":
+		keys = append(keys, "id", "parent_id")
+	case "engine_stage":
+		keys = append(keys, "id", "parent_id", "stage")
 	case "capture_end":
 		keys = append(keys, "dropped")
 	default:
@@ -199,6 +205,13 @@ func decode(raw []byte, line int) (Record, error) {
 		if c.ProposerPolicy != "" && !decimal.MatchString(c.ProposerPolicy) {
 			return r, errors.New("invalid proposer policy")
 		}
+	case "engine_created", "engine_stage":
+		if r.ID == 0 || r.Type == "engine_created" && r.ParentID == 0 {
+			return r, errors.New("invalid engine identity")
+		}
+		if r.Type == "engine_stage" && !engineStage(r.Stage) {
+			return r, errors.New("invalid engine stage")
+		}
 	case "runtime_close":
 		if r.EngineStopped == nil || *r.EngineStopped {
 			return r, errors.New("close does not establish engine stop")
@@ -223,7 +236,7 @@ func decode(raw []byte, line int) (Record, error) {
 		}
 		if r.Type == "operation_start" {
 			switch r.Operation {
-			case "backend_start", "worker_commit_work", "insert_chain", "write_block_and_set_head":
+			case "backend_start", "backend_stop", "worker_commit_work", "insert_chain", "write_block_and_set_head":
 			default:
 				return r, errors.New("invalid operation")
 			}
@@ -372,5 +385,13 @@ func Read(input io.Reader) (Result, error) {
 		}
 	}
 	out.CaptureComplete = len(out.Unavailable) == 0
+	var engineError error
+	out.Engines, engineError = projectEngines(out.Records, starts, ends, out.CaptureComplete)
+	if engineError != nil {
+		return out, engineError
+	}
+	if len(out.Engines) > 0 {
+		out.Format = "wbft-tap-observations/3"
+	}
 	return out, nil
 }

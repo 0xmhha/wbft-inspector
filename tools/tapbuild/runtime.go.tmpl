@@ -513,3 +513,27 @@ func (o *WBFTTapOperation) Stage(stage, height, hash string) {
  if o == nil { return }
  o.writer.observe("operation_stage", time.Now(), map[string]any{"id":o.id,"stage":stage,"height":height,"hash":hash})
 }
+
+// WBFTTapEngine binds lifecycle stages to one concrete core instance. Its writer
+// and start parent are immutable across the asynchronous handler lifetime.
+type WBFTTapEngine struct {
+ writer *wbftTapWriter
+ id uint64
+ parent *WBFTTapOperation
+}
+func WBFTTapNewEngine(parent *WBFTTapOperation) *WBFTTapEngine {
+ if parent == nil { return nil }
+ w:=parent.writer
+ w.mu.Lock();w.operationID++;id:=w.operationID;w.mu.Unlock()
+ e:=&WBFTTapEngine{writer:w,id:id,parent:parent}
+ w.observe("engine_created",time.Now(),map[string]any{"id":id,"parent_id":parent.id})
+ return e
+}
+func (e *WBFTTapEngine) Stage(parent *WBFTTapOperation, stage string) {
+ if e == nil { return }
+ parentID:=uint64(0)
+ stop:=stage=="stop_enter"||stage=="timers_stopped"||stage=="unsubscribed"||stage=="handler_joined"||stage=="stop_return"
+ if parent == nil && !stop { parent=e.parent }
+ if parent != nil { if parent.writer != e.writer { return };parentID=parent.id }
+ e.writer.observe("engine_stage",time.Now(),map[string]any{"id":e.id,"parent_id":parentID,"stage":stage})
+}

@@ -13,15 +13,21 @@ FIELDS = {
     'operation_start': {'id', 'operation', 'height', 'hash', 'count'},
     'operation_end': {'id', 'result', 'height', 'hash', 'index'},
     'capture_end': {'dropped'},
+    'engine_created': {'id','parent_id'},
+    'engine_stage': {'id','parent_id','stage'},
     'operation_stage': {'id','stage','height','hash'},
 }
 CONFIG = {'Address', 'Height', 'RequestTimeoutMS', 'BlockPeriodSeconds', 'Epoch',
           'AllowedFutureBlockSeconds', 'MaxRequestTimeoutSeconds', 'ProposerPolicy',
           'Transitions', 'SystemContractUpgrades'}
-OPERATIONS = {'backend_start', 'worker_commit_work', 'insert_chain', 'write_block_and_set_head'}
+OPERATIONS = {'backend_start', 'backend_stop', 'worker_commit_work', 'insert_chain', 'write_block_and_set_head'}
 RESULTS = {'ok', 'error', 'returned', 'syncing', 'missing_etherbase', 'prepare_error',
            'new_head_discard', 'commit_error'}
 STAGES={'task_offer','task_sent','task_received','task_duplicate','task_skipped','task_abandoned','seal_enter','seal_return','seal_unsupported','request_post_enter','request_post_return','seal_result','seal_cancel'}
+
+
+ENGINE_STOP={'stop_enter','timers_stopped','unsubscribed','handler_joined','stop_return'}
+ENGINE_STAGES=ENGINE_STOP|{'start_enter','subscribed','handler_enter','handler_exit','initial_round_return','start_return'}
 
 
 def unique_object(items):
@@ -47,6 +53,8 @@ def inspect(path):
     problems, unavailable = [], []
     starts, ends, durations = {}, {}, {}
     stages=[]
+    engines={}
+    engine_stages=[]
     kinds = Counter()
     previous = -1
     identity = None
@@ -106,6 +114,23 @@ def inspect(path):
                     if r['result'] not in RESULTS or not integer(r['index']) or r['id'] in ends:
                         raise ValueError('invalid or duplicate operation end')
                     ends[r['id']] = r
+            elif kind in {'engine_created','engine_stage'}:
+                if not integer(r['id']) or not r['id'] or not integer(r['parent_id']):
+                    raise ValueError('invalid engine identity')
+                if kind=='engine_created':
+                    if not r['parent_id'] or r['id'] in engines or r['parent_id'] not in starts or starts[r['parent_id']]['operation']!='backend_start':
+                        raise ValueError('invalid exact engine creation parent')
+                    engines[r['id']]=r
+                else:
+                    if r['id'] not in engines or r['stage'] not in ENGINE_STAGES:
+                        raise ValueError('invalid engine stage')
+                    if r['parent_id']:
+                        want='backend_stop' if r['stage'] in ENGINE_STOP else 'backend_start'
+                        if r['parent_id'] not in starts or starts[r['parent_id']]['operation']!=want or want=='backend_start' and engines[r['id']]['parent_id']!=r['parent_id']:
+                            raise ValueError('engine stage parent mismatch')
+                    elif r['stage'] not in ENGINE_STOP:
+                        raise ValueError('start parent absent')
+                    engine_stages.append(r)
             elif kind == 'runtime_close':
                 if r['engine_stopped'] is not False:
                     raise ValueError('no-op close cannot establish engine stop')
@@ -143,7 +168,7 @@ def inspect(path):
     for stage in stages:
         if stage['id'] not in starts or starts[stage['id']]['operation']!='worker_commit_work':
             problems.append({'error':'stage has no exact worker operation'})
-    return {'format': 'wbft-tap-observations/2' if stages else 'wbft-tap-observations/1', 'identity': identity,
+    return {'format': 'wbft-tap-observations/3' if engines else 'wbft-tap-observations/2' if stages else 'wbft-tap-observations/1', 'engine_instances': len(engines), 'engine_stage_count':len(engine_stages), 'identity': identity,
             'records': sum(kinds.values()), 'kinds': dict(kinds), 'sequence_gaps': missing,
             'problems': problems, 'unavailable': unavailable,
             'capture_complete': not problems and not unavailable,

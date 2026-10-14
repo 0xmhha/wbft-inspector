@@ -28,18 +28,21 @@ func init() {
 ''',
         }
         files.update({
-            "consensus/wbft/backend/backend.go": 'package backend\nimport (\n"github.com/ethereum/go-ethereum/log"\n)\nfunc (sb *Backend) Close() error {return nil}\n',
+            "consensus/wbft/backend/backend.go": 'package backend\nimport (\n"github.com/ethereum/go-ethereum/log"\n)\nfunc (sb *Backend) Close() error {return nil}\nfunc (sb *Backend) startWBFT() error {\n\tsb.core = wbftcore.New(sb, sb.config)\n return nil\n}\nfunc (sb *Backend) stop() error { return core.Stop() }\n',
+            "consensus/wbft/core/core.go": 'package core\nimport ("github.com/ethereum/go-ethereum/log")\ntype Core struct {}\n',
+            "consensus/wbft/core/handler.go": 'package core\nimport ("github.com/ethereum/go-ethereum/log")\nfunc (c *Core) Start() error {\n\tc.subscribeEvents()\n\tgo c.handleEvents()\n\tc.startNewRound(common.Big0)\n return nil\n}\nfunc (c *Core) Stop() error {\n\tc.stopTimer()\n\tc.unsubscribeEvents()\n\tc.handlerWg.Wait()\n return nil\n}\nfunc (c *Core) handleEvents() {\n defer func() {\n\t\tc.handlerWg.Done()\n }()\n}\n',
             "consensus/wbft/config.go": "package wbft\n",
             "consensus/wbft/backend/engine.go": '''package backend
 import (
 "github.com/ethereum/go-ethereum/log"
 )
 func (sb *Backend) Start(notifyNewRound func(waitTime time.Duration, round *big.Int)) error {
+ sb.startWBFT()
  sb.coreStarted = true
 
  return nil
 }
-func (sb *Backend) Stop() error { return nil }
+func (sb *Backend) Stop() error { sb.stop();return nil }
 func (sb *Backend) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
 	go func() {
 		go sb.EventMux().Post(wbft.RequestEvent{

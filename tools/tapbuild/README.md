@@ -96,3 +96,22 @@ acceptance. A function return is not asynchronous completion. Cross-goroutine
 stage write order is not a total execution order. This capture still does not
 establish the entire runtime/application model, receiver coverage, or physical
 untapped equivalence.
+
+## Internal core lifecycle
+
+A concrete core instance receives an immutable engine token at construction,
+linked to the exact `backend_start` call. `engine_created` and `engine_stage`
+rows retain that identity across the event-handler goroutine. Stages distinguish
+subscription, initial round return, handler entry/exit, timer stop, unsubscribe,
+handler join and core Stop return. Stop stages link to the exact `backend_stop`
+call. A direct internal Stop without a parent remains incomplete. Identical
+heights or timestamps never connect unrelated instances.
+
+Lifecycle-aware output uses `wbft-tap-observations/3`. `observed_started` records
+a completed startup, not a claim that the process is currently alive.
+`observed_stopped` requires unique startup and shutdown stages, successful parent
+calls and a handler exit preceding the recorded join. Missing candidates and
+reversed local clocks remain incomplete; duplicates remain ambiguous. Every
+candidate retains its original line. Backend Close and capture flush remain
+separate from these engine boundaries. Full runtime options, input processing,
+application queues, native WAL/sign floor and receiver coverage remain unproved.
