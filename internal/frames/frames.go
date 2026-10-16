@@ -5,7 +5,8 @@
 //	<dir>/payloads/<ab>/<sha256> raw payload bytes, content-addressed
 //
 // The record types are frame, outcome, send_suppressed, conn, dropped and
-// own_input (a signed internal message with accepted outcome provenance).
+// own_input (a signed internal message with accepted outcome provenance),
+// scheduler_trace, scheduler_step and timer_operation (measured scheduler sources).
 // Every record has the common fields v (format version 1), type, node, run,
 // seq, t_wall (RFC 3339 with nanoseconds) and t_mono_ns. seq is unique
 // within a run; it need not increase along the file, since a node may write
@@ -71,13 +72,18 @@ type Record struct {
 	Dedup       *Dedup      `json:"dedup"`
 
 	// Own input byte provenance; absent for legacy dumps.
-	EngineRun      *uint64 `json:"engine_run"`
-	Step           *uint64 `json:"step"`
-	InputOf        *uint64 `json:"input_of"`
-	OwnMessageOf   *uint64 `json:"own_message_of"`
-	InputKind      string  `json:"input_kind"`
-	JournalSegment *uint64 `json:"journal_segment"`
-	JournalOffset  *int64  `json:"journal_offset"`
+	EngineRun      *uint64         `json:"engine_run"`
+	Step           *uint64         `json:"step"`
+	InputOf        *uint64         `json:"input_of"`
+	OwnMessageOf   *uint64         `json:"own_message_of"`
+	InputKind      string          `json:"input_kind"`
+	JournalSegment *uint64         `json:"journal_segment"`
+	JournalOffset  *int64          `json:"journal_offset"`
+	SchedulerTrace *SchedulerTrace `json:"scheduler_trace,omitempty"`
+	TimerOperation *TimerOperation `json:"timer_operation,omitempty"`
+	EntryMono      *string         `json:"entry_t_mono_ns,omitempty"`
+	EntryWall      string          `json:"entry_t_wall,omitempty"`
+	ClockSource    string          `json:"clock_source,omitempty"`
 
 	// outcome
 	Of         *uint64 `json:"of"`
@@ -193,6 +199,10 @@ func (d *Dump) read(path string) error {
 			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
 			continue
 		}
+		if err := decodeSchedulerFields(fields, r); err != nil {
+			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
+			continue
+		}
 		r.present = map[string]bool{}
 		for k := range fields {
 			r.present[k] = true
@@ -204,7 +214,7 @@ func (d *Dump) read(path string) error {
 
 // Value sets of the format.
 var (
-	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped", "own_input"}
+	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped", "own_input", "scheduler_trace", "scheduler_step", "timer_operation"}
 	frameOutcomes   = []string{"PENDING", "ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	outcomeClasses  = []string{"ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	causes          = []string{"broadcast", "gossip", "relay", "retry", "reconnect", "replay", "direct"}
@@ -349,6 +359,8 @@ func Validate(d *Dump) *Result {
 		}
 	}
 	validateOwnReferences(d.Records, add)
+	_, problems := SchedulerSources(d)
+	res.Problems = append(res.Problems, problems...)
 	return res
 }
 

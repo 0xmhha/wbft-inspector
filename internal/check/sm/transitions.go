@@ -33,22 +33,6 @@ func quorum(what string) func(*events.Event) bool {
 	return func(x *events.Event) bool { return x.Kind == "QUORUM" && x.Str("what") == what }
 }
 
-// cancelled reports whether the step cancels timer tm explicitly.
-func cancelled(s check.Step, tm *events.Timer) bool {
-	return s.Has(func(x *events.Event) bool {
-		g, _ := x.Int("gen")
-		return x.Kind == "TIMER_CANCEL" && x.Str("timer") == tm.Kind && g == tm.Gen
-	})
-}
-
-// fired reports whether the step records the expiry of timer tm.
-func fired(s check.Step, tm *events.Timer) bool {
-	return s.Has(func(x *events.Event) bool {
-		g, _ := x.Int("gen")
-		return x.Kind == "TIMER_FIRE" && x.Str("timer") == tm.Kind && g == tm.Gen
-	})
-}
-
 // durationCheck compares the duration of a round-timer arm with
 // round_timeout(config_at(h), r).
 func durationCheck(in *check.Inputs, arm *events.Event) (verdict.Verdict, string) {
@@ -70,6 +54,7 @@ func durationCheck(in *check.Inputs, arm *events.Event) (verdict.Verdict, string
 type roundTimerOnEntry struct{ check.Base }
 
 func (c roundTimerOnEntry) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
+	source := check.NewTimerCancellation(in)
 	var tr check.StepStart
 	check.Walk(in, func(r *events.Run, i int, st *events.State) {
 		e := r.Events[i]
@@ -82,23 +67,28 @@ func (c roundTimerOnEntry) Run(_ context.Context, in *check.Inputs, out check.Em
 		}
 		s := check.StepOf(r, i)
 		_, arm := s.Find(i, roundArm(e.View))
-		var left []string
-		for _, kind := range []string{events.TimerRetry, events.TimerFuture} {
-			if tm := before[kind]; tm != nil && !tm.Expired(e.TMono) && !cancelled(s, tm) && !fired(s, tm) {
-				left = append(left, fmt.Sprintf("%s timer gen %d", kind, tm.Gen))
-			}
-		}
-		switch {
-		case arm == nil:
+		if arm == nil {
 			msg := "entered " + e.View.String() + " without arming its round timer"
 			out.Emit(check.Fail("WBFT-SM-030", e, msg))
 			out.Emit(check.Fail("WBFT-TIMER-010", e, msg))
 			return
-		case len(left) > 0:
-			out.Emit(check.Fail("WBFT-SM-030", e, fmt.Sprintf("entered %s but did not stop %v", e.View, left), arm))
-		default:
-			out.Emit(check.Pass("WBFT-SM-030", e, "round timer armed on entering "+e.View.String(), arm))
 		}
+		status, msg := verdict.Pass, "round timer armed on entering "+e.View.String()
+		inst := check.New("WBFT-SM-030", e, status, verdict.ObserverScope, msg, arm)
+		for _, kind := range []string{events.TimerRetry, events.TimerFuture} {
+			if tm := before[kind]; tm != nil {
+				v, why, records := source.Judge(r, i, tm, arm)
+				if v == verdict.Fail || (v == verdict.CannotDecide && status == verdict.Pass) {
+					status, msg = v, fmt.Sprintf("entered %s: %s timer gen %d: %s", e.View, kind, tm.Gen, why)
+				}
+				inst = check.SchedulerEvidence(inst, records)
+			}
+		}
+		inst.Verdict, inst.Message = status, msg
+		if status == verdict.CannotDecide {
+			inst.Reason = verdict.ObserverScope
+		}
+		out.Emit(inst)
 		if arm.TMono != e.TMono {
 			out.Emit(check.Fail("WBFT-TIMER-010", e, fmt.Sprintf("round timer armed %d ns after entering the view", arm.TMono-e.TMono), arm))
 			return
