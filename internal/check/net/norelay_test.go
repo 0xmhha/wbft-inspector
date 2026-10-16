@@ -2,6 +2,9 @@ package net
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -64,5 +67,62 @@ func TestNoRelayCases(t *testing.T) {
 	want[1], want[4] = "frame:r:2 CANNOT_DECIDE", "frame:r:19 CANNOT_DECIDE"
 	if l := run(b.recs); strings.Join(l, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("with lost records\n%s\nwant\n%s", strings.Join(l, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+func TestNoRelayAcceptsValidatedOwnInputProvenance(t *testing.T) {
+	d, err := frames.Load("../../../testdata/frames/own-input")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res := frames.Validate(d); len(res.Problems) != 0 {
+		t.Fatal(res.Problems)
+	}
+	var sent *frames.Record
+	for _, r := range d.Records {
+		if r.Type == "frame" {
+			sent = r
+		}
+	}
+	if sent == nil || sent.OwnMessageOf == nil {
+		t.Fatal("fixture lacks real own-input provenance")
+	}
+	dir := t.TempDir()
+	original, err := os.ReadFile("../../../testdata/frames/own-input/frames-own-fixture.jsonl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	received := map[string]any{"v": 1, "type": "frame", "dir": "in", "outcome": "DROP_SILENT", "seq": 10, "node": sent.Node, "run": sent.Run, "t_wall": sent.TWall, "t_mono_ns": sent.TMono, "peer": *sent.Peer, "code": sent.Code, "wire_code": *sent.WireCode, "size": *sent.Size, "payload_sha256": sent.Payload, "dedup_key": sent.DedupKey}
+	line, err := json.Marshal(received)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(dir, "frames-own-fixture.jsonl"), append(original, append(line, '\n')...), 0600); err != nil {
+		t.Fatal(err)
+	}
+	payload, err := d.Payload(sent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.MkdirAll(filepath.Join(dir, "payloads", sent.Payload[:2]), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(dir, "payloads", sent.Payload[:2], sent.Payload), payload, 0600); err != nil {
+		t.Fatal(err)
+	}
+	d, err = frames.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res := frames.Validate(d); len(res.Problems) != 0 {
+		t.Fatal("augmented fixture invalid", res.Problems)
+	}
+	var got sink
+	c := noRelayCases{check.Base{ID: "net.no_relay_cases"}}
+	if err = c.Run(context.Background(), &check.Inputs{Frames: []*frames.Dump{d}}, &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || string(got[0].Verdict) != "PASS" {
+		t.Fatal("own internal input was treated as an ignored peer relay", got)
 	}
 }

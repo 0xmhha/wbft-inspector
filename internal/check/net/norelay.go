@@ -65,6 +65,10 @@ func (c noRelayCases) run(recs []*frames.Record, out check.Emitter) {
 		case r.Type == "frame" && r.Dir == "out" && r.DedupKey != "":
 			if r.Cause == "relay" {
 				relayed[r.DedupKey]++
+				if r.OwnMessageOf != nil {
+					// Frame validation proved an accepted signed internal input.
+					own[r.DedupKey] = true
+				}
 			} else if r.Cause != "" {
 				own[r.DedupKey] = true
 			}

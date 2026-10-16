@@ -4,7 +4,8 @@
 //	<dir>/frames-<run>.jsonl    one record per line
 //	<dir>/payloads/<ab>/<sha256> raw payload bytes, content-addressed
 //
-// The record types are frame, outcome, send_suppressed, conn and dropped.
+// The record types are frame, outcome, send_suppressed, conn, dropped and
+// own_input (a signed internal message with accepted outcome provenance).
 // Every record has the common fields v (format version 1), type, node, run,
 // seq, t_wall (RFC 3339 with nanoseconds) and t_mono_ns. seq is unique
 // within a run; it need not increase along the file, since a node may write
@@ -68,6 +69,15 @@ type Record struct {
 	RelayOf     *uint64     `json:"relay_of"`
 	Engine      string      `json:"engine"`
 	Dedup       *Dedup      `json:"dedup"`
+
+	// Own input byte provenance; absent for legacy dumps.
+	EngineRun      *uint64 `json:"engine_run"`
+	Step           *uint64 `json:"step"`
+	InputOf        *uint64 `json:"input_of"`
+	OwnMessageOf   *uint64 `json:"own_message_of"`
+	InputKind      string  `json:"input_kind"`
+	JournalSegment *uint64 `json:"journal_segment"`
+	JournalOffset  *int64  `json:"journal_offset"`
 
 	// outcome
 	Of         *uint64 `json:"of"`
@@ -175,6 +185,10 @@ func (d *Dump) read(path string) error {
 			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
 			continue
 		}
+		if !uniqueFields(b) {
+			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: invalid or duplicate JSON fields", name, line))
+			continue
+		}
 		if err := json.Unmarshal(b, r); err != nil {
 			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
 			continue
@@ -190,7 +204,7 @@ func (d *Dump) read(path string) error {
 
 // Value sets of the format.
 var (
-	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped"}
+	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped", "own_input"}
 	frameOutcomes   = []string{"PENDING", "ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	outcomeClasses  = []string{"ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	causes          = []string{"broadcast", "gossip", "relay", "retry", "reconnect", "replay", "direct"}
@@ -211,7 +225,7 @@ var (
 	suppressFields  = []string{"peer", "dedup_key", "reason"}
 	connFields      = []string{"event", "peer"}
 	droppedFields   = []string{"count"}
-	fieldsByType    = map[string][]string{"frame": frameFields, "outcome": outcomeFields, "send_suppressed": suppressFields, "conn": connFields, "dropped": droppedFields}
+	fieldsByType    = map[string][]string{"frame": frameFields, "outcome": outcomeFields, "send_suppressed": suppressFields, "conn": connFields, "dropped": droppedFields, "own_input": {"via", "input_kind", "engine_run", "step", "code", "peer", "size", "payload_sha256", "dedup_key", "journal_segment", "journal_offset"}}
 	payloadsDirName = "payloads"
 )
 
@@ -290,6 +304,8 @@ func Validate(d *Dump) *Result {
 		switch r.Type {
 		case "frame":
 			validateFrame(d, r, add, checked, &res.Payloads)
+		case "own_input":
+			validateOwnInput(d, r, add, checked, &res.Payloads)
 		case "outcome":
 			if !slices.Contains(outcomeClasses, r.Outcome) {
 				add(r, "outcome %q", r.Outcome)
@@ -332,6 +348,7 @@ func Validate(d *Dump) *Result {
 			ref("of", r.Of)
 		}
 	}
+	validateOwnReferences(d.Records, add)
 	return res
 }
 
@@ -389,7 +406,7 @@ func validateFrame(d *Dump, r *Record, add func(*Record, string, ...any), checke
 		if r.Cause != "" && !slices.Contains(causes, r.Cause) {
 			add(r, "cause %q", r.Cause)
 		}
-		if (r.Cause == "relay") != (r.RelayOf != nil) {
+		if (r.Cause == "relay") != (r.RelayOf != nil || r.OwnMessageOf != nil) || (r.RelayOf != nil && r.OwnMessageOf != nil) {
 			add(r, "cause %q with relay_of %v", r.Cause, r.RelayOf)
 		}
 	default:
@@ -398,6 +415,10 @@ func validateFrame(d *Dump, r *Record, add func(*Record, string, ...any), checke
 	if r.Dir != "out" && r.Has("write_result") {
 		add(r, "write result on a received frame")
 	}
+	validatePayload(d, r, add, checked, payloads)
+}
+
+func validatePayload(d *Dump, r *Record, add func(*Record, string, ...any), checked map[string]bool, payloads *int) {
 	if !codePattern.MatchString(r.Code) {
 		add(r, "code %q is not a hex string", r.Code)
 	}

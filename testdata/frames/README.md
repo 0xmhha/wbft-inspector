@@ -11,3 +11,13 @@ and the retry timer retransmitted ROUND-CHANGE. It holds heights 7 and up of
 that run, written by `wbft-journal export --format r01 --from 7` from wbft
 `72d2147`, which records send causes and suppressed sends. Every
 retransmission is a `send_suppressed` record with cause `retry`.
+
+`own-input/` is a synthetic signed PREPARE exported by the WBFT journal
+producer. Its outgoing relay precedes an accepted self outcome and the
+original internal-input step. `own_message_of` points to that outcome;
+`input_of` points to the `own_input` record, which retains its engine/step,
+original journal segment/offset and exact signed payload. No received frame
+is fabricated. Validation checks hashes, size, key, self signature and the
+same-file/node/run reference chain; loss and ambiguous witnesses are refused.
+The coordinate must be checked against retained raw journal bytes in a source
+audit. This fixture contains public synthetic signed bytes, not a node secret.
