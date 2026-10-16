@@ -62,13 +62,13 @@ func TestRetryWire(t *testing.T) {
 		}, []string{"frame:r:2 PASS"}},
 		{"on the wire after a send to the peer", []*frames.Record{
 			rec(1, "out", 1, 7, "broadcast"), rec(2, "out", 1, 7, "retry"),
-		}, []string{"frame:r:2 FAIL"}},
+		}, []string{"frame:r:2 CANNOT_DECIDE OBSERVER_SCOPE"}},
 		{"on the wire after a suppressed send", []*frames.Record{
 			rec(1, "sup", 1, 7, "retry"), rec(2, "out", 1, 7, "retry"),
-		}, []string{"frame:r:1 PASS", "frame:r:2 FAIL"}},
+		}, []string{"frame:r:1 PASS", "frame:r:2 CANNOT_DECIDE OBSERVER_SCOPE"}},
 		{"records out of seq order in the file", []*frames.Record{
 			rec(2, "out", 1, 7, "retry"), rec(1, "out", 1, 7, "broadcast"),
-		}, []string{"frame:r:2 FAIL"}},
+		}, []string{"frame:r:2 CANNOT_DECIDE OBSERVER_SCOPE"}},
 		{"no earlier copy for the peer", []*frames.Record{
 			rec(1, "out", 2, 7, "broadcast"), rec(2, "out", 1, 7, "retry"),
 		}, []string{"frame:r:2 CANNOT_DECIDE OBSERVER_SCOPE"}},
@@ -90,10 +90,10 @@ func TestRetryWire(t *testing.T) {
 	}
 }
 
-// TestRetryWireEviction leaves a retransmission undecided when the cache
-// could have evicted the key: INMEMORY_MESSAGES other keys of the peer, or
-// INMEMORY_PEERS other peers, used since the last copy; one fewer fails.
-func TestRetryWireEviction(t *testing.T) {
+// Legacy physical uses cannot establish the mutex decision, including either
+// side of the capacity boundary. Exact-source capacity pairs are tested in
+// cache_source_test.go without shrinking the real 40/1024 cache sizes.
+func TestLegacyRetryWireEvictionIsNotDecisionOrder(t *testing.T) {
 	build := func(otherKeys, otherPeers int) []*frames.Record {
 		recs := []*frames.Record{rec(1, "out", 1, 7, "broadcast")}
 		seq := uint64(2)
@@ -111,9 +111,9 @@ func TestRetryWireEviction(t *testing.T) {
 		keys, peers int
 		want        string
 	}{
-		{inmemoryMessages - 1, 0, "FAIL"},
+		{inmemoryMessages - 1, 0, "CANNOT_DECIDE"},
 		{inmemoryMessages, 0, "CANNOT_DECIDE"},
-		{0, inmemoryPeers - 1, "FAIL"},
+		{0, inmemoryPeers - 1, "CANNOT_DECIDE"},
 		{0, inmemoryPeers, "CANNOT_DECIDE"},
 	} {
 		got := runRetry(t, build(tc.keys, tc.peers))
