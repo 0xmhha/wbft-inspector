@@ -260,9 +260,11 @@ frame is undecided, and a dump without `by` passes). The size
 is known from frames whose payload the dump holds and from frames recorded
 without their payload that carry their size. Chapter A-06: WBFT-TIMER-024
 (a retransmitted ROUND-CHANGE goes on the wire only to peers whose recent
-cache does not hold it), from the `cause` and `send_suppressed` records;
-a retransmission on the wire with no earlier copy for that peer in the
-dump, or after enough other keys or peers to evict it, is undecided.
+cache does not hold it), from the exact cache decision and enqueue identity.
+A closed cache snapshot is replayed independently at the real 40-peer and
+1,024-message capacities. Legacy physical frame order cannot establish the
+cache decision of an asynchronous write, so outgoing legacy retries are
+undecided. Explicit suppression remains an observation of a send left out.
 Chapter A-05: WBFT-SM-083 (a node does not send two PREPAREs, or two
 COMMITs, with different digests for one view within one run), from the
 payloads of the node's own sent frames: the signer is recovered from each
@@ -436,3 +438,33 @@ without measured source or an explicit cancellation, the result is
 `CANNOT_DECIDE` (`OBSERVER_SCOPE`). Damaged, conflicting, truncated or
 unbound sources cannot prove a pass. Raw coordinate authentication remains
 a separate audit against retained journal bytes.
+
+
+### Measured cache decisions and queued writes
+
+R01 exports can include `cache_trace`, `cache_instance` and `cache_operation`.
+A node that also records scheduler sources places `cache_trace` metadata on
+its existing `scheduler_trace` declaration row: both originate from one raw
+segment record and retain that single original sequence. The snapshot closes
+the available instance and operation counts and marks incomplete context.
+Only empty-instance declarations initialize a cache. Engine changes or peer
+reconnection do not fabricate a reset.
+
+Each operation preserves its mutex-local instance and sequence, code, key,
+payload hash, pre-operation hits, actual candidate set, targets and suppressed
+peers. The inspector replays both LRU levels independently; file order, frame
+time and a recent peer/key match are not substitutes for decision order.
+Outgoing `send_attempt` metadata binds a queued frame to its own original
+`cache_decision` source sequence, segment and offset. An observer replacement,
+legacy adapter, missing source or reused/conflicting identity cannot provide
+that proof. Metadata integers remain canonical decimal strings, including
+values beyond JavaScript's exact numeric range.
+
+A retry selected while the key was absent passes even when its physical write
+is recorded after a later suppression. A successful write of an exact decision
+whose recent cache held the key fails. An unsuccessful write that does not
+establish a complete frame stays undecided; `not_attached` records no write.
+Gap or inconsistent cache context cannot prove a pass. Every decided instance
+retains separate frame and cache-operation evidence pointers. Raw coordinate
+authentication remains a separate audit against retained journal bytes; the
+metadata alone does not prove peer delivery or authenticate unavailable bytes.

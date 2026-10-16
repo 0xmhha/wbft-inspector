@@ -189,6 +189,9 @@ func SchedulerSources(d *Dump) ([]SchedulerSource, []string) {
 			switch r.Type {
 			case "scheduler_trace":
 				allowed = append(allowed, "scheduler_trace", "clock_source")
+				if r.CacheTrace != nil {
+					allowed = append(allowed, "cache_trace")
+				}
 			case "timer_operation":
 				allowed = append(allowed, "engine_run", "step", "timer_operation")
 			case "scheduler_step":

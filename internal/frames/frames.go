@@ -41,9 +41,14 @@ const FormatVersion = 1
 
 // Record is one line of a dump. Optional fields are pointers or empty.
 type Record struct {
-	Input string `json:"-"` // input id of the dump in a report
-	File  string `json:"-"` // file name in the dump directory
-	Line  int    `json:"-"` // 1-based line
+	CacheTrace     *CacheTrace     `json:"cache_trace,omitempty"`
+	CacheInstance  *CacheInstance  `json:"cache_instance,omitempty"`
+	CacheOperation *CacheOperation `json:"cache_operation,omitempty"`
+	CacheDecision  *CacheDecision  `json:"cache_decision,omitempty"`
+	SendAttempt    *SendAttempt    `json:"send_attempt,omitempty"`
+	Input          string          `json:"-"` // input id of the dump in a report
+	File           string          `json:"-"` // file name in the dump directory
+	Line           int             `json:"-"` // 1-based line
 
 	V     int    `json:"v"`
 	Type  string `json:"type"`
@@ -203,6 +208,10 @@ func (d *Dump) read(path string) error {
 			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
 			continue
 		}
+		if err := decodeCacheFields(fields, r); err != nil {
+			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
+			continue
+		}
 		r.present = map[string]bool{}
 		for k := range fields {
 			r.present[k] = true
@@ -214,7 +223,7 @@ func (d *Dump) read(path string) error {
 
 // Value sets of the format.
 var (
-	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped", "own_input", "scheduler_trace", "scheduler_step", "timer_operation"}
+	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped", "own_input", "scheduler_trace", "scheduler_step", "timer_operation", "cache_trace", "cache_instance", "cache_operation"}
 	frameOutcomes   = []string{"PENDING", "ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	outcomeClasses  = []string{"ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	causes          = []string{"broadcast", "gossip", "relay", "retry", "reconnect", "replay", "direct"}
@@ -361,6 +370,8 @@ func Validate(d *Dump) *Result {
 	validateOwnReferences(d.Records, add)
 	_, problems := SchedulerSources(d)
 	res.Problems = append(res.Problems, problems...)
+	_, cacheProblems := CacheSources(d)
+	res.Problems = append(res.Problems, cacheProblems...)
 	return res
 }
 
