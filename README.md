@@ -412,3 +412,27 @@ boundaries remain unavailable; exit 2 means capture evidence is incomplete.
 Output preserves original one-based lines, integer strings for call identities
 and durations, and recorded return paths. A complete capture does not establish
 a complete runtime model, remote delivery, or application request completion.
+
+### Measured timer cancellation sources
+
+Current R01 exports can include `scheduler_trace`, `timer_operation` and
+`scheduler_step`. The declaration counts the complete available operation
+and step snapshot; `own_input` also serves as its original step witness.
+Every source retains its raw journal sequence, segment and byte offset.
+The declaration's zero/epoch clock is explicitly unavailable, not measured.
+Operation counters and nanosecond bounds use canonical decimal strings.
+
+The cancellation checkers bind event node/run, engine/step, timer kind,
+generation, full view and duration to the measured arm, queue insertion,
+cancellation request and new round arm. Mutex sequence is global within the
+writer run across engine lifecycles; file order is not operation order.
+Lifecycle records can name the last completed step. A WAL replay step without
+entry measurements cannot provide a guessed operation clock.
+
+A complete source that shows the same expiry queued before cancellation can
+prove a missing cancel event is expected. A timer still active at the round
+arm fails. Deadline passage and a later FIRE alone prove neither condition;
+without measured source or an explicit cancellation, the result is
+`CANNOT_DECIDE` (`OBSERVER_SCOPE`). Damaged, conflicting, truncated or
+unbound sources cannot prove a pass. Raw coordinate authentication remains
+a separate audit against retained journal bytes.

@@ -164,96 +164,109 @@ func wantVerdict(t *testing.T, res map[string]verdict.Result, v verdict.Verdict,
 	}
 }
 
-func TestFixturesPass(t *testing.T) {
+func TestFixturesHaveNoFailures(t *testing.T) {
 	res := decide(t, loadRecs(t, "round-changes.jsonl"))
 	noFail(t, res)
 	wantVerdict(t, res, verdict.Pass,
-		"WBFT-SM-011", "WBFT-SM-013", "WBFT-SM-014", "WBFT-SM-020", "WBFT-SM-030", "WBFT-SM-039", "WBFT-SM-043",
+		"WBFT-SM-011", "WBFT-SM-013", "WBFT-SM-014", "WBFT-SM-020", "WBFT-SM-039", "WBFT-SM-043",
 		"WBFT-SM-046", "WBFT-SM-050", "WBFT-SM-057", "WBFT-SM-077", "WBFT-SM-089",
-		"WBFT-TIMER-002", "WBFT-TIMER-003", "WBFT-TIMER-005", "WBFT-TIMER-010", "WBFT-TIMER-012", "WBFT-TIMER-013",
+		"WBFT-TIMER-002", "WBFT-TIMER-003", "WBFT-TIMER-005", "WBFT-TIMER-010", "WBFT-TIMER-012",
 		"WBFT-TIMER-015", "WBFT-TIMER-016", "WBFT-TIMER-020", "WBFT-TIMER-021", "WBFT-TIMER-022", "WBFT-TIMER-023",
 		"WBFT-TIMER-041")
+	// This legacy event-only fixture does not measure callback queue insertion.
+	// Explicit cancellations still pass; deadline passage and later FIREs
+	// leave the remaining instances undecidable rather than inventing a pass.
+	wantVerdict(t, res, verdict.CannotDecide, "WBFT-SM-030", "WBFT-TIMER-013")
+	for _, id := range []string{"WBFT-SM-030", "WBFT-TIMER-013"} {
+		if res[id].Pass == 0 || res[id].CannotDecide == 0 {
+			t.Fatal("legacy explicit cancellation or unknown coverage lost", id, res[id])
+		}
+	}
 	res = decide(t, loadRecs(t, "engine-stop.jsonl"))
 	noFail(t, res)
 	wantVerdict(t, res, verdict.Pass, "WBFT-TIMER-018")
 }
 
-func TestMutationsFail(t *testing.T) {
+func TestEventMutationVerdicts(t *testing.T) {
 	cases := []struct {
 		name   string
 		file   string
 		mutate func(*testing.T, []rec) []rec
-		fail   []string
+		expect []string
+		want   verdict.Verdict
 	}{
 		{"round timer not armed on entering a view", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "15") },
-			[]string{"WBFT-SM-030", "WBFT-TIMER-010"}},
+			[]string{"WBFT-SM-030", "WBFT-TIMER-010"}, verdict.Fail},
 		{"round timer with a wrong duration", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return set(t, r, "15", "duration_ms", json.Number("7000")) },
-			[]string{"WBFT-TIMER-005", "WBFT-TIMER-002", "WBFT-TIMER-010"}},
+			[]string{"WBFT-TIMER-005", "WBFT-TIMER-002", "WBFT-TIMER-010"}, verdict.Fail},
 		{"retry timer not cancelled when the round timer is armed", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "37") },
-			[]string{"WBFT-SM-030", "WBFT-TIMER-013"}},
+			[]string{"WBFT-SM-030", "WBFT-TIMER-013"}, verdict.CannotDecide},
 		{"no ROUND-CHANGE after a round-timer expiry", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "17") },
-			[]string{"WBFT-TIMER-015"}},
+			[]string{"WBFT-TIMER-015"}, verdict.Fail},
 		{"a FUTURE message relayed", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec {
 				return insertAfter(t, r, "47", "41", rec{"step": json.Number("24"), "code": json.Number("19"), "dedup_key": r[index(t, r, "48")]["dedup_key"]})
 			},
-			[]string{"WBFT-SM-013"}},
+			[]string{"WBFT-SM-013"}, verdict.Fail},
 		{"a FUTURE message with outcome ACCEPT", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return set(t, r, "48", "outcome", "ACCEPT") },
-			[]string{"WBFT-SM-020"}},
+			[]string{"WBFT-SM-020"}, verdict.Fail},
 		{"a relay with other bytes", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec {
 				return set(t, r, "41", "dedup_key", "0x0000000000000000000000000000000000000000000000000000000000000001")
 			},
-			[]string{"WBFT-SM-011"}},
+			[]string{"WBFT-SM-011"}, verdict.Fail},
 		{"an own message never processed by the node", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "43") },
-			[]string{"WBFT-SM-014"}},
+			[]string{"WBFT-SM-014"}, verdict.Fail},
 		{"build for round 2 waits", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return set(t, r, "14", "wait_ms", json.Number("500")) },
-			[]string{"WBFT-TIMER-041"}},
+			[]string{"WBFT-TIMER-041"}, verdict.Fail},
 		{"retry expiry without a ROUND-CHANGE", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "8") },
-			[]string{"WBFT-SM-077", "WBFT-TIMER-021"}},
+			[]string{"WBFT-SM-077", "WBFT-TIMER-021"}, verdict.Fail},
 		{"retry expiry for a past round sends a ROUND-CHANGE", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec {
 				return insertAfter(t, r, "20", "8", rec{"step": json.Number("13")})
 			},
-			[]string{"WBFT-SM-077", "WBFT-TIMER-022"}},
+			[]string{"WBFT-SM-077", "WBFT-TIMER-022"}, verdict.Fail},
 		{"retry timer with a doubled duration", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return set(t, r, "16", "duration_ms", json.Number("4000")) },
-			[]string{"WBFT-TIMER-020", "WBFT-TIMER-003"}},
+			[]string{"WBFT-TIMER-020", "WBFT-TIMER-003"}, verdict.Fail},
 		{"retry timer cancelled on its own", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return set(t, r, "37", "step", json.Number("999")) },
-			[]string{"WBFT-TIMER-023"}},
+			[]string{"WBFT-TIMER-023"}, verdict.Fail},
 		{"F+1 rule without start_new_round", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "34") },
-			[]string{"WBFT-SM-057"}},
+			[]string{"WBFT-SM-057"}, verdict.Fail},
 		{"ROUND-CHANGE without a cause", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return set(t, r, "33", "what", "ROUND_CHANGE") },
-			[]string{"WBFT-SM-089"}},
+			[]string{"WBFT-SM-089"}, verdict.Fail},
 		{"PRE-PREPARE accepted without entering Preprepared", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "58") },
-			[]string{"WBFT-SM-039"}},
+			[]string{"WBFT-SM-039"}, verdict.Fail},
 		{"expiry of a superseded round timer changes the view", "round-changes.jsonl",
 			func(t *testing.T, r []rec) []rec {
 				// Inserted in reverse order: the expiry comes first.
 				r = insertAfter(t, r, "60", "13", rec{"step": json.Number("900"), "t_mono_ns": json.Number("16117000000")})
 				return insertAfter(t, r, "60", "12", rec{"step": json.Number("900"), "gen": json.Number("11"), "t_mono_ns": json.Number("16117000000")})
 			},
-			[]string{"WBFT-TIMER-014"}},
+			[]string{"WBFT-TIMER-014"}, verdict.Fail},
 		{"engine stopped with a timer armed", "engine-stop.jsonl",
 			func(t *testing.T, r []rec) []rec { return remove(t, r, "114") },
-			[]string{"WBFT-TIMER-018"}},
+			[]string{"WBFT-TIMER-018"}, verdict.Fail},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			res := decide(t, c.mutate(t, loadRecs(t, c.file)))
-			wantVerdict(t, res, verdict.Fail, c.fail...)
+			// Removing only an event cannot distinguish a missing cancellation
+			// from an expiry queued during processing. A measured active-timer
+			// mutation remains a FAIL in TestMeasuredLiveTimerWithoutCancellationFails.
+			wantVerdict(t, res, c.want, c.expect...)
 		})
 	}
 }

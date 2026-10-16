@@ -113,10 +113,12 @@ func (c roundTimeout) Run(_ context.Context, in *check.Inputs, out check.Emitter
 // cancelOnArm decides WBFT-TIMER-013 and WBFT-TIMER-033: arming or
 // re-arming the round timer cancels the retry timer and the
 // future-PRE-PREPARE timer. A retry or future timer that was armed when the
-// step began, and did not expire in it, must be cancelled in the step.
+// step began must be cancelled unless measured scheduler operations prove
+// its expiry was already queued before cancellation.
 type cancelOnArm struct{ check.Base }
 
 func (c cancelOnArm) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
+	source := check.NewTimerCancellation(in)
 	var ss check.StepStart
 	check.Walk(in, func(r *events.Run, i int, st *events.State) {
 		e := r.Events[i]
@@ -127,19 +129,14 @@ func (c cancelOnArm) Run(_ context.Context, in *check.Inputs, out check.Emitter)
 		if !isArm(events.TimerRound)(e) {
 			return
 		}
-		s := check.StepOf(r, i)
 		for _, kind := range []string{events.TimerRetry, events.TimerFuture} {
 			tm := before[kind]
-			if tm == nil || tm.Expired(e.TMono) || stepHas(s, "TIMER_FIRE", tm) {
-				continue // not armed, or its expiry is already queued and cannot be cancelled
+			if tm == nil {
+				continue
 			}
-			msg := fmt.Sprintf("%s timer gen %d", kind, tm.Gen)
-			var inst verdict.Instance
-			if _, x := s.Find(-1, match("TIMER_CANCEL", tm)); x != nil {
-				inst = check.Pass("", e, msg+" cancelled with the round-timer arm", x)
-			} else {
-				inst = check.Fail("", e, msg+" still armed after the round timer was armed")
-			}
+			v, why, records := source.Judge(r, i, tm, e)
+			inst := check.SchedulerEvidence(check.New("", e, v, verdict.ObserverScope,
+				fmt.Sprintf("%s timer gen %d: %s", kind, tm.Gen, why)), records)
 			inst.Requirement = "WBFT-TIMER-013"
 			out.Emit(inst)
 			if kind == events.TimerFuture {
@@ -154,8 +151,6 @@ func (c cancelOnArm) Run(_ context.Context, in *check.Inputs, out check.Emitter)
 func match(kind string, tm *events.Timer) func(*events.Event) bool {
 	return func(x *events.Event) bool { return x.Kind == kind && x.Str("timer") == tm.Kind && gen(x) == tm.Gen }
 }
-
-func stepHas(s check.Step, kind string, tm *events.Timer) bool { return s.Has(match(kind, tm)) }
 
 // staleExpiry decides WBFT-TIMER-014: within one run of the core, the
 // expiry of a round timer that was cancelled or superseded changes no view
