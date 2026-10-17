@@ -281,7 +281,7 @@ func (t *StepStart) Observe(r *events.Run, i int, st *events.State) map[string]*
 // sequence: it broadcast an own message while its view was in that
 // sequence. The event stream carries no validator set, so a missing own
 // message is decided only for nodes that were seen to be members.
-type Member map[[2]string]bool
+type Member map[[3]string]bool
 
 // Members scans the runs of the inputs.
 func Members(in *Inputs) Member {
@@ -289,14 +289,16 @@ func Members(in *Inputs) Member {
 	Walk(in, func(r *events.Run, i int, st *events.State) {
 		e := r.Events[i]
 		if e.Kind == "SEND" && (e.Str("cause") == "broadcast" || e.Str("cause") == "retry") && st.View != nil {
-			m[[2]string{r.ID, st.View.Seq}] = true
+			m[[3]string{r.Node, r.ID, st.View.Seq}] = true
 		}
 	})
 	return m
 }
 
 // In reports whether the node of run r broadcast in sequence seq.
-func (m Member) In(r *events.Run, seq string) bool { return m[[2]string{r.ID, seq}] }
+func (m Member) In(r *events.Run, seq string) bool {
+	return m[[3]string{r.Node, r.ID, seq}]
+}
 
 // MissingSend returns the instance for an own message that a step should
 // contain but does not: undecided when the signer refused or when the node

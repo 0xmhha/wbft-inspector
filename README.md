@@ -367,8 +367,12 @@ rules that give observations rather than verdicts (WBFT-SM-078, -080, -081,
 Some checkers cannot see everything from an event stream: a relay is recorded
 only when a target is left after target filtering, and the stream carries no
 validator set, so a missing own message is a failure only on a node that was
-seen to send in that sequence. Such instances are `CANNOT_DECIDE`
-(`OBSERVER_SCOPE`), not `PASS`.
+seen to send in that sequence in the same node's writer run. A reused run ID
+on another node does not provide membership evidence. Unproven membership
+leaves the instance `CANNOT_DECIDE` (`OBSERVER_SCOPE`). Self-delivery pairing
+ends at `ENGINE_STOP`; a later engine's receive outcome cannot prove delivery
+of a discarded scheduled message. The stopped send remains `CANNOT_DECIDE`
+(`NOT_EXERCISED`).
 
 ## Development
 
