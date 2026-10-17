@@ -131,6 +131,14 @@ Time comparisons use the monotonic clock of one node: a measured duration
 `d` against an expected `t` passes within `[t, t + sched]`, fails beyond a
 further `margin`, and is `CLOCK_UNCERTAINTY` in between.
 
+For a timer restored after WAL replay, its arm event is written after the
+timer is scheduled. When the event supplies `deadline_mono_ns`, the round
+timeout and first ROUND-CHANGE checks use its logical origin only after
+matching a continuous canonical replay lifecycle, timer identity and live
+expiry. Contradictory or incomplete evidence remains undecided. Older arms
+without this field retain their original timing interpretation; clock
+tolerances and original event timestamps are unchanged.
+
 ## vectors: conformance vectors
 
 ```sh

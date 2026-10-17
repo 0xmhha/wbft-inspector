@@ -107,6 +107,7 @@ type firstRCCause struct{ check.Base }
 
 func (c firstRCCause) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
 	const req = "WBFT-SM-089"
+	timing := check.NewTimerTiming(in)
 	live := map[*events.Event]*events.Timer{} // round-timer expiries and the live timer they belong to
 	check.Walk(in, func(r *events.Run, i int, st *events.State) {
 		e := r.Events[i]
@@ -139,14 +140,20 @@ func (c firstRCCause) Run(_ context.Context, in *check.Inputs, out check.Emitter
 			out.Emit(check.Fail(req, e, "ROUND-CHANGE sent on the expiry of a cancelled or superseded round timer", fire))
 			return
 		}
-		d, t := fire.TMono-tm.ArmMono, tm.DurationMs*1_000_000
+		d, why, origin := timing.Elapsed(r.Events[tm.ArmIndex], fire)
+		evidence := append([]*events.Event{fire}, origin...)
+		if why != "" {
+			out.Emit(check.Undecided(req, e, verdict.ObserverScope, why, evidence...))
+			return
+		}
+		t := tm.DurationMs * 1_000_000
 		switch in.Clock.AtLeast(d, t) {
 		case verdict.Pass:
-			out.Emit(check.Pass(req, e, fmt.Sprintf("cause: round timer of %s expired after %d ms (timeout %d ms)", tm.View, d/1_000_000, tm.DurationMs), fire))
+			out.Emit(check.Pass(req, e, fmt.Sprintf("cause: round timer of %s expired after %d ms (timeout %d ms)", tm.View, d/1_000_000, tm.DurationMs), evidence...))
 		case verdict.Fail:
-			out.Emit(check.Fail(req, e, fmt.Sprintf("round timer of %s expired after %d ms, before its timeout of %d ms", tm.View, d/1_000_000, tm.DurationMs), fire))
+			out.Emit(check.Fail(req, e, fmt.Sprintf("round timer of %s expired after %d ms, before its timeout of %d ms", tm.View, d/1_000_000, tm.DurationMs), evidence...))
 		default:
-			out.Emit(check.Undecided(req, e, verdict.ClockUncertainty, fmt.Sprintf("expiry after %d ns is within the clock tolerance of the timeout %d ms", d, tm.DurationMs), fire))
+			out.Emit(check.Undecided(req, e, verdict.ClockUncertainty, fmt.Sprintf("expiry after %d ns is within the clock tolerance of the timeout %d ms", d, tm.DurationMs), evidence...))
 		}
 	})
 	return nil
