@@ -185,6 +185,22 @@ with 1 when a dump has a problem. `check --frames DIR` decides the frame
 checkers (see [Coverage](#coverage)) and reports the format problems of the
 dump as errors.
 
+Recorded application sync sources use `sync_trace` version 1 and
+`sync_control` notifications and handling records. A snapshot declaration
+can share the scheduler or cache declaration row. The reader checks closed
+metadata, snapshot counts, logical request and handling identities, and the
+exact journal sequence, segment and offset of a retained original request.
+The request may occur physically after its handling record. Source order and
+recorded clocks are retained.
+
+Event cursor bounds use the next-sequence interval `[before, after)` and are
+separate from journal coordinates. Failed control calls can have an empty
+measured interval. Submitted notifications do not measure engine or guard
+state. Explicitly incomplete snapshots remain incomplete and do not gain
+inferred request coordinates. Source validation authenticates neither an
+external downloader nor consensus-policy correctness; this reader support
+does not add a sync-policy requirement checker.
+
 ## Report
 
 The report follows [`schema/report-v1.json`](schema/report-v1.json)
