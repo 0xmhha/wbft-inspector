@@ -10,7 +10,7 @@ import (
 )
 
 func TestKnownRequirementWithoutCheckerIsNotUnknown(t *testing.T) {
-	const known = "SNET-SYNC-030"
+	const known = "SNET-SYNC-031"
 	if _, ok := catalog.Lookup(known); !ok {
 		t.Fatal("fixture must be in the embedded public requirement list")
 	}
