@@ -284,3 +284,6 @@ rows:
   - requirement: "SNET-BHDR-007"
     checker: "hdr.canonical_content"
     priority: "P0"
+  - requirement: "SNET-SYNC-030"
+    checker: "sync.downloader_core"
+    priority: "P1"

@@ -506,3 +506,25 @@ notifications to a core request requires separate exact process identity,
 request/processing coverage and original canonical event evidence. It cannot
 turn a requirement without a checker into a pass, repair lost journal records,
 or establish an absent downloader branch.
+
+### Downloader core lifecycle policy
+
+`sync.downloader_core` checks SNET-SYNC-030 from three sources of the same
+validator process: canonical events (`--events`), recorded control requests and
+handling (`--frames`), and typed notifications (`--sync-observations`). Each
+notification must have one uniquely matched request and processing operation.
+Completion numbers and hashes must also occur in that process's canonical
+`NEW_HEAD` records. Posting time never supplies an event boundary.
+
+Actual control calls use next-sequence ranges `[before, after)` and measured
+running states. The checker independently follows canonical engine starts and
+stops. A later sync's observed stop after the first successful sync is a failure;
+unattributed lifecycle changes, failed control calls and insufficient source
+coverage stay undecided. A no-call handling has no inferred event range.
+
+Missing, coalesced, repeated or reordered handling cannot prove a pass, even
+when notification and operation counts are equal. Failed initial syncs, the
+first successful sync and a subsequent cycle must all be exercised for complete
+branch coverage; absent branches remain `NOT_EXERCISED`. A process with no
+validator downloader cycle also stays undecided. Structured source coverage
+and original input hashes do not authenticate an external producer.
