@@ -41,6 +41,7 @@ func gen(e *events.Event) int64 { g, _ := e.Int("gen"); return g }
 type roundTimeout struct{ check.Base }
 
 func (c roundTimeout) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
+	timing := check.NewTimerTiming(in)
 	type arm struct {
 		r    *events.Run
 		e    *events.Event
@@ -83,12 +84,15 @@ func (c roundTimeout) Run(_ context.Context, in *check.Inputs, out check.Emitter
 			msg = fmt.Sprintf("round timer of %s armed for %d ms, round_timeout(config_at(%s), %s) is %d ms", e.View, got, e.View.Seq, e.View.Round, check.DurationMs(want))
 		case a.fire != nil:
 			more = append(more, a.fire)
-			d := a.fire.TMono - e.TMono
-			switch in.Clock.Timing(d, want) {
-			case verdict.Fail:
+			d, why, origin := timing.Elapsed(e, a.fire)
+			more = append(more, origin...)
+			switch {
+			case why != "":
+				v, reason, msg = verdict.CannotDecide, verdict.ObserverScope, why
+			case in.Clock.Timing(d, want) == verdict.Fail:
 				v = verdict.Fail
 				msg = fmt.Sprintf("round timer of %s expired %d ms after it was armed, round_timeout is %d ms", e.View, d/1_000_000, check.DurationMs(want))
-			case verdict.CannotDecide:
+			case in.Clock.Timing(d, want) == verdict.CannotDecide:
 				v, reason = verdict.CannotDecide, verdict.ClockUncertainty
 				msg = fmt.Sprintf("expiry %d ns after arming is within the clock tolerance of %d ns", d, want)
 			default:
