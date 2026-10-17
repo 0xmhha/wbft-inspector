@@ -1,0 +1,8 @@
+{"format":"wbft-sync-notifications/1","type":"header","node":"0xaa00000000000000000000000000000000000000","run":"synthetic-sync-notifications","validator":true,"core_start_seq":"0"}
+{"type":"notification","sequence":"1","kind":"start","posted_at_available":true,"posted_at":"2026-01-01T00:00:00.000000123Z"}
+{"type":"notification","sequence":"2","kind":"failed","posted_at_available":false}
+{"type":"notification","sequence":"3","kind":"start","posted_at_available":true,"posted_at":"2025-12-31T23:59:59Z"}
+{"type":"notification","sequence":"4","kind":"done","posted_at_available":false,"number":"9007199254740993","hash":"0xbb00000000000000000000000000000000000000000000000000000000000000"}
+{"type":"notification","sequence":"5","kind":"start","posted_at_available":false}
+{"type":"notification","sequence":"6","kind":"done","posted_at_available":false,"number":"115792089237316195423570985008687907853269984665640564039457584007913129639935","hash":"0xcc00000000000000000000000000000000000000000000000000000000000000"}
+{"type":"footer","observed":"6","written":"6","dropped":"0","invalid":"0","sequence_exhausted":false,"core_complete":true,"core_stop_seq":"17","closed_normally":true,"complete":true}

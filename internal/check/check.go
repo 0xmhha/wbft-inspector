@@ -20,6 +20,7 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/headers"
 	"github.com/0xmhha/wbft-inspector/internal/rejections"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
+	"github.com/0xmhha/wbft-inspector/internal/syncobs"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
 
@@ -28,11 +29,12 @@ type Kind string
 
 // Input kinds.
 const (
-	Events      Kind = "events"       // consensus event streams
-	Frames      Kind = "frames"       // frame dumps (R-01)
-	ChainConfig Kind = "chain_config" // genesis chain configuration
-	Rejections  Kind = "rejections"   // the nodes' rejected blocks and proposals (R-09)
-	Headers     Kind = "headers"
+	SyncObservations Kind = "sync_observations" // typed downloader notification files
+	Events           Kind = "events"            // consensus event streams
+	Frames           Kind = "frames"            // frame dumps (R-01)
+	ChainConfig      Kind = "chain_config"      // genesis chain configuration
+	Rejections       Kind = "rejections"        // the nodes' rejected blocks and proposals (R-09)
+	Headers          Kind = "headers"
 )
 
 // Clock is the clock model of a check: the tolerance of time comparisons
@@ -47,13 +49,14 @@ type Clock struct {
 // Inputs is what the checkers read. A checker must be deterministic: no
 // wall clock, no randomness and no network; everything comes from Inputs.
 type Inputs struct {
-	Headers    *headers.Range
-	Events     *events.Set       // nil when no event stream was given
-	Frames     []*frames.Dump    // frame dumps, in the order given
-	Rejections []*rejections.Set // per node, in the order given
-	Config     *params.Config    // nil when no chain configuration was given
-	Clock      Clock
-	Given      map[Kind]bool
+	SyncObservations []*syncobs.Source // independently recorded typed notifications
+	Headers          *headers.Range
+	Events           *events.Set       // nil when no event stream was given
+	Frames           []*frames.Dump    // frame dumps, in the order given
+	Rejections       []*rejections.Set // per node, in the order given
+	Config           *params.Config    // nil when no chain configuration was given
+	Clock            Clock
+	Given            map[Kind]bool
 }
 
 // LogReader is implemented by a checker that can say whether it judges runs
