@@ -484,3 +484,25 @@ Gap or inconsistent cache context cannot prove a pass. Every decided instance
 retains separate frame and cache-operation evidence pointers. Raw coordinate
 authentication remains a separate audit against retained journal bytes; the
 metadata alone does not prove peer delivery or authenticate unavailable bytes.
+
+### Independently recorded downloader notifications
+
+`check --sync-observations FILE` reads a `wbft-sync-notifications/1` JSON Lines
+file, separately from canonical events and R01 control records. Repeat the
+option for multiple sources. The report retains each file's SHA-256 and line
+count as a structured log input, without assigning it a legacy log profile.
+The `sync_notification_source` observation points to its original header and,
+when retained, footer. It describes source coverage and emits no policy verdict.
+
+The reader preserves process node/run identity, notification order, available
+posting times and exact decimal completion-header numbers. It rejects duplicate
+or unknown fields, missing booleans, malformed hashes, impossible counts and
+contradictory completeness claims. A missing footer or final line terminator
+remains incomplete. Wall-clock regression does not reorder notifications, and
+an unavailable clock is never reconstructed from consensus event positions.
+
+A complete file is still not external producer authentication. Matching its
+notifications to a core request requires separate exact process identity,
+request/processing coverage and original canonical event evidence. It cannot
+turn a requirement without a checker into a pass, repair lost journal records,
+or establish an absent downloader branch.

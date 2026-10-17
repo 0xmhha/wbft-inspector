@@ -19,6 +19,7 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/catalog"
 	"github.com/0xmhha/wbft-inspector/internal/check"
 	"github.com/0xmhha/wbft-inspector/internal/events"
+	"github.com/0xmhha/wbft-inspector/internal/evidence"
 	"github.com/0xmhha/wbft-inspector/internal/frames"
 	"github.com/0xmhha/wbft-inspector/internal/headers"
 	"github.com/0xmhha/wbft-inspector/internal/logs"
@@ -26,12 +27,13 @@ import (
 	"github.com/0xmhha/wbft-inspector/internal/report"
 	"github.com/0xmhha/wbft-inspector/internal/rpc"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
+	"github.com/0xmhha/wbft-inspector/internal/syncobs"
 	"github.com/0xmhha/wbft-inspector/internal/verdict"
 )
 
 const checkUsage = `Usage: wbft-inspector check [--rpc URL --from N --to M --chain-config FILE]
        [--blocks DIR | --header-cache DIR --offline] [header flags]
-       [--events PATH ...] [--frames DIR ...]
+       [--events PATH ...] [--frames DIR ...] [--sync-observations FILE ...]
        [--logs NODE=PATH ... --log-profile FILE] [--rejections NODE=PATH ...] [flags]
 
 Decides the requirements of the checker catalog from consensus event
@@ -64,6 +66,8 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	logGenesis := fs.String("log-genesis-hash", "", "declared genesis hash of log inputs (needs log-chain-id)")
 	var framePaths multi
 	fs.Var(&framePaths, "frames", "frame dump directory in the R-01 format (repeatable); format problems are reported as errors")
+	var syncPaths multi
+	fs.Var(&syncPaths, "sync-observations", "typed downloader notification file (wbft-sync-notifications/1; repeatable); source coverage is not a policy verdict")
 	var rejPaths multi
 	fs.Var(&rejPaths, "rejections", "NODE=PATH: the rejected blocks and proposals of the node with address NODE: a wbft_rejections response, JSON Lines records or the node's rejections directory (repeatable)")
 	headerRPC := fs.String("rpc", "", "header JSON-RPC endpoint")
@@ -254,6 +258,24 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		for _, p := range frames.Validate(d).Problems {
 			rep.Errors = append(rep.Errors, report.Error{Message: "frames " + dir + ": " + p})
 		}
+	}
+	for _, path := range syncPaths {
+		source, err := syncobs.Load(path)
+		if err != nil {
+			rep.Errors = append(rep.Errors, report.Error{Message: "sync observations: " + err.Error()})
+			exit = report.ExitNoInput
+			continue
+		}
+		source.Input = fmt.Sprintf("in-%d", len(rep.Run.Inputs)+1)
+		in.SyncObservations = append(in.SyncObservations, source)
+		in.Given[check.SyncObservations] = true
+		rep.Run.Inputs = append(rep.Run.Inputs, report.Input{ID: source.Input, Kind: "log", Node: source.Header.Node, Path: path, SHA256: source.SHA256, Records: source.Lines})
+		idParts = append(idParts, source.SHA256)
+		pointers := []evidence.Pointer{source.Pointer(1)}
+		if source.Footer != nil {
+			pointers = append(pointers, source.Pointer(source.FooterLine))
+		}
+		rep.Observations = append(rep.Observations, report.Observation{ID: fmt.Sprintf("OBS-%04d", len(rep.Observations)+1), Kind: "sync_notification_source", Imp: []string{}, Checker: "source.sync_notifications", Node: source.Header.Node, Count: len(source.Notifications), Evidence: pointers, Note: fmt.Sprintf("Format %s; retained source complete: %t. This describes source coverage, not a consensus-policy verdict or external producer authentication.", syncobs.Format, source.Complete)})
 	}
 	for _, a := range rejPaths {
 		node, p, ok := strings.Cut(a, "=")
