@@ -66,11 +66,12 @@ func (c roundTimeout) Run(_ context.Context, in *check.Inputs, out check.Emitter
 		}
 	})
 	for _, a := range arms {
+		emit := func(instance verdict.Instance) { out.Emit(timing.Evidence(instance, a.fire)) }
 		e := a.e
 		want, warn, ok := in.RoundTimeout(e.View)
 		if !ok {
 			for _, req := range c.Reqs {
-				out.Emit(check.Undecided(req, e, verdict.MissingData, "no chain configuration; round_timeout cannot be computed (give --chain-config)"))
+				emit(check.Undecided(req, e, verdict.MissingData, "no chain configuration; round_timeout cannot be computed (give --chain-config)"))
 			}
 			continue
 		}
@@ -99,16 +100,16 @@ func (c roundTimeout) Run(_ context.Context, in *check.Inputs, out check.Emitter
 				msg += fmt.Sprintf(", expired after %d ms", d/1_000_000)
 			}
 		}
-		out.Emit(check.New("WBFT-TIMER-005", e, v, reason, msg, more...))
-		out.Emit(check.New("WBFT-TIMER-002", e, v, reason, msg, more...))
+		emit(check.New("WBFT-TIMER-005", e, v, reason, msg, more...))
+		emit(check.New("WBFT-TIMER-002", e, v, reason, msg, more...))
 		cfg := in.Config.At(e.View.SeqBig())
 		base := int64(cfg.RequestTimeoutMs) * 1_000_000
 		limit := int64(cfg.MaxRequestTimeoutSeconds) * 1_000_000_000
 		if limit > 0 && base > limit {
-			out.Emit(check.New("WBFT-TIMER-006", e, v, reason, msg, more...))
+			emit(check.New("WBFT-TIMER-006", e, v, reason, msg, more...))
 		}
 		if warn == timers.WarnCapGuard {
-			out.Emit(check.New("WBFT-TIMER-007", e, v, reason, msg, more...))
+			emit(check.New("WBFT-TIMER-007", e, v, reason, msg, more...))
 		}
 	}
 	return nil

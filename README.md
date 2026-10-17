@@ -135,9 +135,17 @@ For a timer restored after WAL replay, its arm event is written after the
 timer is scheduled. When the event supplies `deadline_mono_ns`, the round
 timeout and first ROUND-CHANGE checks use its logical origin only after
 matching a continuous canonical replay lifecycle, timer identity and live
-expiry. Contradictory or incomplete evidence remains undecided. Older arms
-without this field retain their original timing interpretation; clock
-tolerances and original event timestamps are unchanged.
+expiry. Contradictory or incomplete explicit evidence remains undecided.
+
+An older restored arm can also use the measured scheduler origin when a
+complete R01 transcript passes format validation and full operation replay.
+This path requires one closed single-engine run, a unique matching restored
+arm, queued expiry and dequeue, exact timer identity and callback entry
+clocks, and a bound stop and lifecycle clear. Checker evidence refers to the original
+event and R01 positions. A later asynchronous writing timestamp does not
+establish whole-run clock continuity. Without this complete proof, the older
+arm keeps its original timing interpretation. Clock tolerances and original
+event timestamps are unchanged.
 
 ## vectors: conformance vectors
 

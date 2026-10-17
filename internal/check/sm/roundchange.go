@@ -142,18 +142,19 @@ func (c firstRCCause) Run(_ context.Context, in *check.Inputs, out check.Emitter
 		}
 		d, why, origin := timing.Elapsed(r.Events[tm.ArmIndex], fire)
 		evidence := append([]*events.Event{fire}, origin...)
+		emit := func(instance verdict.Instance) { out.Emit(timing.Evidence(instance, fire)) }
 		if why != "" {
-			out.Emit(check.Undecided(req, e, verdict.ObserverScope, why, evidence...))
+			emit(check.Undecided(req, e, verdict.ObserverScope, why, evidence...))
 			return
 		}
 		t := tm.DurationMs * 1_000_000
 		switch in.Clock.AtLeast(d, t) {
 		case verdict.Pass:
-			out.Emit(check.Pass(req, e, fmt.Sprintf("cause: round timer of %s expired after %d ms (timeout %d ms)", tm.View, d/1_000_000, tm.DurationMs), evidence...))
+			emit(check.Pass(req, e, fmt.Sprintf("cause: round timer of %s expired after %d ms (timeout %d ms)", tm.View, d/1_000_000, tm.DurationMs), evidence...))
 		case verdict.Fail:
-			out.Emit(check.Fail(req, e, fmt.Sprintf("round timer of %s expired after %d ms, before its timeout of %d ms", tm.View, d/1_000_000, tm.DurationMs), evidence...))
+			emit(check.Fail(req, e, fmt.Sprintf("round timer of %s expired after %d ms, before its timeout of %d ms", tm.View, d/1_000_000, tm.DurationMs), evidence...))
 		default:
-			out.Emit(check.Undecided(req, e, verdict.ClockUncertainty, fmt.Sprintf("expiry after %d ns is within the clock tolerance of the timeout %d ms", d, tm.DurationMs), evidence...))
+			emit(check.Undecided(req, e, verdict.ClockUncertainty, fmt.Sprintf("expiry after %d ns is within the clock tolerance of the timeout %d ms", d, tm.DurationMs), evidence...))
 		}
 	})
 	return nil
