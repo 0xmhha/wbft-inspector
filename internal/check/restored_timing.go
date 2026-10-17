@@ -14,11 +14,13 @@ type restoredArm struct {
 	start, arm *events.Event
 	from       int64
 	valid      bool
+	retained   *retainedTimingArm
 }
 
 // TimerTiming indexes explicit restored deadlines in canonical event streams.
 // A deadline is usable only within an uninterrupted replay lifecycle and for
-// the same live timer. Legacy arms keep their original timing interpretation.
+// the same live timer. Legacy arms require an independently closed scheduler
+// transcript to establish an origin earlier than their writing timestamp.
 type TimerTiming struct {
 	fires map[*events.Event]*restoredArm
 }
@@ -28,7 +30,9 @@ func NewTimerTiming(in *Inputs) *TimerTiming {
 	if in.Events == nil {
 		return t
 	}
+	sources := retainedTimingSources(in)
 	for _, run := range in.Events.Runs {
+		retained := closedRetainedTiming(run, sources[[2]string{run.Node, run.ID}])
 		var start, previous *events.Event
 		var engine, lastEngine int64
 		healthy, restoring := false, false
@@ -64,7 +68,7 @@ func NewTimerTiming(in *Inputs) *TimerTiming {
 			if e.Kind == "TIMER_ARM" {
 				kind := e.Str("timer")
 				delete(live, kind)
-				if rearmed && e.Has("deadline_mono_ns") {
+				if rearmed && (e.Has("deadline_mono_ns") || retained != nil) {
 					a := &restoredArm{start: start, arm: e}
 					deadline, deadlineOK := timingInt(e, "deadline_mono_ns")
 					duration, durationOK := timingInt(e, "duration_ms")
@@ -75,6 +79,12 @@ func NewTimerTiming(in *Inputs) *TimerTiming {
 						durationOK && duration >= 0 && duration <= math.MaxInt64/1_000_000 && deadlineOK && deadline >= duration*1_000_000 {
 						a.from = deadline - duration*1_000_000
 						a.valid = a.from >= start.TMono && a.from <= e.TMono
+					}
+					if !e.Has("deadline_mono_ns") && healthy && restoring && !seen[kind] && e.Step == nil && timingView(e.View) {
+						a.retained = retained.arm(start, e)
+						if a.retained != nil {
+							a.from, a.valid = a.retained.from, true
+						}
 					}
 					live[kind] = a
 				}
@@ -97,6 +107,10 @@ func NewTimerTiming(in *Inputs) *TimerTiming {
 					liveExpiry := bytes.Equal(bytes.TrimSpace(e.F["stale"]), []byte("false"))
 					proof.valid = proof.valid && healthy && liveExpiry && e.Step != nil && *e.Step > 0 &&
 						timingSameInt(a.arm, e, "engine_run") && timingSameInt(a.arm, e, "gen") && a.arm.View.Equal(e.View) && e.TMono >= a.from
+					if proof.retained != nil {
+						proof.retained = proof.retained.expiry(e)
+						proof.valid = proof.valid && proof.retained != nil
+					}
 					t.fires[e] = &proof
 				}
 				delete(live, kind)
@@ -111,6 +125,10 @@ func NewTimerTiming(in *Inputs) *TimerTiming {
 // callers must keep that instance undecided rather than fall back silently.
 func (t *TimerTiming) Elapsed(arm, fire *events.Event) (int64, string, []*events.Event) {
 	if !arm.Has("rearmed") || !arm.Has("deadline_mono_ns") {
+		if a := t.fires[fire]; a != nil && a.arm == arm && a.valid && a.retained != nil {
+			evidence := append([]*events.Event{a.start, a.arm}, a.retained.source.closure...)
+			return fire.TMono - a.from, "", evidence
+		}
 		return fire.TMono - arm.TMono, "", nil
 	}
 	a := t.fires[fire]
