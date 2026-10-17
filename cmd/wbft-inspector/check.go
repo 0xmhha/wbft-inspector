@@ -323,7 +323,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		for _, id := range ids {
 			if _, ok := catalog.Lookup(id); !ok {
 				unknown = append(unknown, id)
-			} else if _, ok := catalog.RowOf(id); ok {
+			} else {
 				selected[id] = true
 			}
 		}
@@ -421,7 +421,7 @@ func selectRows(tokens []string) (map[string]bool, []string) {
 	for _, t := range tokens {
 		switch {
 		case catalog.ValidID(t):
-			if _, ok := catalog.RowOf(t); ok {
+			if _, ok := catalog.Lookup(t); ok {
 				sel[t] = true
 			} else {
 				unknown = append(unknown, t)
