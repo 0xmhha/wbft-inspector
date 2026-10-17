@@ -6,7 +6,9 @@
 //
 // The record types are frame, outcome, send_suppressed, conn, dropped and
 // own_input (a signed internal message with accepted outcome provenance),
-// scheduler_trace, scheduler_step and timer_operation (measured scheduler sources).
+// scheduler_trace, scheduler_step and timer_operation (measured scheduler sources),
+// cache_trace, cache_instance and cache_operation, and recorded application
+// sync_trace and sync_control metadata.
 // Every record has the common fields v (format version 1), type, node, run,
 // seq, t_wall (RFC 3339 with nanoseconds) and t_mono_ns. seq is unique
 // within a run; it need not increase along the file, since a node may write
@@ -41,6 +43,8 @@ const FormatVersion = 1
 
 // Record is one line of a dump. Optional fields are pointers or empty.
 type Record struct {
+	SyncTrace      *SyncTrace      `json:"sync_trace,omitempty"`
+	SyncControl    *SyncControl    `json:"sync_control,omitempty"`
 	CacheTrace     *CacheTrace     `json:"cache_trace,omitempty"`
 	CacheInstance  *CacheInstance  `json:"cache_instance,omitempty"`
 	CacheOperation *CacheOperation `json:"cache_operation,omitempty"`
@@ -212,6 +216,10 @@ func (d *Dump) read(path string) error {
 			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
 			continue
 		}
+		if err := decodeSyncFields(fields, r); err != nil {
+			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
+			continue
+		}
 		r.present = map[string]bool{}
 		for k := range fields {
 			r.present[k] = true
@@ -223,7 +231,7 @@ func (d *Dump) read(path string) error {
 
 // Value sets of the format.
 var (
-	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped", "own_input", "scheduler_trace", "scheduler_step", "timer_operation", "cache_trace", "cache_instance", "cache_operation"}
+	recordTypes     = []string{"frame", "outcome", "send_suppressed", "conn", "dropped", "own_input", "scheduler_trace", "scheduler_step", "timer_operation", "cache_trace", "cache_instance", "cache_operation", "sync_trace", "sync_control"}
 	frameOutcomes   = []string{"PENDING", "ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	outcomeClasses  = []string{"ACCEPT", "IGNORE", "DROP_SILENT", "DISCONNECT"}
 	causes          = []string{"broadcast", "gossip", "relay", "retry", "reconnect", "replay", "direct"}
@@ -372,6 +380,8 @@ func Validate(d *Dump) *Result {
 	res.Problems = append(res.Problems, problems...)
 	_, cacheProblems := CacheSources(d)
 	res.Problems = append(res.Problems, cacheProblems...)
+	_, syncProblems := SyncSources(d)
+	res.Problems = append(res.Problems, syncProblems...)
 	return res
 }
 
