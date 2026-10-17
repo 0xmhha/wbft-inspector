@@ -147,6 +147,15 @@ func (c selfDelivery) Run(_ context.Context, in *check.Inputs, out check.Emitter
 		pending := map[string][]int{}
 		for i, e := range r.Events {
 			switch {
+			case e.Kind == "ENGINE_STOP":
+				// Stop discards scheduled events. A later engine cannot
+				// supply the receive outcome for these sends.
+				for _, q := range pending {
+					for _, send := range q {
+						out.Emit(unmatched(req, r, send))
+					}
+				}
+				pending = map[string][]int{}
 			case e.Kind == "SEND" && (e.Str("cause") == "broadcast" || e.Str("cause") == "retry") && e.Str("dedup_key") != "":
 				k := e.Str("dedup_key")
 				pending[k] = append(pending[k], i)
