@@ -1,0 +1,142 @@
+{
+  "format": "wbft-reconstruction-review/1",
+  "classification": "cross_implementation_candidate",
+  "specification_verdict": "not_evaluated",
+  "result_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+  "execution_version": "wbft-reconstructed-execution/1",
+  "comparison_model": "wbft-observable-state-actions/1",
+  "core_version": "5555555555555555555555555555555555555555",
+  "all_improvements_off": true,
+  "network": {
+    "chain_id": "7",
+    "genesis_hash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "node": "0x1111111111111111111111111111111111111111",
+  "height": {
+    "height": "18446744073709551618",
+    "status": "partial",
+    "issues": [
+      "processing_window_not_completed"
+    ]
+  },
+  "log_run": "log:1",
+  "position": 1,
+  "source": {
+    "log_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "log_profile": "gstable@740526d03",
+    "log_profile_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "log_normalizer": "wbft-log-normalization/2",
+    "processing_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "processing_format": "wbft-input-observations/1",
+    "processing_normalizer": "wbft-input-observation-normalization/1",
+    "processing_run": "synthetic-processing",
+    "processing_instance": "2",
+    "frame_run": "synthetic-frames",
+    "frame_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "chain_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "genesis_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "binary_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "source_commit": "2222222222222222222222222222222222222222",
+    "capture_complete": true,
+    "capture_issues": []
+  },
+  "step": {
+    "core_applied": true,
+    "issues": [],
+    "input": {
+      "ordinal": "4",
+      "kind": "round_timeout",
+      "height": "18446744073709551618",
+      "round": "18446744073709551617",
+      "source": {
+        "kind": "processing_boundary",
+        "file": "input_observations",
+        "line": 20,
+        "run": "synthetic-processing",
+        "sequence": "9007199254740993"
+      },
+      "via": "derived_timer_generation",
+      "processing_mono_ns": "9007199254740999",
+      "observation_instance": "2",
+      "derived_timer_generation": "7",
+      "timer_arm": {
+        "kind": "log",
+        "file": "log",
+        "line": 10,
+        "run": "log:1"
+      },
+      "receive_clock": "actual_processing_boundary_not_wire_arrival"
+    },
+    "observed": [
+      {
+        "kind": "state_before",
+        "running": true,
+        "height": "18446744073709551618",
+        "round": "18446744073709551617",
+        "state": "Prepared",
+        "proposer": "0x1111111111111111111111111111111111111111",
+        "valset_digest": "0x3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      {
+        "kind": "timer_arm",
+        "height": "18446744073709551618",
+        "round": "18446744073709551617",
+        "timer": "round",
+        "duration_seconds": "2",
+        "duration_ns": "2000000000",
+        "source": {
+          "kind": "log",
+          "file": "log",
+          "line": 32,
+          "run": "log:1"
+        }
+      }
+    ],
+    "computed": [
+      {
+        "kind": "state_before",
+        "running": true,
+        "height": "18446744073709551618",
+        "round": "18446744073709551617",
+        "state": "Prepared",
+        "proposer": "0x1111111111111111111111111111111111111111",
+        "valset_digest": "0x3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      {
+        "kind": "timer_arm",
+        "height": "18446744073709551618",
+        "round": "18446744073709551617",
+        "timer": "round",
+        "duration_seconds": "3",
+        "duration_ns": "3000000000"
+      }
+    ],
+    "difference_candidates": [
+      {
+        "kind": "timer_arm",
+        "expected": {
+          "kind": "timer_arm",
+          "height": "18446744073709551618",
+          "round": "18446744073709551617",
+          "timer": "round",
+          "duration_seconds": "2",
+          "duration_ns": "2000000000",
+          "source": {
+            "kind": "log",
+            "file": "log",
+            "line": 32,
+            "run": "log:1"
+          }
+        },
+        "actual": {
+          "kind": "timer_arm",
+          "height": "18446744073709551618",
+          "round": "18446744073709551617",
+          "timer": "round",
+          "duration_seconds": "3",
+          "duration_ns": "3000000000"
+        }
+      }
+    ]
+  }
+}

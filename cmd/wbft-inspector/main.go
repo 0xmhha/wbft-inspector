@@ -34,6 +34,7 @@ Commands:
   vectors   run conformance vectors against implementation adapters (wbft-vector/1)
   catalog   list the checker catalog, check it against a specification, or extract requirements
   observations validate runtime observation sidecars
+  reconstruction validate a source-bound reconstructed step packet without deciding conformance
   frames    validate frame dumps in the R-01 format
   version   print the version and build
 
@@ -60,6 +61,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runFrames(args[1:], stdout, stderr)
 	case "observations":
 		return runObservations(args[1:], stdout, stderr)
+	case "reconstruction":
+		return runReconstruction(args[1:], stdout, stderr)
 	case "version":
 		fmt.Fprintf(stdout, "wbft-inspector %s (commit %s, %s, build %s)\n", buildinfo.Version, buildinfo.Commit(), buildinfo.Go(), buildinfo.Build())
 		return report.ExitOK
