@@ -82,7 +82,9 @@ func (c relayOnOK) Run(_ context.Context, in *check.Inputs, out check.Emitter) e
 
 // relayBacklog decides WBFT-SM-012: a backlog replay whose processing
 // returned OK is relayed as rlp_encode(m). The re-encoding may differ from
-// the received bytes, so any relay of the code in the step counts.
+// the received bytes, so any relay of the code in the step counts. Without
+// a send, only an exact payload match can bind target-selection evidence
+// to the replay; a different re-encoding remains undecided.
 type relayBacklog struct{ check.Base }
 
 func (c relayBacklog) Run(_ context.Context, in *check.Inputs, out check.Emitter) error {
@@ -92,9 +94,29 @@ func (c relayBacklog) Run(_ context.Context, in *check.Inputs, out check.Emitter
 		if !outcome(e, "backlog") || e.Str("outcome") != "ACCEPT" {
 			return
 		}
-		if _, s := check.StepOf(r, i).Find(-1, relaySend(e.Code())); s != nil {
+		st := check.StepOf(r, i)
+		if _, s := st.Find(-1, relaySend(e.Code())); s != nil {
 			out.Emit(check.Pass(req, e, "backlog replay relayed", s))
 			return
+		}
+		key := e.Str("dedup_key")
+		plans := []*events.Event{}
+		for _, index := range st.Idx {
+			candidate := r.Events[index]
+			if key != "" && candidate.Kind == "RELAY_TARGETS" && candidate.Code() == e.Code() && candidate.Str("dedup_key") == key {
+				plans = append(plans, candidate)
+			}
+		}
+		if len(plans) == 1 && len(r.Lost) == 0 && !r.FromLog {
+			targets, valid := relaySelection(plans[0])
+			if valid && !targets {
+				out.Emit(check.Pass(req, e, "backlog relay selected no target after explicit peer-cache filtering", plans[0]))
+				return
+			}
+			if valid && targets {
+				out.Emit(check.Fail(req, e, "backlog relay selected targets without a relay send record", plans[0]))
+				return
+			}
 		}
 		out.Emit(check.Undecided(req, e, verdict.ObserverScope, "no relay record; every target may already have held the message (A-07 target filtering)"))
 	})
