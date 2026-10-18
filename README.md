@@ -16,6 +16,10 @@ commands that decide requirements:
   implementation through the adapter protocol `wbft-vector/1` (A-11 §3.4)
   and reports every case and every requirement the cases cover.
 
+`reconstruction` independently validates one reconstructed comparison packet
+and preserves its original source pointers. It does not decide requirements;
+see [reconstructed step review](#reconstructed-step-review).
+
 This is the first public version. The checkers cover part of chapters A-05
 (consensus state machine) and A-06 (timers); see [Coverage](#coverage).
 
@@ -548,3 +552,28 @@ first successful sync and a subsequent cycle must all be exercised for complete
 branch coverage; absent branches remain `NOT_EXERCISED`. A process with no
 validator downloader cycle also stays undecided. Structured source coverage
 and original input hashes do not authenticate an external producer.
+
+## Reconstructed step review
+
+```sh
+wbft-inspector reconstruction --packet review.json --sha256 EXPECTED_SHA256
+```
+
+The input is a bounded `wbft-reconstruction-review/1` packet containing one
+WBFT observable state/action comparison, its source fingerprints and its
+original processing coordinates. The reader rejects duplicate or unknown
+fields, paths, raw payloads, inconsistent source domains and truncated or
+oversized documents. Full decimal heights, rounds and clocks remain strings.
+Reconstructed ordinals, physical source sequences and storage positions stay
+separate; timer generations remain explicitly derived.
+
+Exit 0 means the packet structure was validated and, when `--sha256` is given,
+its bytes match that independently supplied checksum. Output uses
+`wbft-reconstruction-review-validation/1`. It retains partial or unapplied
+steps and labels the specification verdict `not_evaluated`. A parent result
+hash alone does not verify the selected record, and packet validation does not
+authenticate source truth. Use the original logs, frames and headers with
+`check` for requirements whose evidence is available.
+
+The standard-library-only reader is independent of the comparison producer.
+The versioned contract is [schema/reconstruction-review-v1.md](schema/reconstruction-review-v1.md).
