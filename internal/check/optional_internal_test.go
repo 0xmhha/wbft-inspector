@@ -11,7 +11,7 @@ import (
 // declaration is a named public behaviour, and only for a requirement
 // none of them changes.
 func TestPublicOnly(t *testing.T) {
-	defaults := []string{"one_round0_proposal", "bad_block_release_mark", "parent_epoch_lookup"}
+	defaults := []string{"one_round0_proposal", "bad_block_release_mark", "parent_epoch_lookup", "integer_quorum", "checked_proposer_policy"}
 	cases := []struct {
 		node          events.NodeInfo
 		req           string
@@ -22,6 +22,12 @@ func TestPublicOnly(t *testing.T) {
 		{events.NodeInfo{Behaviours: defaults}, "WBFT-APP-003", true, true},
 		{events.NodeInfo{Behaviours: defaults}, "WBFT-SM-032", true, true},
 		{events.NodeInfo{Behaviours: defaults}, "WBFT-SM-082", true, true},
+		{events.NodeInfo{Behaviours: defaults}, "WBFT-VAL-002", true, true},
+		{events.NodeInfo{Behaviours: defaults}, "WBFT-VAL-003", true, true},
+		{events.NodeInfo{Behaviours: defaults}, "WBFT-PARAM-032", true, true},
+		{events.NodeInfo{Behaviours: defaults}, "WBFT-PARAM-034", true, true},
+		{events.NodeInfo{Behaviours: defaults}, "WBFT-PARAM-020", true, false},
+		{events.NodeInfo{Behaviours: defaults}, "WBFT-VAL-001", true, false},
 		{events.NodeInfo{Behaviours: defaults[1:]}, "WBFT-SM-082", true, false},
 		{events.NodeInfo{Behaviours: append(defaults, "other")}, "WBFT-SM-083", false, false},
 		{events.NodeInfo{Behaviours: defaults, Unnamed: true}, "WBFT-SM-083", false, false},
