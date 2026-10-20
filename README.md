@@ -599,3 +599,11 @@ authenticate source truth. Use the original logs, frames and headers with
 
 The standard-library-only reader is independent of the comparison producer.
 The versioned contract is [schema/reconstruction-review-v1.md](schema/reconstruction-review-v1.md).
+
+
+Local prepared-candidate checks use the rejection path `local_reproposal`.
+The reader retains this origin separately from `preprepare`; a local record
+is not evidence that a peer PRE-PREPARE or physical frame was received.
+Checks that require received-proposal rejections keep their existing scope.
+The `round_proposal` timer and its snapshot-unavailable health condition
+are local observations, without implying execution or network validity.
