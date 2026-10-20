@@ -358,7 +358,7 @@ func safeRun(ctx context.Context, c Checker, in *Inputs, e Emitter) (err error) 
 }
 
 // PublicBehaviours are the optional behaviours a public wbft node always
-// declares, its restart-safety rules, with the requirements whose verdict
+// declares, its local defaults, with the requirements whose verdict
 // they change:
 //   - one_round0_proposal: the proposer sends no second PRE-PREPARE in a
 //     round-0 view, where the reference does on a second request
@@ -367,12 +367,16 @@ func safeRun(ctx context.Context, c Checker, in *Inputs, e Emitter) (err error) 
 //     pair the bad-block rule released, for the node's signer only; the
 //     messages are those of the reference.
 //
+// Parent-epoch lookup follows the requested parent chain rather than a
+// canonical index. Its declaration changes canonical-first lookup rules.
+//
 // A refusal of the node's signer is not a behaviour of this list: the
 // node records it (HEALTH privval_refusal, sign_floor_skip) and the
 // checkers do not count the message it did not send.
 var PublicBehaviours = map[string][]string{
 	"one_round0_proposal":    {"WBFT-SM-032", "WBFT-SM-082"},
 	"bad_block_release_mark": nil,
+	"parent_epoch_lookup":    {"WBFT-HDR-071", "WBFT-APP-003"},
 }
 
 // publicOnly reports whether the node declares only behaviours of
