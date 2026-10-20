@@ -151,6 +151,28 @@ establish whole-run clock continuity. Without this complete proof, the older
 arm keeps its original timing interpretation. Clock tolerances and original
 event timestamps are unchanged.
 
+## Node header variants
+
+A header variant is one node's observed header for a height and WBFT block
+hash. For a decodable, difficulty-one WBFT header, the hash is computed with
+the current `PreparedSeal` and `CommittedSeal` removed and `Round` set to zero.
+Two node copies can therefore have the same block hash while their current round, signer bitmaps and
+aggregate signatures differ. The child's `PrevRound` and previous seals
+remain part of the child's hashed content; they are a separate observation.
+
+Scope own-header observations to their input snapshot and `--header-node`
+label. The source fingerprint includes the full observed header, including
+fields excluded from the block hash. A shared block hash alone does not
+identify one exact header variant or establish globally identical own seals.
+Apply content checks to the observed variant. A differing signer bitmap,
+round or additional seal by itself is not an inspector failure.
+
+Network participation uses a parent-linked child's previous seals and the
+validator set governing the preceding height. Without that child, it remains
+unknown. Keep a node-copy round distinct from a child-backed decision round;
+these observations alone do not validate aggregate signatures, execution
+state or message timing.
+
 ## vectors: conformance vectors
 
 ```sh
