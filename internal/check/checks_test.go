@@ -354,17 +354,17 @@ func TestOptionalBehavioursMakeFailuresUndecided(t *testing.T) {
 func TestPublicBehavioursKeepFailures(t *testing.T) {
 	public := []any{map[string]any{"name": "one_round0_proposal", "source": "profile"},
 		map[string]any{"name": "bad_block_release_mark", "source": "profile"}}
-	for _, parentLookup := range []bool{false, true} {
+	for _, profile := range [][]string{nil, {"parent_epoch_lookup"}, {"integer_quorum", "checked_proposer_policy"}, {"parent_epoch_lookup", "integer_quorum", "checked_proposer_policy"}} {
 		declarations := append([]any(nil), public...)
-		if parentLookup {
-			declarations = append(declarations, map[string]any{"name": "parent_epoch_lookup", "source": "profile"})
+		for _, name := range profile {
+			declarations = append(declarations, map[string]any{"name": name, "source": "profile"})
 		}
 		r := remove(t, loadRecs(t, "round-changes.jsonl"), "15")
 		r[0]["improvements"] = declarations
 		res := decide(t, r)
 		for _, id := range []string{"WBFT-SM-030", "WBFT-TIMER-010"} {
 			if res[id].Verdict != verdict.Fail {
-				t.Errorf("parent lookup=%v, %s: %s, reasons %v; want FAIL", parentLookup, id, res[id].Verdict, res[id].Reasons)
+				t.Errorf("profile=%v, %s: %s, reasons %v; want FAIL", profile, id, res[id].Verdict, res[id].Reasons)
 			}
 		}
 		r = remove(t, loadRecs(t, "round-changes.jsonl"), "15")
@@ -372,7 +372,7 @@ func TestPublicBehavioursKeepFailures(t *testing.T) {
 		res = decide(t, r)
 		for _, id := range []string{"WBFT-SM-030", "WBFT-TIMER-010"} {
 			if res[id].Verdict == verdict.Fail || res[id].Reasons[verdict.NotInBuild] == 0 {
-				t.Errorf("parent lookup=%v, %s with another behaviour: %s, reasons %v; want NOT_IN_BUILD", parentLookup, id, res[id].Verdict, res[id].Reasons)
+				t.Errorf("profile=%v, %s with another behaviour: %s, reasons %v; want NOT_IN_BUILD", profile, id, res[id].Verdict, res[id].Reasons)
 			}
 		}
 	}

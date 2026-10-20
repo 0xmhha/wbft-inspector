@@ -369,14 +369,18 @@ func safeRun(ctx context.Context, c Checker, in *Inputs, e Emitter) (err error) 
 //
 // Parent-epoch lookup follows the requested parent chain rather than a
 // canonical index. Its declaration changes canonical-first lookup rules.
+// Integer thresholds and checked proposer configuration declare only the
+// corresponding numeric and missing-policy requirement changes.
 //
 // A refusal of the node's signer is not a behaviour of this list: the
 // node records it (HEALTH privval_refusal, sign_floor_skip) and the
 // checkers do not count the message it did not send.
 var PublicBehaviours = map[string][]string{
-	"one_round0_proposal":    {"WBFT-SM-032", "WBFT-SM-082"},
-	"bad_block_release_mark": nil,
-	"parent_epoch_lookup":    {"WBFT-HDR-071", "WBFT-APP-003"},
+	"one_round0_proposal":     {"WBFT-SM-032", "WBFT-SM-082"},
+	"bad_block_release_mark":  nil,
+	"parent_epoch_lookup":     {"WBFT-HDR-071", "WBFT-APP-003"},
+	"integer_quorum":          {"WBFT-VAL-002", "WBFT-VAL-003"},
+	"checked_proposer_policy": {"WBFT-PARAM-032", "WBFT-PARAM-034"},
 }
 
 // publicOnly reports whether the node declares only behaviours of
