@@ -221,7 +221,7 @@ func (c decideOnCommitQuorum) Run(_ context.Context, in *check.Inputs, out check
 // the timer) or an engine stop.
 func legitRoundCancel(s check.Step) bool {
 	return s.Has(func(x *events.Event) bool {
-		return x.Kind == "ROUND_ENTER" || x.Kind == "PREPREPARE_ACCEPT" || (x.Kind == "TIMER_ARM" && x.Str("timer") == events.TimerRound)
+		return x.Kind == "ROUND_ENTER" || x.Kind == "PREPREPARE_ACCEPT"
 	}) || s.FollowedByStop()
 }
 
