@@ -265,7 +265,7 @@ func SchedulerSources(d *Dump) ([]SchedulerSource, []string) {
 				}
 				seen := map[string]bool{}
 				for _, k := range op.Kinds {
-					if !slices.Contains([]string{"round", "retry", "future"}, k) || seen[k] {
+					if !slices.Contains([]string{"round", "retry", "future", "round_proposal"}, k) || seen[k] {
 						add(r, "invalid cancellation kinds")
 					}
 					seen[k] = true
@@ -277,7 +277,7 @@ func SchedulerSources(d *Dump) ([]SchedulerSource, []string) {
 				_, gok := SchedulerUint(op.Generation)
 				hok := SchedulerDecimal(op.Height)
 				rok := SchedulerDecimal(op.Round)
-				if end < entry || !gok || !hok || !rok || !sha256Pattern.MatchString(op.TimeoutSHA256) || op.Decode != "complete" || !slices.Contains([]string{"round", "retry", "future"}, op.Timer) || len(op.Kinds) != 0 {
+				if end < entry || !gok || !hok || !rok || !sha256Pattern.MatchString(op.TimeoutSHA256) || op.Decode != "complete" || !slices.Contains([]string{"round", "retry", "future", "round_proposal"}, op.Timer) || len(op.Kinds) != 0 {
 					add(r, "incomplete scheduler timeout")
 				}
 			}

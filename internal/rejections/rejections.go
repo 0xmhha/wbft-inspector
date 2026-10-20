@@ -8,7 +8,7 @@
 //	 "path": "preprepare", "time": "2026-10-11T02:18:43.123Z"}
 //
 // with number a decimal string, hash 32 bytes in hex, path one of
-// "preprepare", "sealed_locally", "imported", "synced" or "unknown", and step and
+// "preprepare", "local_reproposal", "sealed_locally", "imported", "synced" or "unknown", and step and
 // errorClass empty when the node did not know them.
 package rejections
 
@@ -174,7 +174,7 @@ func (s *Set) add(raw json.RawMessage) {
 		return
 	}
 	switch r.Path {
-	case "preprepare", "sealed_locally", "imported", "synced", "unknown":
+	case "preprepare", "local_reproposal", "sealed_locally", "imported", "synced", "unknown":
 	default:
 		bad("path %q is not known", r.Path)
 		return
