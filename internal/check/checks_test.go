@@ -349,26 +349,31 @@ func TestOptionalBehavioursMakeFailuresUndecided(t *testing.T) {
 	}
 }
 
-// A node that declares only the restart-safety rules of a public wbft
-// node keeps its failures of requirements those rules do not change. One
-// more behaviour, public or not, makes them undecided again.
+// Nodes declaring public defaults keep unrelated failures. An unrecognized
+// declaration makes those failures undecided.
 func TestPublicBehavioursKeepFailures(t *testing.T) {
 	public := []any{map[string]any{"name": "one_round0_proposal", "source": "profile"},
 		map[string]any{"name": "bad_block_release_mark", "source": "profile"}}
-	r := remove(t, loadRecs(t, "round-changes.jsonl"), "15")
-	r[0]["improvements"] = public
-	res := decide(t, r)
-	for _, id := range []string{"WBFT-SM-030", "WBFT-TIMER-010"} {
-		if res[id].Verdict != verdict.Fail {
-			t.Errorf("%s: %s, reasons %v; want FAIL", id, res[id].Verdict, res[id].Reasons)
+	for _, parentLookup := range []bool{false, true} {
+		declarations := append([]any(nil), public...)
+		if parentLookup {
+			declarations = append(declarations, map[string]any{"name": "parent_epoch_lookup", "source": "profile"})
 		}
-	}
-	r = remove(t, loadRecs(t, "round-changes.jsonl"), "15")
-	r[0]["improvements"] = append(append([]any(nil), public...), map[string]any{"name": "other", "source": "node"})
-	res = decide(t, r)
-	for _, id := range []string{"WBFT-SM-030", "WBFT-TIMER-010"} {
-		if res[id].Verdict == verdict.Fail || res[id].Reasons[verdict.NotInBuild] == 0 {
-			t.Errorf("%s with another behaviour: %s, reasons %v; want NOT_IN_BUILD", id, res[id].Verdict, res[id].Reasons)
+		r := remove(t, loadRecs(t, "round-changes.jsonl"), "15")
+		r[0]["improvements"] = declarations
+		res := decide(t, r)
+		for _, id := range []string{"WBFT-SM-030", "WBFT-TIMER-010"} {
+			if res[id].Verdict != verdict.Fail {
+				t.Errorf("parent lookup=%v, %s: %s, reasons %v; want FAIL", parentLookup, id, res[id].Verdict, res[id].Reasons)
+			}
+		}
+		r = remove(t, loadRecs(t, "round-changes.jsonl"), "15")
+		r[0]["improvements"] = append(append([]any(nil), declarations...), map[string]any{"name": "other", "source": "node"})
+		res = decide(t, r)
+		for _, id := range []string{"WBFT-SM-030", "WBFT-TIMER-010"} {
+			if res[id].Verdict == verdict.Fail || res[id].Reasons[verdict.NotInBuild] == 0 {
+				t.Errorf("parent lookup=%v, %s with another behaviour: %s, reasons %v; want NOT_IN_BUILD", parentLookup, id, res[id].Verdict, res[id].Reasons)
+			}
 		}
 	}
 }
