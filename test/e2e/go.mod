@@ -3,7 +3,7 @@ module github.com/0xmhha/wbft-inspector/test/e2e
 go 1.26.8
 
 require (
-	github.com/0xmhha/wbft v0.0.0-20260928195704-9215f9980335
+	github.com/0xmhha/wbft v0.0.0-20261026080943-b17290fd2d03
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 )
 

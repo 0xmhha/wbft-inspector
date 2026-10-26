@@ -43,13 +43,23 @@ func (c headerContent) Run(ctx context.Context, in *check.Inputs, out check.Emit
 			}
 			headerBatch[n-from] = h
 		}
+		parents := make([]*header.Header, len(batch))
+		if in.Config != nil && in.Config.BLSRandaoAt != nil {
+			for i := range headerBatch {
+				if i > 0 {
+					parents[i] = headerBatch[i-1]
+				} else if from > 0 {
+					parents[i], _ = r.Source.Read(from - 1)
+				}
+			}
+		}
 		workers := min(runtime.GOMAXPROCS(0), 8, len(batch))
 		jobs := make(chan int)
 		var wg sync.WaitGroup
 		for worker := 0; worker < workers; worker++ {
 			wg.Go(func() {
 				for i := range jobs {
-					batch[i] = headers.Predicates(headerBatch[i], in.Config)
+					batch[i] = headers.PredicatesWithParent(headerBatch[i], in.Config, parents[i])
 				}
 			})
 		}
@@ -72,6 +82,9 @@ func (c headerContent) Run(ctx context.Context, in *check.Inputs, out check.Emit
 					if p.Unknown != "" {
 						instance.Verdict = verdict.CannotDecide
 						instance.Reason = verdict.MissingData
+						if p.ObserverScope {
+							instance.Reason = verdict.ObserverScope
+						}
 						instance.Message = p.Unknown
 					} else if !p.Valid {
 						instance.Verdict = verdict.Fail

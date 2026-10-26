@@ -69,6 +69,12 @@ func (c proposalOrder) Run(_ context.Context, in *check.Inputs, out check.Emitte
 	var chainID *big.Int
 	if in.Config != nil {
 		chainID = in.Config.ChainID
+		// Frame-only evidence has no checked parent for a declared reveal
+		// activation and no independent BLS verifier. Do not apply legacy
+		// ECDSA recovery to that profile; other first-failure checks remain.
+		if in.Config.BLSRandaoAt != nil {
+			chainID = nil
+		}
 	}
 	byNode := map[string][]*rejections.Record{}
 	given := map[string]bool{}
