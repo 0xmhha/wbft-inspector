@@ -44,6 +44,7 @@ type Config struct {
 	Base        WBFT
 	Transitions []Transition
 	ChainID     *big.Int // the chain id of the configuration, nil when absent
+	BLSRandaoAt *big.Int // explicit activation, nil for the legacy reveal profile
 }
 
 // New returns a configuration with the transitions sorted by block.
@@ -160,6 +161,9 @@ func ParseGenesis(raw []byte) (*Config, error) {
 			return nil, fmt.Errorf("params: bad chainId %s", cc.ChainID)
 		}
 		c.ChainID = id
+	}
+	if c.BLSRandaoAt, err = parseBLSRandao(raw); err != nil {
+		return nil, err
 	}
 	return c, nil
 }

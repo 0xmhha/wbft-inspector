@@ -10,10 +10,8 @@ import (
 
 	"github.com/0xmhha/wbft-inspector/internal/evidence"
 	"github.com/0xmhha/wbft-inspector/internal/spec/header"
-	"github.com/0xmhha/wbft-inspector/internal/spec/keccak"
 	"github.com/0xmhha/wbft-inspector/internal/spec/params"
 	"github.com/0xmhha/wbft-inspector/internal/spec/rlp"
-	"github.com/0xmhha/wbft-inspector/internal/spec/secp256k1"
 )
 
 type Finding struct {
@@ -200,11 +198,17 @@ type Predicate struct {
 	Requirement, Field string
 	Valid              bool
 	Unknown            string
+	ObserverScope      bool
 }
 
 // Predicates check only observable content invariants. Node rejection order,
 // proposal clock, execution state and aggregate signatures are outside scope.
 func Predicates(h *header.Header, cfg *params.Config) []Predicate {
+	return PredicatesWithParent(h, cfg, nil)
+}
+
+// PredicatesWithParent binds a declared reveal profile to checked ancestry.
+func PredicatesWithParent(h *header.Header, cfg *params.Config, parent *header.Header) []Predicate {
 	uintField := func(i int) *big.Int {
 		f, _ := h.Field(i)
 		n, err := f.Uint()
@@ -232,15 +236,7 @@ func Predicates(h *header.Header, cfg *params.Config) []Predicate {
 	}
 	x, err := h.Extra()
 	out = append(out, Predicate{Requirement: "WBFT-ENC-021", Field: "Extra", Valid: err == nil})
-	if cfg == nil || cfg.ChainID == nil {
-		out = append(out, Predicate{Requirement: "WBFT-HDR-014", Field: "extra.randao_reveal", Unknown: "chain ID is unavailable"})
-	} else if err == nil {
-		pre := header.RandaoData(cfg.ChainID, h.Number)
-		signer, recoverErr := secp256k1.Recover(keccak.Sum256(pre[:]), x.Randao)
-		out = append(out, Predicate{Requirement: "WBFT-HDR-014", Field: "extra.randao_reveal", Valid: recoverErr == nil && "0x"+hex.EncodeToString(signer[:]) == h.Coinbase()})
-	} else {
-		out = append(out, Predicate{Requirement: "WBFT-HDR-014", Field: "extra.randao_reveal", Unknown: "extra cannot be decoded"})
-	}
+	out = append(out, revealPredicate(h, cfg, parent, x, err))
 	return out
 }
 

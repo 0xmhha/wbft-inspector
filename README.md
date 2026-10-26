@@ -607,3 +607,15 @@ is not evidence that a peer PRE-PREPARE or physical frame was received.
 Checks that require received-proposal rejections keep their existing scope.
 The `round_proposal` timer and its snapshot-unavailable health condition
 are local observations, without implying execution or network validity.
+
+
+For an explicit positive `consensusRules.blsRandao` activation, the canonical
+header reader selects the reveal format from a matching parent's full successor
+height. It checks the active wire length and retains the independent structural
+predicates. BLS signature validity is `CANNOT_DECIDE` until an independent BLS
+verifier and registered proposer key are supplied. It never treats a 96-byte
+reveal as an ECDSA recovery failure or reports its signature as verified. A
+frame-only observation with a declared activation lacks this parent context;
+its first-failure checker retains other checks without applying legacy recovery.
+Missing or null activation keeps the existing ECDSA checks. Standard-library-only
+dependencies and the separate node-key observer-scope limitation are preserved.
