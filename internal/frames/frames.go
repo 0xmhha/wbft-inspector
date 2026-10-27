@@ -43,16 +43,19 @@ const FormatVersion = 1
 
 // Record is one line of a dump. Optional fields are pointers or empty.
 type Record struct {
-	SyncTrace      *SyncTrace      `json:"sync_trace,omitempty"`
-	SyncControl    *SyncControl    `json:"sync_control,omitempty"`
-	CacheTrace     *CacheTrace     `json:"cache_trace,omitempty"`
-	CacheInstance  *CacheInstance  `json:"cache_instance,omitempty"`
-	CacheOperation *CacheOperation `json:"cache_operation,omitempty"`
-	CacheDecision  *CacheDecision  `json:"cache_decision,omitempty"`
-	SendAttempt    *SendAttempt    `json:"send_attempt,omitempty"`
-	Input          string          `json:"-"` // input id of the dump in a report
-	File           string          `json:"-"` // file name in the dump directory
-	Line           int             `json:"-"` // 1-based line
+	// These declarations are capability markers, never retry authorization.
+	RoundChangeRetry       json.RawMessage `json:"round_change_retry,omitempty"`
+	RoundChangeRetrySource json.RawMessage `json:"round_change_retry_source,omitempty"`
+	SyncTrace              *SyncTrace      `json:"sync_trace,omitempty"`
+	SyncControl            *SyncControl    `json:"sync_control,omitempty"`
+	CacheTrace             *CacheTrace     `json:"cache_trace,omitempty"`
+	CacheInstance          *CacheInstance  `json:"cache_instance,omitempty"`
+	CacheOperation         *CacheOperation `json:"cache_operation,omitempty"`
+	CacheDecision          *CacheDecision  `json:"cache_decision,omitempty"`
+	SendAttempt            *SendAttempt    `json:"send_attempt,omitempty"`
+	Input                  string          `json:"-"` // input id of the dump in a report
+	File                   string          `json:"-"` // file name in the dump directory
+	Line                   int             `json:"-"` // 1-based line
 
 	V     int    `json:"v"`
 	Type  string `json:"type"`
