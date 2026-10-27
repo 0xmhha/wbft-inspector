@@ -189,10 +189,11 @@ type Outcome struct {
 }
 
 type collector struct {
-	c    Checker
-	want map[string]bool
-	out  *Outcome
-	errs *[]string
+	retry *retryPolicyIndex
+	c     Checker
+	want  map[string]bool
+	out   *Outcome
+	errs  *[]string
 }
 
 func (k *collector) Emit(i verdict.Instance) {
@@ -200,12 +201,14 @@ func (k *collector) Emit(i verdict.Instance) {
 		*k.errs = append(*k.errs, fmt.Sprintf("checker %s emitted %s, which it does not declare", k.c.Name(), i.Requirement))
 		return
 	}
+	i = k.retry.gate(i)
 	k.out.Instances[i.Requirement] = append(k.out.Instances[i.Requirement], i)
 }
 
 // Run runs the checkers that decide any of the selected requirements.
 func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 	out := &Outcome{Instances: map[string][]verdict.Instance{}, Ran: map[string]bool{}, Missing: map[string][]Kind{}}
+	retry := newRetryPolicyIndex(in)
 	for _, c := range All() {
 		use := false
 		for _, r := range c.Requirements() {
@@ -230,7 +233,7 @@ func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 		for _, r := range c.Requirements() {
 			want[r] = true
 		}
-		col := &collector{c: c, want: want, out: out, errs: &out.Errors}
+		col := &collector{retry: retry, c: c, want: want, out: out, errs: &out.Errors}
 		cin, skipped := forChecker(in, c)
 		if cin.Events != nil && len(cin.Events.Runs) == 0 && len(skipped) > 0 {
 			// Only log runs this checker does not judge.
@@ -376,6 +379,7 @@ func safeRun(ctx context.Context, c Checker, in *Inputs, e Emitter) (err error) 
 // node records it (HEALTH privval_refusal, sign_floor_skip) and the
 // checkers do not count the message it did not send.
 var PublicBehaviours = map[string][]string{
+	"round_change_retry":      {"WBFT-TIMER-003", "WBFT-TIMER-020", "WBFT-TIMER-024", "WBFT-NET-023", "WBFT-NET-032"},
 	"one_round0_proposal":     {"WBFT-SM-032", "WBFT-SM-082"},
 	"bad_block_release_mark":  nil,
 	"parent_epoch_lookup":     {"WBFT-HDR-071", "WBFT-APP-003"},
@@ -411,7 +415,7 @@ func applyOptional(in *Inputs, out *Outcome) {
 	for req, insts := range out.Instances {
 		kept := insts[:0]
 		for _, x := range insts {
-			node := in.Events.Nodes[x.Node]
+			node := retryOptionalNode(in, x)
 			if x.Verdict != verdict.Fail || node == nil || !node.Optional {
 				kept = append(kept, x)
 				continue

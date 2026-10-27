@@ -619,3 +619,28 @@ frame-only observation with a declared activation lacks this parent context;
 its first-failure checker retains other checks without applying legacy recovery.
 Missing or null activation keeps the existing ECDSA checks. Standard-library-only
 dependencies and the separate node-key observer-scope limitation are preserved.
+
+## Current-view retry policy observations
+
+A `NODE_START` declaration named `round_change_retry` changes the interpretation
+of retry spacing and current-own recent-cache exceptions. The affected timer
+and retransmission instances are gated by their exact input, node and run
+before PASS or FAIL is retained. Event/frame labels alone cannot establish
+timer generation, signing/WAL ownership or the explicit backoff bound, so this
+build reports CANNOT_DECIDE for those cases. Unrelated rules and disabled runs
+keep their original verdicts. Another run of the same address cannot inherit
+this policy through the node-wide optional-behavior summary.
+
+For externally supplied frame metadata, `round_change_retry` is a declaration
+marker and `round_change_retry_source` indicates retained retry provenance. A
+marker does not authorize a send or prove consistency. A retry source without
+a declaration in the same input/node/run remains missing data, and conflicting
+declarations remain inconsistent input. Existing legacy frame inputs retain
+their original rules. New retry journals must be checked with a compatible
+original-source checker; unsupported event observations do not replace that
+validation.
+
+If another input identifies the same node/run as using this policy, an unmarked
+input remains missing data rather than inheriting that declaration or silently
+assuming a legacy policy. An explicit disabled declaration in its own event
+input retains the existing disabled-run verdict.
