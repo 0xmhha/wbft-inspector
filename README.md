@@ -644,3 +644,25 @@ If another input identifies the same node/run as using this policy, an unmarked
 input remains missing data rather than inheriting that declaration or silently
 assuming a legacy policy. An explicit disabled declaration in its own event
 input retains the existing disabled-run verdict.
+
+### Original receive failure source reports
+
+`wbft-inspector receive-failures --checker /absolute/wbft-journal
+--checker-sha256 SHA256 --journal DIR --source-limits FILE` invokes the
+explicit WBFT journal checker against original closed input. `--timeout`
+defaults to 2m and may not exceed 10m. Obtain the expected SHA256 from the
+checker build you selected; matching it identifies that executable and does
+not endorse its implementation. The executable must identify its Go build
+path as the WBFT journal command. No shell command is interpreted.
+
+The result is a conditional implementation source report, separate from an
+inspector conformance verdict. Executed checks, verified failures, cache
+lookups and consumed cached failures remain separate. The adapter validates
+the complete current JSON contract, bounds output to 1 MiB, and requires
+matching checker exit/status (0 consistent, 69 unavailable, 1 inconsistent).
+Missing or malformed output, checker identity mismatch, timeout and invalid
+input return 69 without exposing operator paths. Physical or schedule
+certification is unavailable. The checker requires explicit positive finite
+inspection limits; record decoding and byte inspection are not heap bounds.
+This command does not convert new source records to R-01, acceptance, signer
+calls, or executed checks and does not enable functional replay.
