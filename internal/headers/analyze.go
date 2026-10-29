@@ -77,19 +77,19 @@ func (r *Range) Analyze(cfg *params.Config) (Scan, error) {
 				if childErr == nil && child.ParentHash() == h.Hash() {
 					cx, _ = child.Extra()
 				}
-				round := x.Round
-				if cx != nil {
-					round = cx.PrevRound
+				if cx == nil {
+					add(Finding{Kind: "decision_round_unknown", Key: "decision_round_unknown", Note: "No linked successor is available; this node's round and seals do not establish the network decision or participation.", Evidence: []evidence.Pointer{{Kind: "block", Input: r.Input, Node: r.Node, Number: h.Number.String(), Hash: h.Hash(), Field: "extra.round"}}})
 				}
 				pol := cfg.At(h.Number).ProposerPolicy
-				if pol != nil && len(addresses) > 0 {
+				if cx != nil && pol != nil && len(addresses) > 0 {
+					round := cx.PrevRound
 					last := parent.Coinbase()
 					if parent.Number.Sign() == 0 {
 						last = "0x" + strings.Repeat("0", 40)
 					}
 					planned := Proposer(addresses, last, uint64(round), *pol)
 					if planned != h.Coinbase() {
-						add(Finding{Kind: "proposer_schedule_diff", Key: "proposer_schedule_diff", Note: fmt.Sprintf("Coinbase %s differs from the scheduled proposer %s at decision round %d; headers do not explain why.", h.Coinbase(), planned, round), Evidence: []evidence.Pointer{{Kind: "block", Input: r.Input, Node: r.Node, Number: h.Number.String(), Hash: h.Hash(), Field: "Coinbase"}}})
+						add(Finding{Kind: "proposer_schedule_diff", Key: "proposer_schedule_diff", Note: fmt.Sprintf("Coinbase %s differs from the scheduled proposer %s at decision round %d; headers do not explain why.", h.Coinbase(), planned, round), Evidence: []evidence.Pointer{{Kind: "block", Input: r.Input, Node: r.Node, Number: h.Number.String(), Hash: h.Hash(), Field: "Coinbase"}, {Kind: "block", Input: r.Input, Node: r.Node, Number: child.Number.String(), Hash: child.Hash(), Field: "extra.prev_round"}}})
 					}
 				}
 				if cx != nil {
@@ -116,7 +116,7 @@ func (r *Range) Analyze(cfg *params.Config) (Scan, error) {
 	}
 	for _, f := range findings {
 		shown := len(f.Evidence)
-		if f.Kind == "late_seal" {
+		if f.Kind == "late_seal" || f.Kind == "proposer_schedule_diff" {
 			shown /= 2
 		}
 		if f.Count > shown {
