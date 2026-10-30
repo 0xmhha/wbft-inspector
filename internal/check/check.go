@@ -87,8 +87,9 @@ type Checker interface {
 }
 
 var (
-	mu       sync.Mutex
-	checkers = map[string]Checker{}
+	mu        sync.Mutex
+	checkers  = map[string]Checker{}
+	observers = map[string]Checker{}
 )
 
 // Register adds a checker. It panics if the name is taken or if another
@@ -98,6 +99,9 @@ func Register(c Checker) {
 	defer mu.Unlock()
 	if _, dup := checkers[c.Name()]; dup {
 		panic(fmt.Sprintf("check: checker %s registered twice", c.Name()))
+	}
+	if _, dup := observers[c.Name()]; dup {
+		panic(fmt.Sprintf("check: checker name %s belongs to an observer", c.Name()))
 	}
 	for _, o := range checkers {
 		for _, a := range o.Requirements() {
@@ -109,6 +113,37 @@ func Register(c Checker) {
 		}
 	}
 	checkers[c.Name()] = c
+}
+
+// RegisterObserver adds a supplemental CANNOT-only observation. Its related
+// requirements do not grant catalog or conformance ownership. Primary
+// existence is checked at Run time, after all package initializers.
+func RegisterObserver(c Checker) {
+	mu.Lock()
+	defer mu.Unlock()
+	if _, dup := checkers[c.Name()]; dup {
+		panic(fmt.Sprintf("check: observer name %s belongs to a checker", c.Name()))
+	}
+	if _, dup := observers[c.Name()]; dup {
+		panic(fmt.Sprintf("check: observer %s registered twice", c.Name()))
+	}
+	if len(c.Requirements()) == 0 {
+		panic(fmt.Sprintf("check: observer %s has no related requirements", c.Name()))
+	}
+	observers[c.Name()] = c
+}
+
+// AllObservers returns supplemental observations separately from All and
+// ForRequirement's primary catalog ownership.
+func AllObservers() []Checker {
+	mu.Lock()
+	defer mu.Unlock()
+	out := make([]Checker, 0, len(observers))
+	for _, c := range observers {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name() < out[j].Name() })
+	return out
 }
 
 // All returns the registered checkers sorted by name.
@@ -189,16 +224,22 @@ type Outcome struct {
 }
 
 type collector struct {
-	retry *retryPolicyIndex
-	c     Checker
-	want  map[string]bool
-	out   *Outcome
-	errs  *[]string
+	retry           *retryPolicyIndex
+	c               Checker
+	want            map[string]bool
+	out             *Outcome
+	errs            *[]string
+	observationOnly bool
 }
 
 func (k *collector) Emit(i verdict.Instance) {
 	if !k.want[i.Requirement] {
 		*k.errs = append(*k.errs, fmt.Sprintf("checker %s emitted %s, which it does not declare", k.c.Name(), i.Requirement))
+		return
+	}
+	// Check the raw verdict before any policy can transform it.
+	if k.observationOnly && i.Verdict != verdict.CannotDecide {
+		*k.errs = append(*k.errs, fmt.Sprintf("observer %s emitted %s; only CANNOT_DECIDE is allowed", k.c.Name(), i.Verdict))
 		return
 	}
 	i = k.retry.gate(i)
@@ -209,7 +250,19 @@ func (k *collector) Emit(i verdict.Instance) {
 func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 	out := &Outcome{Instances: map[string][]verdict.Instance{}, Ran: map[string]bool{}, Missing: map[string][]Kind{}}
 	retry := newRetryPolicyIndex(in)
+	type execution struct {
+		checker         Checker
+		observationOnly bool
+	}
+	var executions []execution
 	for _, c := range All() {
+		executions = append(executions, execution{checker: c})
+	}
+	for _, c := range AllObservers() {
+		executions = append(executions, execution{checker: c, observationOnly: true})
+	}
+	for _, entry := range executions {
+		c := entry.checker
 		use := false
 		for _, r := range c.Requirements() {
 			if selected[r] {
@@ -218,6 +271,18 @@ func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 		}
 		if !use {
 			continue
+		}
+		if entry.observationOnly {
+			owned := true
+			for _, id := range c.Requirements() {
+				if _, ok := ForRequirement(id); !ok {
+					out.Errors = append(out.Errors, fmt.Sprintf("observer %s has no primary checker for %s", c.Name(), id))
+					owned = false
+				}
+			}
+			if !owned {
+				continue
+			}
 		}
 		var lack []Kind
 		for _, k := range c.Needs() {
@@ -233,8 +298,8 @@ func Run(ctx context.Context, in *Inputs, selected map[string]bool) *Outcome {
 		for _, r := range c.Requirements() {
 			want[r] = true
 		}
-		col := &collector{retry: retry, c: c, want: want, out: out, errs: &out.Errors}
-		cin, skipped := forChecker(in, c)
+		col := &collector{retry: retry, c: c, want: want, out: out, errs: &out.Errors, observationOnly: entry.observationOnly}
+		cin, skipped := executionInputs(in, c, entry.observationOnly)
 		if cin.Events != nil && len(cin.Events.Runs) == 0 && len(skipped) > 0 {
 			// Only log runs this checker does not judge.
 			for _, r := range skipped {
@@ -310,6 +375,16 @@ func eventRun(key string) (string, bool) {
 		return "", false
 	}
 	return rest[:i], true
+}
+
+// executionInputs keeps optional-event filtering without allowing unsupported
+// logs to suppress an observer's independently supplied frame input.
+func executionInputs(in *Inputs, c Checker, observationOnly bool) (*Inputs, []*events.Run) {
+	cin, skipped := forChecker(in, c)
+	if observationOnly && !slices.Contains(c.Needs(), Events) {
+		skipped = nil
+	}
+	return cin, skipped
 }
 
 // forChecker returns the inputs of checker c: without the log runs it does

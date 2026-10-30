@@ -359,25 +359,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	}
 	var entries []report.Entry
 	for _, id := range sortedKeys(selected) {
-		row, _ := catalog.RowOf(id)
-		e := report.Entry{ID: id, Checker: row.Checker}
-		c, ok := check.ForRequirement(id)
-		switch {
-		case !ok:
-			e.NotRun, e.Detail = true, "no checker for this requirement in this build yet"
-		case out.Missing[c.Name()] != nil:
-			e.Checker = c.Name()
-			e.Undecided = verdict.MissingData
-			e.Detail = fmt.Sprintf("the checker needs input of kind %v", out.Missing[c.Name()])
-		case !out.Ran[c.Name()]:
-			e.Checker = c.Name()
-			e.Undecided = verdict.MissingData
-			e.Detail = "the checker failed; see errors"
-		default:
-			e.Checker = c.Name()
-			e.Instances = out.Instances[id]
-		}
-		entries = append(entries, e)
+		entries = append(entries, checkerReportEntry(id, out))
 	}
 	seen := map[string]bool{}
 	for _, id := range unknown {
@@ -428,6 +410,37 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	return exit
 }
 
+// checkerReportEntry preserves a missing primary verdict while retaining
+// supplemental CANNOT observations that can run with independently supplied data.
+func checkerReportEntry(id string, out *check.Outcome) report.Entry {
+	row, _ := catalog.RowOf(id)
+	e := report.Entry{ID: id, Checker: row.Checker}
+	c, ok := check.ForRequirement(id)
+	switch {
+	case !ok:
+		e.NotRun, e.Detail = true, "no checker for this requirement in this build yet"
+	case out.Missing[c.Name()] != nil:
+		e.Checker = c.Name()
+		e.Undecided = verdict.MissingData
+		e.Detail = fmt.Sprintf("the checker needs input of kind %v", out.Missing[c.Name()])
+	case !out.Ran[c.Name()]:
+		e.Checker = c.Name()
+		e.Undecided = verdict.MissingData
+		e.Detail = "the checker failed; see errors"
+	default:
+		e.Checker = c.Name()
+		e.Instances = out.Instances[id]
+	}
+	if !e.NotRun && len(e.Instances) == 0 && len(out.Instances[id]) > 0 {
+		missing := verdict.Instance{Requirement: id, Key: "primary-unavailable:" + c.Name(),
+			Verdict: verdict.CannotDecide, Reason: verdict.MissingData, Message: e.Detail,
+			Actual:   map[string]string{"primary_checker": c.Name(), "status": "unavailable"},
+			Evidence: []evidence.Pointer{{Kind: evidence.KindComputed, Name: "primary_checker", Value: c.Name()}}}
+		e.Instances = append([]verdict.Instance{missing}, out.Instances[id]...)
+	}
+	return e
+}
+
 // selectRows returns the catalog rows chosen by the selection tokens, and
 // the requirement IDs among the tokens that this build does not know.
 func selectRows(tokens []string) (map[string]bool, []string) {
@@ -458,6 +471,18 @@ func selectRows(tokens []string) (map[string]bool, []string) {
 			for _, r := range rows {
 				if ok, _ := path.Match(t, r.Checker); ok {
 					sel[r.Requirement] = true
+				}
+			}
+			// Observer names select related public requirements without
+			// replacing their primary conformance checker.
+			for _, observer := range check.AllObservers() {
+				if matched, _ := path.Match(t, observer.Name()); !matched {
+					continue
+				}
+				for _, id := range observer.Requirements() {
+					if _, public := catalog.Lookup(id); public {
+						sel[id] = true
+					}
 				}
 			}
 		}
