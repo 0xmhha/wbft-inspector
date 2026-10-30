@@ -163,6 +163,10 @@ func (d *Dump) Payload(r *Record) ([]byte, error) {
 // ErrNoPayload is returned by Payload for a frame recorded without its bytes.
 var ErrNoPayload = errors.New("frames: frame recorded without its payload")
 
+// ErrDomainUnsupported identifies declarations R01 cannot bind. Discard the
+// whole input instead of recovering a selected message with legacy rules.
+var ErrDomainUnsupported = errors.New("frames: unsupported chain signing domain; use original journal source checks")
+
 // Load reads the frames-*.jsonl files of dir in name order.
 func Load(dir string) (*Dump, error) {
 	names, err := filepath.Glob(filepath.Join(dir, "frames-*.jsonl"))
@@ -202,6 +206,11 @@ func (d *Dump) read(path string) error {
 		if err := json.Unmarshal(b, &fields); err != nil {
 			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: %v", name, line, err))
 			continue
+		}
+		for _, field := range []string{"signing_profile", "round_change_domain"} {
+			if _, present := fields[field]; present {
+				return ErrDomainUnsupported
+			}
 		}
 		if !uniqueFields(b) {
 			d.Malformed = append(d.Malformed, fmt.Sprintf("%s:%d: invalid or duplicate JSON fields", name, line))
