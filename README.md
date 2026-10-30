@@ -666,3 +666,20 @@ certification is unavailable. The checker requires explicit positive finite
 inspection limits; record decoding and byte inspection are not heap bounds.
 This command does not convert new source records to R-01, acceptance, signer
 calls, or executed checks and does not enable functional replay.
+
+### Chain-bound signing source scope
+
+The naked R-01 message decoder uses the legacy outer-signature interpretation;
+it has no chain-domain or membership authority. R01 cannot preserve a selected
+chain signing domain. A dump declaring `signing_profile` or
+`round_change_domain`, including an empty or unknown declaration, is refused
+as unsupported before any prefix is supplied to conformance checkers. The
+frame command returns unavailable (exit 69), rather than reporting a legacy
+signer for that input. Keep original journals or original-segment bundles.
+
+The dedicated original receive-failure adapter preserves the checker's
+`unsupported_source_profile` unavailable result and its zero/default nested
+source report. It validates executable identity, before/after checksums,
+status/exit and the finite JSON contract; it does not reconstruct missing
+signing context or certify physical/full-runtime restoration. Supplying a
+chain-config file alone does not add a signing domain to a naked frame dump.

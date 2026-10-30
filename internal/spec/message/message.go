@@ -40,7 +40,9 @@ type Message struct {
 	Header []byte
 }
 
-// Decode reads the message of code from payload and recovers its signer.
+// Decode reads a legacy-only naked payload and recovers its outer signer.
+// It has no chain domain or membership authority. Bound profiles must not be
+// projected through this API after discarding their original declaration.
 func Decode(code uint64, payload []byte) (*Message, error) {
 	m := &Message{Code: code}
 	var signed rlp.Item // the signed fields, signed by sig
