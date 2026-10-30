@@ -335,6 +335,28 @@ records with its received PRE-PREPARE, PREPARE and COMMIT frames: a pair
 without EVIDENCE fails while the node was at that sequence or next to it,
 and an EVIDENCE whose two messages the dump does not hold is undecided
 (INCONSISTENT_INPUT).
+The supplemental `sec.prepare_justification_pairs` observer also reads PREPARE
+signatures inside ROUND-CHANGE and PRE-PREPARE justifications. It keeps the
+first representative pair with different digests when at least one vote is
+nested, per capture input, node, run, full view and signer. Two original
+container pointers and the signatures, digests and byte identities are kept
+in `Actual` with schema `wbft-prepare-justification-observation/1`.
+This is an inspector observation, emitted as `CANNOT_DECIDE/OBSERVER_SCOPE`;
+it does not decide whether the node recorded EVIDENCE. An existing pass and
+such an observation therefore remain partly decided. The original node
+EVIDENCE checker and the node's execution history are unchanged.
+`cryptographic_candidate` means only that the signatures recover;
+`node_membership_observed` additionally requires separate, unique matching
+node recovery outcomes for both votes. Neither establishes independent
+chain authority or a particular physical delivery. Missing or ambiguous
+outcomes remain unbound, and the absence of a pair is not a safety pass.
+Declared unsupported signing profiles retain the original input rejection;
+their declaration is never removed to recover with legacy rules.
+`--checks sec.prepare_justification_pairs` selects the related public
+requirement and keeps its primary checker active. When that checker lacks
+events, the report preserves its missing-data status alongside the observer's
+candidate data. The observer has a separate registry and can only emit
+`CANNOT_DECIDE`; it cannot become a requirement's primary checker.
 Also with the event stream, chapter A-10: WBFT-SEC-081 (after a node
 records a block at height h as bad, it sends no PREPARE or COMMIT for it
 at h). The bad blocks are the node's `IMPORT_FAIL` records with
